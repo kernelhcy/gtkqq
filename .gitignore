@@ -1,2 +1,7 @@
 *.out
 *~
+.deps/
+.libs/
+*.o
+*.lo
+*.log

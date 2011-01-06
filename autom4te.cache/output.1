@@ -2497,7 +2497,8 @@ am__tar='${AMTAR} chof - "$$tardir"'; am__untar='${AMTAR} xf -'
 
 
 
-CFLAGS+=`pkg-config --libs --cflags glib-2.0`
+CFLAGS+=`pkg-config --libs --cflags glib-2.0` 
+CFLAGS+='-Wall -O2'
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'

@@ -1,4 +1,6 @@
-AM_CFLAGS=-I../libqq/
+AM_CFLAGS=-I${srcdir}/../libqq/
 noinst_PROGRAMS=testhttp testjson
-testhttp_SOURCES=../libqq/http.h ../libqq/http.c testhttp.c
-testjson_SOURCES=../libqq/json.h ../libqq/json.c testjson.c
+testhttp_SOURCES= testhttp.c
+testjson_SOURCES= testjson.c
+testhttp_LDADD=${srcdir}/../libqq/libwebqq.la
+testjson_LDADD=${srcdir}/../libqq/libwebqq.la
