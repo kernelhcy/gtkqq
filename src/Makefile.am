@@ -1,1 +1,1 @@
-SUBDIRS=libqq tool
+SUBDIRS=libqq tool test
