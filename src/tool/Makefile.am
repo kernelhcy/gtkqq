@@ -1,0 +1,2 @@
+bin_PROGRAMS=unidecode
+unidecode_SOURCES=unidecode.c
