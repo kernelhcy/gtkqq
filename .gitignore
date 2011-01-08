@@ -5,3 +5,4 @@
 *.o
 *.lo
 *.log
+autom4te.cache/
