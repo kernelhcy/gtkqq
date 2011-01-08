@@ -1,0 +1,8 @@
+#!/bin/bash
+make distclean
+rm m4 -rf
+rm build-aux -rf
+rm config.* -rf
+rm autom4te.cache -rf
+rm aclocal.m4 
+
