@@ -1,0 +1,5 @@
+#/bin/bash
+rm m4 -rf
+rm build-aux -rf
+mkdir m4 build-aux
+autoreconf --install
