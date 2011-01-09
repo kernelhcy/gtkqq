@@ -24,7 +24,7 @@ typedef struct _request
 	
 	GTree *headers;		//the headers and values.
 	GString *msg;		//message
-}request;
+}Request;
 
 
 /*
@@ -46,29 +46,29 @@ typedef struct _response
 	
 	GTree *headers;		//the headers and values.
 	GString *msg;		//message
-}response;
+}Response;
 
 /*
  * create and destroy a request
  */
-request* request_new();
-void request_del(request *r);
+Request* request_new();
+void request_del(Request *r);
 
 /*
  * convert request to the string format
  */
-GString* request_tostring(request* r);
+GString* request_tostring(Request* r);
 
-void request_set_method(request* r, const gchar* m);
-void request_set_uri(request* r, const gchar* uri);
-void request_set_version(request* r, const gchar* v);
-void request_add_header(request* r, const gchar* name
+void request_set_method(Request* r, const gchar* m);
+void request_set_uri(Request* r, const gchar* uri);
+void request_set_version(Request* r, const gchar* v);
+void request_add_header(Request* r, const gchar* name
 				, const gchar* value);
 /*
  * get the value of header name
  */
-GString* request_get_header(request* r, const GString* name);
-void request_append_msg(request* r, const gchar* msg
+GString* request_get_header(Request* r, const GString* name);
+void request_append_msg(Request* r, const gchar* msg
 				, gsize len);
 
 
@@ -76,18 +76,18 @@ void request_append_msg(request* r, const gchar* msg
 /*
  * create and destroy a response
  */
-response* response_new();
-void response_del(response *r);
+Response* response_new();
+void response_del(Response *r);
 
 /*
  * parse s and create a response
  */
-response* response_new_parse(GString* s);
+Response* response_new_parse(GString* s);
 
 /*
  * convert response to the string format
  */
-GString* response_tostring(response* r);
+GString* response_tostring(Response* r);
 
 
 /*

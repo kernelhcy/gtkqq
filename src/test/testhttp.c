@@ -4,7 +4,7 @@
 
 int main(int argc, char** argv)
 {
-	request* r = request_new();
+	Request* r = request_new();
 	request_set_method(r, "GET");
 	request_set_uri(r, "http://web.qq.com/hello.html?key=234");
 	request_set_version(r, "HTTP/1.1");
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
 "Cache-Control: no-cache; must-revalidate\r\n"
 "Connection: Close\r\n"
 "Content-Type: application/x-javascript; charset=utf-8\r\n";
-	response* rps = response_new_parse(g_string_new(s));
+	Response* rps = response_new_parse(g_string_new(s));
 	g_printf(response_tostring(rps) -> str);
 	g_printf("\n\n");
 	print_raw(rps -> reason);

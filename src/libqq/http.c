@@ -57,10 +57,10 @@ static gboolean toStringTraverseFunc(gpointer key
 	request
 **************************/
 
-request* request_new()
+Request* request_new()
 {
-	request* r = NULL;
-	r = g_slice_new(request);
+	Request* r = NULL;
+	r = g_slice_new(Request);
 	
 	r -> method = g_string_new(NULL);
 	r -> uri = g_string_new(NULL);
@@ -72,7 +72,7 @@ request* request_new()
 	
 }
 
-void request_del(request *r)
+void request_del(Request *r)
 {
 	if(r == NULL){
 		return;
@@ -86,10 +86,10 @@ void request_del(request *r)
 	g_tree_destroy(r -> headers);
 	g_string_free(r -> msg, TRUE);
 	
-	g_slice_free(request, r);
+	g_slice_free(Request, r);
 }
 
-GString* request_tostring(request *r)
+GString* request_tostring(Request *r)
 {
 	if(r == NULL){
 		return NULL;
@@ -111,7 +111,7 @@ GString* request_tostring(request *r)
 	return s;
 }
 
-void request_set_method(request* r, const gchar* m)
+void request_set_method(Request* r, const gchar* m)
 {
 	if(r == NULL || m == NULL){
 		return;
@@ -119,7 +119,7 @@ void request_set_method(request* r, const gchar* m)
 	g_string_truncate(r -> method, 0);
 	g_string_append(r -> method, m);
 }
-void request_set_uri(request* r, const gchar* uri)
+void request_set_uri(Request* r, const gchar* uri)
 {
 	if(r == NULL || uri == NULL){
 		return;
@@ -127,7 +127,7 @@ void request_set_uri(request* r, const gchar* uri)
 	g_string_truncate(r -> uri, 0);
 	g_string_append(r -> uri, uri);
 }
-void request_set_version(request* r, const gchar* v)
+void request_set_version(Request* r, const gchar* v)
 {
 	if(r == NULL || v == NULL){
 		return;
@@ -136,7 +136,7 @@ void request_set_version(request* r, const gchar* v)
 	g_string_append(r -> version, v);
 }
 
-void request_add_header(request* r, const gchar* name
+void request_add_header(Request* r, const gchar* name
 				, const gchar* value)
 {
 	if(r == NULL || name == NULL){
@@ -146,7 +146,7 @@ void request_add_header(request* r, const gchar* name
 	GString* v = g_string_new(value);
 	g_tree_insert(r -> headers, k, v);
 }
-void request_append_msg(request* r, const gchar* msg
+void request_append_msg(Request* r, const gchar* msg
 				, gsize len)
 {
 	if(r == NULL || msg == NULL || len <= 0){
@@ -155,7 +155,7 @@ void request_append_msg(request* r, const gchar* msg
 	g_string_append_len(r -> msg, msg, len);
 }
 
-GString* request_get_header(request* r, const GString* name)
+GString* request_get_header(Request* r, const GString* name)
 {
 	if(r == NULL || name == NULL){
 		return NULL;
@@ -167,10 +167,10 @@ GString* request_get_header(request* r, const GString* name)
 /*************************
 	response
 **************************/
-response* response_new()
+Response* response_new()
 {
-	response* r = NULL;
-	r = g_slice_new(response);
+	Response* r = NULL;
+	r = g_slice_new(Response);
 	
 	r -> status = g_string_new(NULL);
 	r -> reason = g_string_new(NULL);
@@ -181,7 +181,7 @@ response* response_new()
 	return r;
 }
 
-void response_del(response *r)
+void response_del(Response *r)
 {
 	if(r == NULL){
 		return;
@@ -195,16 +195,16 @@ void response_del(response *r)
 	g_tree_destroy(r -> headers);
 	g_string_free(r -> msg, TRUE);
 	
-	g_slice_free(response, r);
+	g_slice_free(Response, r);
 }
 
-response* response_new_parse(GString* s)
+Response* response_new_parse(GString* s)
 {
 	if(s == NULL || s -> len <= 0){
 		return NULL;
 	}
 	
-	response* r = response_new();
+	Response* r = response_new();
 	gchar* rps = s -> str;
 	
 	gint stage = 0; 		
@@ -309,7 +309,7 @@ response* response_new_parse(GString* s)
 	return r;
 }
 
-GString* response_tostring(response *r)
+GString* response_tostring(Response *r)
 {
 	if(r == NULL){
 		return NULL;

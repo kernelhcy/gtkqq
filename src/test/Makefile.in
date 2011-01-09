@@ -35,7 +35,7 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = testhttp$(EXEEXT) testjson$(EXEEXT) \
-	testcprint$(EXEEXT) testlog$(EXEEXT)
+	testcprint$(EXEEXT) testlog$(EXEEXT) testurl$(EXEEXT)
 subdir = src/test
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -62,6 +62,9 @@ testjson_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la
 am_testlog_OBJECTS = cprint.$(OBJEXT) log.$(OBJEXT) testlog.$(OBJEXT)
 testlog_OBJECTS = $(am_testlog_OBJECTS)
 testlog_LDADD = $(LDADD)
+am_testurl_OBJECTS = log.$(OBJEXT) testurl.$(OBJEXT) cprint.$(OBJEXT)
+testurl_OBJECTS = $(am_testurl_OBJECTS)
+testurl_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -76,9 +79,9 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(testcprint_SOURCES) $(testhttp_SOURCES) \
-	$(testjson_SOURCES) $(testlog_SOURCES)
+	$(testjson_SOURCES) $(testlog_SOURCES) $(testurl_SOURCES)
 DIST_SOURCES = $(testcprint_SOURCES) $(testhttp_SOURCES) \
-	$(testjson_SOURCES) $(testlog_SOURCES)
+	$(testjson_SOURCES) $(testlog_SOURCES) $(testurl_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -200,6 +203,8 @@ testjson_SOURCES = testjson.c
 testjson_LDADD = ${srcdir}/../libqq/libwebqq.la
 testcprint_SOURCES = ${srcdir}/../comm/cprint.c testcprint.c 
 testlog_SOURCES = ${srcdir}/../comm/cprint.c ${srcdir}/../comm/log.c testlog.c
+testurl_SOURCES = ${srcdir}/../comm/log.c testurl.c ${srcdir}/../comm/cprint.c 
+testurl_LDADD = ${srcdir}/../libqq/libwebqq.la
 all: all-am
 
 .SUFFIXES:
@@ -255,6 +260,9 @@ testjson$(EXEEXT): $(testjson_OBJECTS) $(testjson_DEPENDENCIES)
 testlog$(EXEEXT): $(testlog_OBJECTS) $(testlog_DEPENDENCIES) 
 	@rm -f testlog$(EXEEXT)
 	$(LINK) $(testlog_OBJECTS) $(testlog_LDADD) $(LIBS)
+testurl$(EXEEXT): $(testurl_OBJECTS) $(testurl_DEPENDENCIES) 
+	@rm -f testurl$(EXEEXT)
+	$(LINK) $(testurl_OBJECTS) $(testurl_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -268,6 +276,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testhttp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testjson.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testlog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testurl.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

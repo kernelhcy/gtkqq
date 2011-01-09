@@ -71,7 +71,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 libwebqq_la_LIBADD =
-am_libwebqq_la_OBJECTS = http.lo json.lo
+am_libwebqq_la_OBJECTS = http.lo json.lo url.lo
 libwebqq_la_OBJECTS = $(am_libwebqq_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
@@ -203,7 +203,7 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libwebqq.la
-libwebqq_la_SOURCES = http.h http.c json.h json.c
+libwebqq_la_SOURCES = http.h http.c json.h json.c url.h url.c
 all: all-am
 
 .SUFFIXES:
@@ -280,6 +280,7 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/json.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
