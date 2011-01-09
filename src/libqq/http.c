@@ -146,6 +146,30 @@ void request_add_header(Request* r, const gchar* name
 	GString* v = g_string_new(value);
 	g_tree_insert(r -> headers, k, v);
 }
+
+void request_set_default_headers(Request *r)
+{
+	request_add_header(r, "User-Agent", "Mozilla/5.0 (X11; U; Linux i686; "
+						"en-US) AppleWebKit/534.13 "
+						"(KHTML, like Gecko) "
+						"Chrome/9.0.597.45 "
+						"Safari/534.13");
+	request_add_header(r, "Accept", "text/html, application/xml;q=0.9, "
+					"application/xhtml+xml, image/png, "
+					"image/jpeg, image/gif, "
+					"image/x-xbitmap, */*;q=0.1");
+	request_add_header(r, "Accept-Language", "en-US,zh-cn;q=0.9,en;q=0.8");
+	request_add_header(r, "Accept-Charset", "iso-8859-1, utf-8, utf-16, "
+						"*;q=0.1");
+	request_add_header(r, "Accept-Encoding", "deflate, gzip, x-gzip, "
+							"identity, *;q=0");
+	request_add_header(r, "Connection","Keep-Alive, TE");
+	request_add_header(r, "Cookie2", "$Version=1");
+	request_add_header(r, "TE", "deflate, gzip, chunked, "
+					"identity, trailers");
+}
+
+
 void request_append_msg(Request* r, const gchar* msg
 				, gsize len)
 {

@@ -7,7 +7,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 
-int connect_to_host(const char *hostname)
+int connect_to_host(const char *hostname, int port)
 {
 	if(NULL == hostname){
 		return -1;
@@ -44,7 +44,7 @@ int connect_to_host(const char *hostname)
 		/*
 		 * the http protocol uses port 80
 		 */
-		sinp -> sin_port = htons((gint16)80);
+		sinp -> sin_port = htons((gint16)port);
 		
 		g_debug("Address: %s Port %d\n"
 				, inet_ntop(AF_INET, &sinp -> sin_addr

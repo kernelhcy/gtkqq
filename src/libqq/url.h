@@ -7,10 +7,10 @@
  */
 
 /*
- * Connect to the url
+ * Connect to the url:port
  * return the socket file descriptor, or -1 for error.
  */
-int connect_to_host(const char *hostname);
+int connect_to_host(const char *hostname, int port);
 /*
  * close the connection
  */

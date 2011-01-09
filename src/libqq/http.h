@@ -64,6 +64,12 @@ void request_set_uri(Request* r, const gchar* uri);
 void request_set_version(Request* r, const gchar* v);
 void request_add_header(Request* r, const gchar* name
 				, const gchar* value);
+
+/*
+ * Set the some headers to simulate the explorer
+ * we mask as chrome.
+ */
+void request_set_default_headers(Request *r);
 /*
  * get the value of header name
  */
