@@ -5,5 +5,4 @@
 *.o
 *.lo
 *.log
-*.in
 Makefile
