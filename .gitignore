@@ -5,8 +5,5 @@
 *.o
 *.lo
 *.log
-autom4te.cache/
 *.in
-configure
-aclocal.m4
 Makefile
