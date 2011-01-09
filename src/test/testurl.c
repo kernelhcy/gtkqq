@@ -17,13 +17,15 @@ int main(int argc, char ** argv)
 	request_add_header(r, "Proxy-Authorization", "Basic "
 						"YWNtOjEyMzQ1Njc4OTBhIQ==");
 	if(send_request(fd, r) < 0){
-		close(fd);
+		close_con(fd);
 		return 0;
 	}
 	Response *rps = NULL;
-	if(0 < rcv_response(fd, &rps)){
-		printf("%s\n", response_tostring(rps) -> str);
+	if(rcv_response(fd, &rps) < 0){
+		close_con(fd);
+		return 0;
 	}
+	printf("%s\n", response_tostring(rps) -> str);
 	close_con(fd);
 	return 0;
 }
