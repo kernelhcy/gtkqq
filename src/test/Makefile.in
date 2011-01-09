@@ -34,7 +34,8 @@ PRE_UNINSTALL = :
 POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
-noinst_PROGRAMS = testhttp$(EXEEXT) testjson$(EXEEXT)
+noinst_PROGRAMS = testhttp$(EXEEXT) testjson$(EXEEXT) \
+	testcprint$(EXEEXT) testlog$(EXEEXT)
 subdir = src/test
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -49,12 +50,18 @@ CONFIG_HEADER = $(top_builddir)/config.h
 CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 PROGRAMS = $(noinst_PROGRAMS)
+am_testcprint_OBJECTS = cprint.$(OBJEXT) testcprint.$(OBJEXT)
+testcprint_OBJECTS = $(am_testcprint_OBJECTS)
+testcprint_LDADD = $(LDADD)
 am_testhttp_OBJECTS = testhttp.$(OBJEXT)
 testhttp_OBJECTS = $(am_testhttp_OBJECTS)
 testhttp_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la
 am_testjson_OBJECTS = testjson.$(OBJEXT)
 testjson_OBJECTS = $(am_testjson_OBJECTS)
 testjson_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la
+am_testlog_OBJECTS = cprint.$(OBJEXT) log.$(OBJEXT) testlog.$(OBJEXT)
+testlog_OBJECTS = $(am_testlog_OBJECTS)
+testlog_LDADD = $(LDADD)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
 am__depfiles_maybe = depfiles
@@ -68,8 +75,10 @@ CCLD = $(CC)
 LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
-SOURCES = $(testhttp_SOURCES) $(testjson_SOURCES)
-DIST_SOURCES = $(testhttp_SOURCES) $(testjson_SOURCES)
+SOURCES = $(testcprint_SOURCES) $(testhttp_SOURCES) \
+	$(testjson_SOURCES) $(testlog_SOURCES)
+DIST_SOURCES = $(testcprint_SOURCES) $(testhttp_SOURCES) \
+	$(testjson_SOURCES) $(testlog_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -184,11 +193,13 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -I${srcdir}/../libqq/
+AM_CFLAGS = -I${srcdir}/../libqq/ -I${srcdir}/../comm/
 testhttp_SOURCES = testhttp.c
-testjson_SOURCES = testjson.c
 testhttp_LDADD = ${srcdir}/../libqq/libwebqq.la
+testjson_SOURCES = testjson.c
 testjson_LDADD = ${srcdir}/../libqq/libwebqq.la
+testcprint_SOURCES = ${srcdir}/../comm/cprint.c testcprint.c 
+testlog_SOURCES = ${srcdir}/../comm/cprint.c ${srcdir}/../comm/log.c testlog.c
 all: all-am
 
 .SUFFIXES:
@@ -232,12 +243,18 @@ clean-noinstPROGRAMS:
 	list=`for p in $$list; do echo "$$p"; done | sed 's/$(EXEEXT)$$//'`; \
 	echo " rm -f" $$list; \
 	rm -f $$list
+testcprint$(EXEEXT): $(testcprint_OBJECTS) $(testcprint_DEPENDENCIES) 
+	@rm -f testcprint$(EXEEXT)
+	$(LINK) $(testcprint_OBJECTS) $(testcprint_LDADD) $(LIBS)
 testhttp$(EXEEXT): $(testhttp_OBJECTS) $(testhttp_DEPENDENCIES) 
 	@rm -f testhttp$(EXEEXT)
 	$(LINK) $(testhttp_OBJECTS) $(testhttp_LDADD) $(LIBS)
 testjson$(EXEEXT): $(testjson_OBJECTS) $(testjson_DEPENDENCIES) 
 	@rm -f testjson$(EXEEXT)
 	$(LINK) $(testjson_OBJECTS) $(testjson_LDADD) $(LIBS)
+testlog$(EXEEXT): $(testlog_OBJECTS) $(testlog_DEPENDENCIES) 
+	@rm -f testlog$(EXEEXT)
+	$(LINK) $(testlog_OBJECTS) $(testlog_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -245,8 +262,12 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cprint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testcprint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testhttp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testjson.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testlog.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -268,6 +289,34 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+cprint.o: ${srcdir}/../comm/cprint.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cprint.o -MD -MP -MF $(DEPDIR)/cprint.Tpo -c -o cprint.o `test -f '${srcdir}/../comm/cprint.c' || echo '$(srcdir)/'`${srcdir}/../comm/cprint.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/cprint.Tpo $(DEPDIR)/cprint.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/cprint.c' object='cprint.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cprint.o `test -f '${srcdir}/../comm/cprint.c' || echo '$(srcdir)/'`${srcdir}/../comm/cprint.c
+
+cprint.obj: ${srcdir}/../comm/cprint.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cprint.obj -MD -MP -MF $(DEPDIR)/cprint.Tpo -c -o cprint.obj `if test -f '${srcdir}/../comm/cprint.c'; then $(CYGPATH_W) '${srcdir}/../comm/cprint.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/cprint.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/cprint.Tpo $(DEPDIR)/cprint.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/cprint.c' object='cprint.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cprint.obj `if test -f '${srcdir}/../comm/cprint.c'; then $(CYGPATH_W) '${srcdir}/../comm/cprint.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/cprint.c'; fi`
+
+log.o: ${srcdir}/../comm/log.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT log.o -MD -MP -MF $(DEPDIR)/log.Tpo -c -o log.o `test -f '${srcdir}/../comm/log.c' || echo '$(srcdir)/'`${srcdir}/../comm/log.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/log.Tpo $(DEPDIR)/log.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/log.c' object='log.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o log.o `test -f '${srcdir}/../comm/log.c' || echo '$(srcdir)/'`${srcdir}/../comm/log.c
+
+log.obj: ${srcdir}/../comm/log.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT log.obj -MD -MP -MF $(DEPDIR)/log.Tpo -c -o log.obj `if test -f '${srcdir}/../comm/log.c'; then $(CYGPATH_W) '${srcdir}/../comm/log.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/log.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/log.Tpo $(DEPDIR)/log.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/log.c' object='log.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o log.obj `if test -f '${srcdir}/../comm/log.c'; then $(CYGPATH_W) '${srcdir}/../comm/log.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/log.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

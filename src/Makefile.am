@@ -1,1 +1,1 @@
-SUBDIRS=libqq tool test
+SUBDIRS=comm libqq cli gui  tool test

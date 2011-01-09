@@ -7,7 +7,13 @@ CFLAGS+='-Wall -O2'
 LT_INIT(disable-static)
 AC_PROG_CC
 AC_CONFIG_HEADERS([config.h])
-AC_CHECK_HEADERS([glib.h])
-AC_CONFIG_FILES([Makefile src/Makefile src/libqq/Makefile src/tool/Makefile
+AC_CHECK_HEADERS([glib.h stdarg.h])
+AC_CONFIG_FILES([Makefile 
+		 src/Makefile 
+		 src/comm/Makefile 
+		 src/libqq/Makefile 
+		 src/cli/Makefile
+		 src/gui/Makefile
+		 src/tool/Makefile
 		 src/test/Makefile])
 AC_OUTPUT
