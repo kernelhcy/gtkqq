@@ -168,10 +168,12 @@ int rcv_response(Connection *con, Response **rp)
 	Response *r = NULL;
 	gsize need_to_read = G_MAXSIZE;		//we don't know the length of
 						//the data that need to read.
-	gsize has_read = 0;
 	//store the data that has read
 	GString *data = g_string_new(NULL);
 	GString *content = g_string_new("Content-Length");
+	gint cl = -1;				//the content length
+	gboolean nocontentlength = FALSE;	//no content lenght
+						//so, we should do sth
 
 	#define BUFSIZE 500
 	gchar buf[BUFSIZE];
@@ -180,18 +182,35 @@ int rcv_response(Connection *con, Response **rp)
 	gsize bytes_read = 0;
 	
 	g_debug("Begin to read data.(%s, %d)\n", __FILE__, __LINE__);
-	while(has_read < need_to_read){
-		status = g_io_channel_read_chars(con -> channel
-				, buf, BUFSIZE, &bytes_read, &err);
+	while(need_to_read > 0){
+		status = g_io_channel_read_chars(con -> channel, buf
+				, BUFSIZE < need_to_read? 
+					BUFSIZE : need_to_read
+				, &bytes_read, &err);
+		if(nocontentlength && bytes_read < BUFSIZE){
+			//no content length sent to us.
+			//So, we think we got all the data.
+			g_string_append_len(data, buf, bytes_read);
+			break;
+		}
 		switch(status)
 		{
 		case G_IO_STATUS_NORMAL:
 			g_debug("Read %d bytes data.(%s, %d)\n"
 					,bytes_read,  __FILE__, __LINE__);
 			//read success.
-			has_read += bytes_read;
+			need_to_read -= bytes_read;
 			break;
 		case G_IO_STATUS_EOF:
+			if(nocontentlength){
+				/*
+				 * no content lenght.
+				 * So, the server will close the connection
+				 * after send all the data.
+				 */
+				//we got all the data.
+				break;
+			}
 			g_warning("Read data EOF!! What's happenning??"
 					"(%s, %d)\n"
 					, __FILE__, __LINE__);
@@ -218,26 +237,29 @@ int rcv_response(Connection *con, Response **rp)
 		}
 		g_string_append_len(data, buf, bytes_read);
 		
-		if(g_strstr_len(data -> str, data -> len, "\r\n\r\n") 
+		if(cl == -1 && g_strstr_len(data -> str, data -> len
+							, "\r\n\r\n") 
 						!= NULL){
 			//We have gotten all the headers;
 			//Find the Content-Length 's value
 			r = response_new_parse(data);
+			g_string_truncate(data, 0);
 			GString *clen = response_get_header(r, content);
 			if(clen == NULL){
-				g_warning("No Content-Length!!"
+				g_debug("No Content-Length!!"
 						"(%s, %d)\n"
 						, __FILE__, __LINE__);
-				g_message(response_tostring(r) -> str);
-				g_string_free(data, TRUE);
-				g_string_free(content, TRUE);
-				return -1;
+				nocontentlength = TRUE;
+				cl = 0;
+				continue;
 			}
 			//calculate the message we have not read.
-			gint cl = atoi(clen -> str);
+			cl = atoi(clen -> str);
+			g_debug("Content-Length: %d.(%s, %d)\n"
+					, cl, __FILE__, __LINE__);
 			need_to_read = cl - r -> msg -> len;
-			has_read = 0;
-			g_string_truncate(data, 0);
+			g_debug("Message need to read %d bytes.(%s, %d)\n"
+					, need_to_read, __FILE__, __LINE__);
 		}
 	}
 	g_debug("Read all data.(%s, %d)\n", __FILE__, __LINE__);
@@ -251,10 +273,17 @@ int rcv_response(Connection *con, Response **rp)
 		return -1;
 	}
 	//copy the message to r -> msg;
-	g_string_append(r -> msg, data -> str);
-	g_debug("Append the message to r -> msg.(%s, %d)\n"
-			, __FILE__, __LINE__);
+	g_string_append_len(r -> msg, data -> str, data -> len);
+	g_debug("Append %d bytes message to r -> msg."
+			"r -> msg -> len: %d (%s, %d)\n"
+			, data -> len, r -> msg -> len, __FILE__, __LINE__);
 	#undef BUFSIZE
+	*rp = r;
+	if(!nocontentlength && r -> msg -> len != cl){
+		g_warning("No read all the message!! content length:%d"
+				" msg -> len: %d. (%s, %d)\n"
+				, cl, r -> msg -> len, __FILE__, __LINE__);
+	}
 	g_string_free(data, TRUE);
 	g_string_free(content, TRUE);
 	g_debug("Free the temporary memory.(%s, %d)\n", __FILE__, __LINE__);

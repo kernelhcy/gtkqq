@@ -1,7 +1,6 @@
 #include <url.h>
 #include <log.h>
 #include <stdio.h>
-
 int main(int argc, char ** argv)
 {
 	log_init();
@@ -16,7 +15,8 @@ int main(int argc, char ** argv)
 	request_set_default_headers(r);
 	request_add_header(r, "Proxy-Authorization", "Basic "
 						"YWNtOjEyMzQ1Njc4OTBhIQ==");
-	request_add_header(r, "Cache-Control", "maxage=0");
+	request_add_header(r, "Proxy-Connection", "keep-alive");
+	request_add_header(r, "host", "web2.qq.com");
 	
 	if(send_request(con, r) < 0){
 		close_con(con);
@@ -27,7 +27,9 @@ int main(int argc, char ** argv)
 		close_con(con);
 		return 0;
 	}
-	printf("%s\n", response_tostring(rps) -> str);
+	g_debug("read the response\n");
+	g_debug("%s\n", response_tostring(rps) -> str);
+	printf("MESSAGE: %s\n", rps -> msg -> str);
 	close_con(con);
 	return 0;
 }

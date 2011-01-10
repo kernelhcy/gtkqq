@@ -158,15 +158,13 @@ void request_set_default_headers(Request *r)
 					"application/xhtml+xml, image/png, "
 					"image/jpeg, image/gif, "
 					"image/x-xbitmap, */*;q=0.1");
-	request_add_header(r, "Accept-Language", "en-US,zh-cn;q=0.9,en;q=0.8");
-	request_add_header(r, "Accept-Charset", "iso-8859-1, utf-8, utf-16, "
+	request_add_header(r, "Accept-Language", "en-US,zh-CN,zh;q=0.9,"
+							"en;q=0.8");
+	request_add_header(r, "Accept-Charset", "GBK, utf-8, utf-16, "
 						"*;q=0.1");
 	request_add_header(r, "Accept-Encoding", "deflate, gzip, x-gzip, "
 							"identity, *;q=0");
-	request_add_header(r, "Connection","Keep-Alive, TE");
-	request_add_header(r, "Cookie2", "$Version=1");
-	request_add_header(r, "TE", "deflate, gzip, chunked, "
-					"identity, trailers");
+	request_add_header(r, "Connection","Keep-Alive");
 }
 
 
@@ -350,7 +348,7 @@ GString* response_tostring(Response *r)
 	g_tree_foreach(r -> headers, toStringTraverseFunc, s);
 	g_string_append(s, CRLF);
 	
-	g_string_append(s, r -> msg -> str);
+	//g_string_append(s, r -> msg -> str);
 	
 	return s;
 }
