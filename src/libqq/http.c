@@ -1,4 +1,4 @@
-#include "http.h"
+#include <http.h>
 #include <glib/gprintf.h>
 
 #define CRLF "\r\n"
@@ -375,4 +375,11 @@ void print_raw(GString* s)
 	g_printf("\n");
 }
 
+GString* response_get_header(Response *rp, const GString *header)
+{
+	if(rp == NULL || header == NULL){
+		return NULL;
+	}
 
+	return (GString*)g_tree_lookup(rp -> headers, header);
+}

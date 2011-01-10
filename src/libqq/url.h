@@ -7,23 +7,37 @@
  */
 
 /*
+ * define a connection to any host
+ */
+typedef struct{
+	int fd;			//socket fd
+	GIOChannel *channel;	//the GIOChannel of the fd.
+}Connection;
+
+/*
+ * create and free a connection.
+ * Just allocate and free the memory.
+ */
+Connection* connection_new();
+void connection_free(Connection *con);
+
+/*
  * Connect to the url:port
  * return the socket file descriptor, or -1 for error.
  */
-int connect_to_host(const char *hostname, int port);
+Connection* connect_to_host(const char *hostname, int port);
 /*
  * close the connection
  */
-void close_con(int fd);
+void close_con(Connection* con);
 /*
  * sent the request to fd.
  */
-int send_request(int fd, Request *r);
+int send_request(Connection* con, Request *r);
 
 /*
  * read the response from fd.
  * the response will store in **r.
  */
-int rcv_response(int fd, Response **r);
-
+int rcv_response(Connection* con, Response **rp);
 #endif

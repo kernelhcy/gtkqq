@@ -16,7 +16,7 @@
  *		[ message-body ]
  * Request-Line = Method SP Request-URI SP HTTP-Version CRLF
  */
-typedef struct _request
+typedef struct
 {
 	GString *method;
 	GString *uri;
@@ -38,7 +38,7 @@ typedef struct _request
  *		[ message-body ] ; Section 7.2
  * Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
  */
-typedef struct _response
+typedef struct
 {
 	GString* version;
 	GString* status;
@@ -89,7 +89,10 @@ void response_del(Response *r);
  * parse s and create a response
  */
 Response* response_new_parse(GString* s);
-
+/*
+ * get the value of header
+ */
+GString* response_get_header(Response *rp, const GString *header);
 /*
  * convert response to the string format
  */

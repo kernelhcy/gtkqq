@@ -6,6 +6,7 @@ CFLAGS+=`pkg-config --libs --cflags glib-2.0`
 CFLAGS+='-Wall -O2'
 LT_INIT(disable-static)
 AC_PROG_CC
+AC_ARG_ENABLE(debug, [--enable-debug turn on debug], CFLAGS="$CFLAGS -ggdb")
 AC_CONFIG_HEADERS([config.h])
 AC_CHECK_HEADERS([glib.h stdarg.h])
 AC_CONFIG_FILES([Makefile 
