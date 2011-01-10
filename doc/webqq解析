@@ -1,3 +1,78 @@
+		WebQQ协议解析
+
+1.登录
+	WebQQ的登录是通过网址http://ui.ptlogin2.qq.com/cgi-bin/login完成。
+	访问这个网址的时候需要几个参数。首先，appid和s_url是必需的。这两个的值
+可以设置为1003903和http://web2.qq.com/loginproxy.html。通常在通过webqq登录的时
+后还会有其他参数，但不是必需的。比如style表示的是风格。应该是腾讯给其他版本的
+QQ提供不同的登录风格。由于不同style的登录页面代码有差别，因此，下面的分析采用
+webqq使用的风格4。还有下面的参数target=self，appid=1003903，enable_qlogin=0，
+no_verifyimg=1。发现这几个参数是硬编码在html文件中的。因此用这些默认的值就可以。
+	通过这个地址可以获取到登录窗口的所有源码。最重要的就是那个登录form。
+form中有用的参数有三个，action="http://ptlogin2.qq.com/login"，method="post"和
+onsubmit="ptui_onLoginEx(loginform,'qq.com')"。在提交登录信息之前，通过函数
+ptui_onLoginEx函数处理提交的信息。
+	首先来看看验证码。验证码的图片通过这行<img id=imgVerify width='130'
+height='53' onload='imgLoadReport()'>代码现实。主要是调用函数imgLoadReport。
+变更验证码图片是通过调用函数ptui_changeImg('qq.com', 1002101, true)完成。
+	当用户点击提交，也就是登录之后。如果用户选择记住密码，那么调用函数
+ptui_onLoginEx(form, "qq.com")来完成登录，否则调用ptui_onLogin(form)。前面所说
+的那些函数都是javascript函数，定义在文件http://imgcache.qq.com/ptlogin/ac/v8/
+js/comm.js?v=1.2.5中。ptui_onLoginEx会调用ptui_onLogin登录，因此，只分析ptui_
+onLogin。ptui_onLogin中调用函数ptui_checkValidate，函数ptui_checkValidate中做了
+一些检查工作，然后调用函数ajax_Submit。在ajax_Submit中拼接发送个登录网址的参数。
+主要的参数如下：
+	u = QQ号码
+	p = 对密码进行三次MD5运算，加上全部大写的验证码，再进行一次MD5运算。
+	verifycode = 验证码
+	webqq_type = 1
+	remember_uin = 1 or 0 是否记住用户名
+	下面的几个参数都是从页面的隐藏标签中获得。
+	aid = 1002101
+	ul = http://web2.qq.com
+	ptredirect=1
+	ptlang=2052
+	from_ui=1
+	pttype=1
+	fp=loginerroralert
+
+发送出去之后。服务器返回为：
+	1.ptuiCB('4','0','','0','\346\202\250\350\276\223\345\205\245\347\232\204
+			\351\252\214\350\257\201\347\240\201\346\234\211\350
+			\257\257\357\274\214\350\257\267\351\207\215\350\257
+			\225\343\200\202')
+	表示密码或者验证码错误。
+
+	2.ptuiCB('0','0','http://web2.qq.com/loginproxy.html?login_level=3','0',
+			'\347\231\273\345\275\225\346\210\220\345\212\237\357
+			\274\201')
+	表示登录成功。
+然后，通过POST方法向http://d.web2.qq.com/channel/login2发送数据	r={"status":"",
+"ptwebqq":"83274d9a158ec3151bcb47cea852a518c4f6ed590420ae33bd03df0fc8f57a91",
+"passwd_sig":"","clientid":"59790248","psessionid":null}获取登录后的信息。这个数
+据需要url转码。ptwebqq和clientid是什么意思还没搞明白。
+
+服务器返回，{"retcode":0,"result":{"uin":494498045,"index":1074,"port":33237,
+"status":"hidden","vfwebqq":"6c8fdacdba15f2f9c666c114be65afa7de1d5e37eaff87e
+1ac37099ef1d2421010d8d4452510a211",
+"psessionid":"8368046764001e636f6e6e7365727665725f77656271714031302e3132382e3
+6362e31313500000e030000039e026e0400fd70791d6d0000000a40784c74344a4f666d786d00
+0000286c8fdacdba15f2f9c666c114be65afa7de1d5e37eaff87e1ac37099ef1d2421010d8d44
+52510a211"}}其中，vfwebqq和pesssionid是每次通讯必需使用的。
+
+	至此，登录成功。
+	
+2.登出
+3.获取个人信息
+4.获取好友列表及信息
+5.获取群信息
+6.发送和接收好友消息
+7.发送和接收群消息
+8.传送和接收文件
+9.其他
+
+
+
 客户端密码的加密：
 	首先将密码用md5加密三次。
 	然后将加密结果和验证码链接成字符串。

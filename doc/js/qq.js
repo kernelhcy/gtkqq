@@ -247,6 +247,21 @@ function getCookieVal(B){
 	}
 	return unescape(document.cookie.substring(B,A))
 }
+GET /login?
+	u=494498045&
+	p=974C91358CF964920CEB83881776F2BA&
+	verifycode=!5JW&
+	webqq_type=1&
+	remember_uin=1&
+	aid=1002101&
+	u1=http%3A%2F%2Fw.qq.com%2Fmain.shtml%3F816&
+	h=1&
+	ptredirect=1&
+	ptlang=2052&
+	from_ui=1&
+	pttype=1&
+	dumy=&
+	fp=loginerroralert
 
 function ajax_Submit(){
 	var D=true;
