@@ -1,0 +1,14 @@
+<html>
+<head></head>
+<body onload='javascript:browser_version()'>
+<script language="javascript">
+function browser_version(){
+	var A=navigator.userAgent.toLowerCase();
+	var B=A.match(/msie ([\d.]+)/)?1:A.match(/firefox\/([\d.]+)/)?3:A.match(/chrome\/([\d.]+)/)?5:A.match(/opera.([\d.]+)/)?9:A.match(/version\/([\d.]+).*safari/)?7:1
+	alert(B);
+	return B;
+}
+</script>
+
+</body>
+</html>

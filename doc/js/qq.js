@@ -104,7 +104,8 @@ function ptui_needVC(C,D){
 	}
 	var A=document.createElement("script");
 	g_imgTime=new Date();
-	A.src=B;document.body.appendChild(A);
+	A.src=B;
+	document.body.appendChild(A);
 	g_loadcheck=true;
 	return 
 }
@@ -326,7 +327,10 @@ function ajax_Submit(){
 
 function ptuiCB(C,A,B,G,F){$("p").blur();g_time.time13=new Date();var E={"15":g_time.time13-g_time.time12};ptui_speedReport(E);first=false;if(B!=""){switch(G){case"0":window.location.href=B;break;case"1":top.location.href=B;break;case"2":parent.location.href=B;break;default:top.location.href=B}return }g_submitting=false;if(C==0){top.location=document.forms[0].ul.value;return }else{if(A==0){if(F&&F!=""){pt.show_err(F)}else{pt.show_err("您的输入有误，请重试。")}}else{pt.show_err(F);$("p").value="";$("p").focus();$("p").select()}if(isLoadVC){ptui_changeImg(g_domain,g_appid,true);$("verifycode").value="";loadVC(true);$("verifycode").focus();$("verifycode").select()}else{if(A==0){g_uin=0}}if(C==3||C==4){if(navigator.userAgent.toLowerCase().indexOf("webkit")>-1){$("u").focus()}if(C==3){$("p").value=""}$("p").focus();$("p").select();if(C==4){try{$("verifycode").focus();$("verifycode").select()}catch(D){}}if(A!=0){$("verifycode").value="";loadVC(true);g_submitting=true}}}}
 
-function browser_version(){var A=navigator.userAgent.toLowerCase();return A.match(/msie ([\d.]+)/)?1:A.match(/firefox\/([\d.]+)/)?3:A.match(/chrome\/([\d.]+)/)?5:A.match(/opera.([\d.]+)/)?9:A.match(/version\/([\d.]+).*safari/)?7:1}
+function browser_version(){
+	var A=navigator.userAgent.toLowerCase();
+	return A.match(/msie ([\d.]+)/)?1:A.match(/firefox\/([\d.]+)/)?3:A.match(/chrome\/([\d.]+)/)?5:A.match(/opera.([\d.]+)/)?9:A.match(/version\/([\d.]+).*safari/)?7:1
+}
 
 function ptui_reportSpeed(D,C){if(pt.isHttps){return }if(Math.random()>0.001){return }var A=browser_version();url="http://isdspeed.qq.com/cgi-bin/r.cgi?flag1=6000&flag2=1&flag3="+A;for(var B=0;B<g_speedArray.length;B++){url+="&"+g_speedArray[B][0]+"="+(g_speedArray[B][1]-D)}if(C!=0){url+="&4="+(D-C)}imgSendTimePoint=new Image();imgSendTimePoint.src=url}
 
@@ -338,11 +342,42 @@ function ptui_reportAttr(A){if(Math.random()>0.001){return }url="http://ui.ptlog
 
 function ptui_reportNum(B){if(Math.random()>0.001){return }url="http://ui.ptlogin2."+g_domain+"/cgi-bin/report?id=1000&n="+B;var A=new Image();A.src=url}
 
-function imgLoadReport(){if(changeimg){return }var A=new Date();var B={};if(defaultuin!=""&&g_changeNum<=1){g_time.time8=A;if(!xuiFrame&&defaultuin!=""){B["9"]=g_time.time8-g_time.time1;B["10"]=g_time.time8-g_time.time3;B["11"]=g_time.time8-g_time.time7}}else{g_time.time11=A;B["14"]=g_time.time11-g_time.time10}ptui_speedReport(B)}
+function imgLoadReport(){
+	if(changeimg){return }
+	var A=new Date();
+	var B={};
+	if(defaultuin!=""&&g_changeNum<=1){
+		g_time.time8=A;
+		if(!xuiFrame&&defaultuin!=""){
+			B["9"]=g_time.time8-g_time.time1;
+			B["10"]=g_time.time8-g_time.time3;
+			B["11"]=g_time.time8-g_time.time7
+		}
+	}else{
+		g_time.time11=A;
+		B["14"]=g_time.time11-g_time.time10
+	}
+	ptui_speedReport(B)
+}
 
 function webLoginReport(){var D={};D["7"]=g_time.time3-g_time.time1;if(!xuiFrame){D["8"]=g_time.time4-g_time.time1}try{if(location.hash){var B=location.hash.substring(1,location.hash.length);if(B.indexOf("_")>-1){var A=B.split("_");g_time.time0=A[1]>=A[0]?A[0]:A[1];g_time.time2=A[1]>=A[0]?A[1]:A[0]}else{g_time.time2=B}}}catch(C){}if(g_time.time2&&g_time.time2>0){D["18"]=g_time.time1-g_time.time2;D["21"]=g_time.time3-g_time.time2;if(D["18"]>60000||D["21"]>60000){return }}if(g_time.time0&&g_time.time0>0){D["19"]=g_time.time2-g_time.time0;D["20"]=g_time.time3-g_time.time0;if(D["19"]>60000||D["20"]>60000){return }}ptui_speedReport(D)}
 
-function ptui_speedReport(E){if(pt.isHttps){return }if(!first){return }if(Math.random()>0.001){return }var B="http://isdspeed.qq.com/cgi-bin/r.cgi?flag1=6000&flag2=1&flag3="+browser_version();var C=0;for(var D in E){B+="&"+D+"="+E[D];C++}if(C==0){return }var A=new Image();A.src=B}
+function ptui_speedReport(E){
+	if(pt.isHttps){return }
+	if(!first){return }
+	if(Math.random()>0.001){return }
+	
+	var B="http://isdspeed.qq.com/cgi-bin/r.cgiflag1=6000&flag2=1&flag3="
+		+browser_version();
+	var C=0;
+	for(var D in E){
+		B+="&"+D+"="+E[D];
+		C++
+	}
+	if(C==0){return }
+	var A=new Image();
+	A.src=B
+}
 
 function ptui_notifyClose(){try{if(parent.ptlogin2_onClose){parent.ptlogin2_onClose()}else{if(top==this){window.close()}}}catch(A){window.close()}}
 
@@ -653,7 +688,40 @@ function binl2b64(D){
 
 isAbleSubmit=true;
 function check(){var B=new Date();if(defaultuin!=""&&g_changeNum==0){g_time.time6=B}else{g_time.time9=B}var A=ptui_trim($("u").value);if(g_uin==A||(!ptui_checkQQUin(A))){return }g_changeNum++;g_uin=ptui_trim($("u").value);try{if(parent.ptui_uin){parent.ptui_uin(g_uin)}}catch(C){}ptui_needVC(g_uin,g_appid)}
-function loadVC(A){if(isLoadVC==A&&(lastUin==g_uin)){return }lastUin=g_uin;isLoadVC=A;if(A==true){var B=$("imgVerify");var F=g_uin;if((g_appid==t_appid)&&isNaN(g_uin)&&(g_uin.indexOf("@")<0)){F="@"+g_uin}var E="/getimage?aid="+g_appid+"&r="+Math.random()+"&uin="+F;if(g_https){E="."+E}else{E="http://captcha."+g_domain+E+"&vc_type="+vc_type}var D=new Date();B.src=E;$("verifyinput").style.display="";$("verifytip").style.display="";$("verifyshow").style.display="";ptui_notifySize("login");try{$("p").focus()}catch(C){}}else{$("verifyinput").style.display="none";$("verifytip").style.display="none";$("verifyshow").style.display="none";ptui_notifySize("login");try{$("p").focus()}catch(C){}}}
+
+function loadVC(A){
+	if(isLoadVC==A&&(lastUin==g_uin)){return }
+	lastUin=g_uin;
+	isLoadVC=A;
+	if(A==true){
+		var B=$("imgVerify");
+		var F=g_uin;
+		if((g_appid==t_appid)&&isNaN(g_uin)&&(g_uin.indexOf("@")<0)){
+			F="@"+g_uin
+		}
+		var E="/getimage?aid="+g_appid+"&r="+Math.random()+"&uin="+F;
+		if(g_https){
+			E="."+E
+		}else{
+			E="http://captcha."+g_domain+E+"&vc_type="+vc_type
+		}
+		var D=new Date();
+		B.src=E;
+		$("verifyinput").style.display="";
+		$("verifytip").style.display="";	
+		$("verifyshow").style.display="";
+		ptui_notifySize("login");
+		try{
+			$("p").focus()
+		}catch(C){}
+	}else{
+		$("verifyinput").style.display="none";
+		$("verifytip").style.display="none";
+		$("verifyshow").style.display="none";
+		ptui_notifySize("login");
+		try{$("p").focus()}catch(C){}
+	}
+}
 
 function onPageClose(){ptui_notifyClose()}
 function onFormReset(A){if(ptui_onReset(A)){A.u.style.color="#CCCCCC";return true}return false}

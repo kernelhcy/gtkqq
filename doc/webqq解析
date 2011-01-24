@@ -1,6 +1,6 @@
 		WebQQ协议解析
 
-1.登录
+1.登录1421032531
 	WebQQ的登录是通过网址http://ui.ptlogin2.qq.com/cgi-bin/login完成。
 	访问这个网址的时候需要几个参数。首先，appid和s_url是必需的。这两个的值
 可以设置为1003903和http://web2.qq.com/loginproxy.html。通常在通过webqq登录的时
@@ -12,15 +12,18 @@ no_verifyimg=1。发现这几个参数是硬编码在html文件中的。因此�
 form中有用的参数有三个，action="http://ptlogin2.qq.com/login"，method="post"和
 onsubmit="ptui_onLoginEx(loginform,'qq.com')"。在提交登录信息之前，通过函数
 ptui_onLoginEx函数处理提交的信息。
-	首先来看看验证码。验证码的图片通过这行<img id=imgVerify width='130'
-height='53' onload='imgLoadReport()'>代码现实。主要是调用函数imgLoadReport。
-变更验证码图片是通过调用函数ptui_changeImg('qq.com', 1002101, true)完成。
+	完成所有源码的下载之后，webqq需要获得一个叫做vc_type的变量。这个变量在后面的通讯中有
+用。首先，发送GET请求http://ptlogin2.webqq.com/check?uin=xxxxxx&appid=1003903&r=xx
+其中，uin是qq号。appid是前面加载验证码图片的ptui_changeImg函数的第二个参数。r是一个小于1的
+随机数。服务器返回下面的数据：ptui_checkVC('1',
+'44657d96f141ad5fc9ced861e2ba1a48b32e0dc974505ad7');。第二个参数就是vc_type的值。
+这同时也是检测是否需要输入验证码。
+	在加载验证码图片的时候，会调用imgLoadReport函数来检测是否需要验证码。服务器会返回前面
+提到的vc_type的值。通过下面的请求获取新的验证码图片:http://captcha.qq.com/getimage?&uin=xxx&vc_type=xxx&aid=1002101&random。aid后面紧跟着一个小于1的随机数。验证码的生成估计
+和这个发送的随机数有关。
 	当用户点击提交，也就是登录之后。如果用户选择记住密码，那么调用函数
-ptui_onLoginEx(form, "qq.com")来完成登录，否则调用ptui_onLogin(form)。前面所说
-的那些函数都是javascript函数，定义在文件http://imgcache.qq.com/ptlogin/ac/v8/
-js/comm.js?v=1.2.5中。ptui_onLoginEx会调用ptui_onLogin登录，因此，只分析ptui_
-onLogin。ptui_onLogin中调用函数ptui_checkValidate，函数ptui_checkValidate中做了
-一些检查工作，然后调用函数ajax_Submit。在ajax_Submit中拼接发送个登录网址的参数。
+ptui_onLoginEx(form, "qq.com")来完成登录，否则调用ptui_onLogin(form)。最终调用函数
+ajax_Submit提交登录申请。在ajax_Submit中拼接发送个登录网址的参数。
 主要的参数如下：
 	u = QQ号码
 	p = 对密码进行三次MD5运算，加上全部大写的验证码，再进行一次MD5运算。
@@ -47,10 +50,13 @@ onLogin。ptui_onLogin中调用函数ptui_checkValidate，函数ptui_checkValida
 			'\347\231\273\345\275\225\346\210\220\345\212\237\357
 			\274\201')
 	表示登录成功。
-然后，通过POST方法向http://d.web2.qq.com/channel/login2发送数据	r={"status":"",
+	（注：上面的\xxx是utf8编码的字符，glib可以直接识别。不需要做任何处理，
+glib会以正确的形式输出和现实。）
+
+然后，通过POST方法向http://d.web2.qq.com/channel/login2发送数据r={"status":"",
 "ptwebqq":"83274d9a158ec3151bcb47cea852a518c4f6ed590420ae33bd03df0fc8f57a91",
 "passwd_sig":"","clientid":"59790248","psessionid":null}获取登录后的信息。这个数
-据需要url转码。ptwebqq和clientid是什么意思还没搞明白。
+据需要url转码。ptwebqq在前面登录的form提交后，返回的response中的cookie中。
 
 服务器返回，{"retcode":0,"result":{"uin":494498045,"index":1074,"port":33237,
 "status":"hidden","vfwebqq":"6c8fdacdba15f2f9c666c114be65afa7de1d5e37eaff87e

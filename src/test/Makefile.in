@@ -35,7 +35,8 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 noinst_PROGRAMS = testhttp$(EXEEXT) testjson$(EXEEXT) \
-	testcprint$(EXEEXT) testlog$(EXEEXT) testurl$(EXEEXT)
+	testcprint$(EXEEXT) testlog$(EXEEXT) testurl$(EXEEXT) \
+	testqqwin$(EXEEXT)
 subdir = src/test
 DIST_COMMON = $(srcdir)/Makefile.am $(srcdir)/Makefile.in
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
@@ -62,6 +63,9 @@ testjson_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la
 am_testlog_OBJECTS = cprint.$(OBJEXT) log.$(OBJEXT) testlog.$(OBJEXT)
 testlog_OBJECTS = $(am_testlog_OBJECTS)
 testlog_LDADD = $(LDADD)
+am_testqqwin_OBJECTS = qqwindow.$(OBJEXT) testqqwin.$(OBJEXT)
+testqqwin_OBJECTS = $(am_testqqwin_OBJECTS)
+testqqwin_LDADD = $(LDADD)
 am_testurl_OBJECTS = log.$(OBJEXT) testurl.$(OBJEXT) cprint.$(OBJEXT)
 testurl_OBJECTS = $(am_testurl_OBJECTS)
 testurl_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la
@@ -79,9 +83,11 @@ LINK = $(LIBTOOL) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) \
 	--mode=link $(CCLD) $(AM_CFLAGS) $(CFLAGS) $(AM_LDFLAGS) \
 	$(LDFLAGS) -o $@
 SOURCES = $(testcprint_SOURCES) $(testhttp_SOURCES) \
-	$(testjson_SOURCES) $(testlog_SOURCES) $(testurl_SOURCES)
+	$(testjson_SOURCES) $(testlog_SOURCES) $(testqqwin_SOURCES) \
+	$(testurl_SOURCES)
 DIST_SOURCES = $(testcprint_SOURCES) $(testhttp_SOURCES) \
-	$(testjson_SOURCES) $(testlog_SOURCES) $(testurl_SOURCES)
+	$(testjson_SOURCES) $(testlog_SOURCES) $(testqqwin_SOURCES) \
+	$(testurl_SOURCES)
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -196,7 +202,8 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-AM_CFLAGS = -I${srcdir}/../libqq/ -I${srcdir}/../comm/
+AM_CFLAGS = -I${srcdir}/../libqq/ -I${srcdir}/../comm/ \
+	-I${srcdir}/../gui/
 testhttp_SOURCES = testhttp.c
 testhttp_LDADD = ${srcdir}/../libqq/libwebqq.la
 testjson_SOURCES = testjson.c
@@ -205,6 +212,9 @@ testcprint_SOURCES = ${srcdir}/../comm/cprint.c testcprint.c
 testlog_SOURCES = ${srcdir}/../comm/cprint.c ${srcdir}/../comm/log.c testlog.c
 testurl_SOURCES = ${srcdir}/../comm/log.c testurl.c ${srcdir}/../comm/cprint.c 
 testurl_LDADD = ${srcdir}/../libqq/libwebqq.la
+testqqwin_SOURCES = ${srcdir}/../gui/qqwindow.h ${srcdir}/../gui/qqwindow.c\
+		  testqqwin.c
+
 all: all-am
 
 .SUFFIXES:
@@ -260,6 +270,9 @@ testjson$(EXEEXT): $(testjson_OBJECTS) $(testjson_DEPENDENCIES)
 testlog$(EXEEXT): $(testlog_OBJECTS) $(testlog_DEPENDENCIES) 
 	@rm -f testlog$(EXEEXT)
 	$(LINK) $(testlog_OBJECTS) $(testlog_LDADD) $(LIBS)
+testqqwin$(EXEEXT): $(testqqwin_OBJECTS) $(testqqwin_DEPENDENCIES) 
+	@rm -f testqqwin$(EXEEXT)
+	$(LINK) $(testqqwin_OBJECTS) $(testqqwin_LDADD) $(LIBS)
 testurl$(EXEEXT): $(testurl_OBJECTS) $(testurl_DEPENDENCIES) 
 	@rm -f testurl$(EXEEXT)
 	$(LINK) $(testurl_OBJECTS) $(testurl_LDADD) $(LIBS)
@@ -272,10 +285,12 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cprint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/qqwindow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testcprint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testhttp.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testjson.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testlog.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testqqwin.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testurl.Po@am__quote@
 
 .c.o:
@@ -326,6 +341,20 @@ log.obj: ${srcdir}/../comm/log.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/log.c' object='log.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o log.obj `if test -f '${srcdir}/../comm/log.c'; then $(CYGPATH_W) '${srcdir}/../comm/log.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/log.c'; fi`
+
+qqwindow.o: ${srcdir}/../gui/qqwindow.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT qqwindow.o -MD -MP -MF $(DEPDIR)/qqwindow.Tpo -c -o qqwindow.o `test -f '${srcdir}/../gui/qqwindow.c' || echo '$(srcdir)/'`${srcdir}/../gui/qqwindow.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/qqwindow.Tpo $(DEPDIR)/qqwindow.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../gui/qqwindow.c' object='qqwindow.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o qqwindow.o `test -f '${srcdir}/../gui/qqwindow.c' || echo '$(srcdir)/'`${srcdir}/../gui/qqwindow.c
+
+qqwindow.obj: ${srcdir}/../gui/qqwindow.c
+@am__fastdepCC_TRUE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT qqwindow.obj -MD -MP -MF $(DEPDIR)/qqwindow.Tpo -c -o qqwindow.obj `if test -f '${srcdir}/../gui/qqwindow.c'; then $(CYGPATH_W) '${srcdir}/../gui/qqwindow.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../gui/qqwindow.c'; fi`
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/qqwindow.Tpo $(DEPDIR)/qqwindow.Po
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../gui/qqwindow.c' object='qqwindow.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o qqwindow.obj `if test -f '${srcdir}/../gui/qqwindow.c'; then $(CYGPATH_W) '${srcdir}/../gui/qqwindow.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../gui/qqwindow.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo
