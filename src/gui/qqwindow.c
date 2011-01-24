@@ -14,6 +14,8 @@ static gboolean motion_event_cb		(GtkWidget *widget, GdkEventMotion *event
 					, gpointer data);
 static gboolean expose_event_cb		(GtkWidget *widget, GdkEventExpose *event
 					, gpointer data);
+static gboolean configure_event_cb	(GtkWidget *widget, GdkEventConfigure *event
+					, gpointer data);
 
 static void qq_window_set_shape_mask	(QQWindow *qwin);
 static void qq_window_remove_shape_mask	(QQWindow *qw);
@@ -101,6 +103,8 @@ void qq_window_init(QQWindow *qwin, gpointer data)
 			, G_CALLBACK(button_release_event_cb), NULL);
 	g_signal_connect(widget, "motion-notify-event"
 			, G_CALLBACK(motion_event_cb), NULL);
+	g_signal_connect(widget, "configure-event"
+			, G_CALLBACK(configure_event_cb), NULL);
 
 	g_signal_connect(widget, "expose-event"
 			, G_CALLBACK(expose_event_cb), NULL);
@@ -159,15 +163,13 @@ gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event
 		return TRUE;
 	}
 
-	//qq_window_remove_shape_mask(QQ_WINDOW(widget));
-
 	if(event -> type == GDK_2BUTTON_PRESS){
+		qq_window_remove_shape_mask(QQ_WINDOW(widget));
 		if(QQ_WINDOW(widget) -> is_maxsize){
 			qq_window_unmaximize(QQ_WINDOW(widget));
 		}else{
 			qq_window_maximize(QQ_WINDOW(widget));
 		}
-		qq_window_set_shape_mask(QQ_WINDOW(widget));
 		return FALSE;
 	}
 
@@ -230,7 +232,6 @@ gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event
 gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event
 				, gpointer data)
 {
-	qq_window_set_shape_mask(QQ_WINDOW(widget));
 	return FALSE;
 }
 gboolean motion_event_cb(GtkWidget *widget, GdkEventMotion *event
@@ -273,7 +274,7 @@ gboolean motion_event_cb(GtkWidget *widget, GdkEventMotion *event
 	if(cur != nc && ! QQ_WINDOW(widget) -> is_maxsize){
 		gdk_window_set_cursor(widget -> window, cur);
 	}
-	qq_window_set_shape_mask(QQ_WINDOW(widget));
+
 	return FALSE;
 }
 
@@ -302,6 +303,15 @@ void qq_window_set_shape_mask(QQWindow *qwin)
 	QQWindowClass *c = QQ_WINDOW_GET_CLASS(qwin);
 	gint width, height;
 	gtk_window_get_size(GTK_WINDOW(qwin), &width, &height);
+
+	if(qwin -> pre_w == width 
+			&& qwin -> pre_h == height){
+		/*
+		 * The shape of the window does change.
+		 * We just do nothing. 
+		 */
+		return;
+	}
 
 	GdkBitmap 	*bm = NULL;
 	gdouble 	radius = 10;
@@ -344,10 +354,24 @@ void qq_window_set_shape_mask(QQWindow *qwin)
 
 	gtk_widget_shape_combine_mask(GTK_WIDGET(qwin), bm, 0, 0);
 	gtk_widget_input_shape_combine_mask(GTK_WIDGET(qwin), bm, 0, 0);
+
+	qwin -> pre_w = width;
+	qwin -> pre_h = height;
 }
 
 gboolean expose_event_cb(GtkWidget *widget, GdkEventExpose *event
 			, gpointer data)
 {
+	return FALSE;
+}
+
+/*
+ * The window's size is changed.
+ * Reset the shape mask.
+ */
+gboolean configure_event_cb(GtkWidget *widget, GdkEventConfigure *event
+				, gpointer data)
+{
+	qq_window_set_shape_mask(QQ_WINDOW(widget));
 	return FALSE;
 }
