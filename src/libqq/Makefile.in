@@ -70,8 +70,10 @@ am__base_list = \
   sed '$$!N;$$!N;$$!N;$$!N;s/\n/ /g'
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
-libwebqq_la_LIBADD =
-am_libwebqq_la_OBJECTS = http.lo json.lo url.lo
+am__DEPENDENCIES_1 =
+libwebqq_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+am_libwebqq_la_OBJECTS = libwebqq_la-http.lo libwebqq_la-json.lo \
+	libwebqq_la-url.lo
 libwebqq_la_OBJECTS = $(am_libwebqq_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
@@ -114,7 +116,19 @@ ECHO_T = @ECHO_T@
 EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
+GLIB2_CFLAGS = @GLIB2_CFLAGS@
+GLIB2_LIBS = @GLIB2_LIBS@
+GLIB_CFLAGS = @GLIB_CFLAGS@
+GLIB_LIBS = @GLIB_LIBS@
+GOBJECT2_CFLAGS = @GOBJECT2_CFLAGS@
+GOBJECT2_LIBS = @GOBJECT2_LIBS@
 GREP = @GREP@
+GSTREAMER_CFLAGS = @GSTREAMER_CFLAGS@
+GSTREAMER_LIBS = @GSTREAMER_LIBS@
+GTHREAD_CFLAGS = @GTHREAD_CFLAGS@
+GTHREAD_LIBS = @GTHREAD_LIBS@
+GTK_CFLAGS = @GTK_CFLAGS@
+GTK_LIBS = @GTK_LIBS@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -122,9 +136,17 @@ INSTALL_SCRIPT = @INSTALL_SCRIPT@
 INSTALL_STRIP_PROGRAM = @INSTALL_STRIP_PROGRAM@
 LD = @LD@
 LDFLAGS = @LDFLAGS@
+LIBNOTIFY_CFLAGS = @LIBNOTIFY_CFLAGS@
+LIBNOTIFY_LIBS = @LIBNOTIFY_LIBS@
 LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
+LIBSSL_CFLAGS = @LIBSSL_CFLAGS@
+LIBSSL_LIBS = @LIBSSL_LIBS@
 LIBTOOL = @LIBTOOL@
+LIBXML_CFLAGS = @LIBXML_CFLAGS@
+LIBXML_LIBS = @LIBXML_LIBS@
+LIBXSS_CFLAGS = @LIBXSS_CFLAGS@
+LIBXSS_LIBS = @LIBXSS_LIBS@
 LIPO = @LIPO@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
@@ -144,6 +166,9 @@ PACKAGE_TARNAME = @PACKAGE_TARNAME@
 PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
+PKG_CONFIG = @PKG_CONFIG@
+PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
+PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
@@ -203,6 +228,8 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libwebqq.la
+libwebqq_la_CPPFLAGS = $(GTK_CFLAGS)
+libwebqq_la_LIBADD = $(GTK_LIBS)
 libwebqq_la_SOURCES = http.h http.c json.h json.c url.h url.c
 all: all-am
 
@@ -278,9 +305,9 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/http.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/json.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/url.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-http.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-json.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-url.Plo@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -302,6 +329,27 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
+
+libwebqq_la-http.lo: http.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwebqq_la-http.lo -MD -MP -MF $(DEPDIR)/libwebqq_la-http.Tpo -c -o libwebqq_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libwebqq_la-http.Tpo $(DEPDIR)/libwebqq_la-http.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='http.c' object='libwebqq_la-http.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-http.lo `test -f 'http.c' || echo '$(srcdir)/'`http.c
+
+libwebqq_la-json.lo: json.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwebqq_la-json.lo -MD -MP -MF $(DEPDIR)/libwebqq_la-json.Tpo -c -o libwebqq_la-json.lo `test -f 'json.c' || echo '$(srcdir)/'`json.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libwebqq_la-json.Tpo $(DEPDIR)/libwebqq_la-json.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='json.c' object='libwebqq_la-json.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-json.lo `test -f 'json.c' || echo '$(srcdir)/'`json.c
+
+libwebqq_la-url.lo: url.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwebqq_la-url.lo -MD -MP -MF $(DEPDIR)/libwebqq_la-url.Tpo -c -o libwebqq_la-url.lo `test -f 'url.c' || echo '$(srcdir)/'`url.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libwebqq_la-url.Tpo $(DEPDIR)/libwebqq_la-url.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='url.c' object='libwebqq_la-url.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-url.lo `test -f 'url.c' || echo '$(srcdir)/'`url.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

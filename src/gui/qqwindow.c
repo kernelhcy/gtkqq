@@ -18,8 +18,6 @@ static gboolean configure_event_cb	(GtkWidget *widget, GdkEventConfigure *event
 					, gpointer data);
 
 static void qq_window_set_shape_mask	(QQWindow *qwin);
-static void qq_window_remove_shape_mask	(QQWindow *qw);
-
 
 
 GtkWidget* qq_window_new()
@@ -164,7 +162,6 @@ gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event
 	}
 
 	if(event -> type == GDK_2BUTTON_PRESS){
-		qq_window_remove_shape_mask(QQ_WINDOW(widget));
 		if(QQ_WINDOW(widget) -> is_maxsize){
 			qq_window_unmaximize(QQ_WINDOW(widget));
 		}else{
@@ -183,7 +180,9 @@ gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event
 	gint width, height;
 	gtk_window_get_size(GTK_WINDOW(widget), &width, &height);
 
-	if(x >= 10 && y >= 10 && x <= width - 10 && y <= height - 10
+	if(x >= c -> resize_border && y >= 3/* up border is thin */
+			&& x <= width - c -> resize_border 
+			&& y <= height - c -> resize_border
 			&& ! QQ_WINDOW(widget) -> is_maxsize){
 		/*
 		 * In the center area, we want to move the window
@@ -212,15 +211,17 @@ gboolean button_press_event_cb(GtkWidget *widget, GdkEventButton *event
 	}else if(x > width - c -> resize_border && y > c -> resize_border 
 				&& y < height - c -> resize_border){
 		edge = GDK_WINDOW_EDGE_EAST;
-	}else if(y < c -> resize_border && x > c -> resize_border 
+	}else if(y < 3 && x > c -> resize_border 
 				&& x < width - c -> resize_border){
+		/*
+		 * The up border. Seldom to use to resize the window.
+		 */
 		edge = GDK_WINDOW_EDGE_NORTH;
 	}else if(y > height - c -> resize_border && x > c -> resize_border 
 				&& x < width - c -> resize_border){
 		edge = GDK_WINDOW_EDGE_SOUTH;
 	}
 	if(edge != -1 && !QQ_WINDOW(widget) -> is_maxsize){
-		qq_window_remove_shape_mask(QQ_WINDOW(widget));
 		gtk_window_begin_resize_drag(GTK_WINDOW(widget)
 					,edge, 1 /* left button */
 					, root_x, root_y, 0);
@@ -262,7 +263,7 @@ gboolean motion_event_cb(GtkWidget *widget, GdkEventMotion *event
 	}else if(x > width - c -> resize_border && y > c -> resize_border 
 				&& y < height - c -> resize_border){
 		cur = c -> rs;
-	}else if(y < c -> resize_border && x > c -> resize_border 
+	}else if(y < 3 && x > c -> resize_border 
 				&& x < width - c -> resize_border){
 		cur = c -> ts;
 	}else if(y > height - c -> resize_border && x > c -> resize_border 
@@ -283,16 +284,6 @@ gboolean delete_event_cb(GtkWidget *widget, gpointer data)
 	gtk_main_quit();
 	return FALSE;
 }
-
-/*
- * Remove the shape mask
- */
-void qq_window_remove_shape_mask(QQWindow *qw)
-{
-	gtk_widget_shape_combine_mask(GTK_WIDGET(qw), NULL, 0, 0);
-	gtk_widget_input_shape_combine_mask(GTK_WIDGET(qw), NULL, 0, 0);
-}
-
 /*
  * Set the window shape mask
  */
@@ -314,7 +305,7 @@ void qq_window_set_shape_mask(QQWindow *qwin)
 	}
 
 	GdkBitmap 	*bm = NULL;
-	gdouble 	radius = 10;
+	gdouble 	radius = 5;
 
 	bm = (GdkBitmap*)gdk_pixmap_new(NULL, width, height, 1);	
 	/*
