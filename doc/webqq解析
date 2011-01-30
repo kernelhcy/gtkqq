@@ -12,15 +12,16 @@ no_verifyimg=1。发现这几个参数是硬编码在html文件中的。因此�
 form中有用的参数有三个，action="http://ptlogin2.qq.com/login"，method="post"和
 onsubmit="ptui_onLoginEx(loginform,'qq.com')"。在提交登录信息之前，通过函数
 ptui_onLoginEx函数处理提交的信息。
-	完成所有源码的下载之后，webqq需要获得一个叫做vc_type的变量。这个变量在后面的通讯中有
-用。首先，发送GET请求http://ptlogin2.webqq.com/check?uin=xxxxxx&appid=1003903&r=xx
-其中，uin是qq号。appid是前面加载验证码图片的ptui_changeImg函数的第二个参数。r是一个小于1的
-随机数。服务器返回下面的数据：ptui_checkVC('1',
-'44657d96f141ad5fc9ced861e2ba1a48b32e0dc974505ad7');。第二个参数就是vc_type的值。
-这同时也是检测是否需要输入验证码。
-	在加载验证码图片的时候，会调用imgLoadReport函数来检测是否需要验证码。服务器会返回前面
-提到的vc_type的值。通过下面的请求获取新的验证码图片:http://captcha.qq.com/getimage?&uin=xxx&vc_type=xxx&aid=1002101&random。aid后面紧跟着一个小于1的随机数。验证码的生成估计
-和这个发送的随机数有关。
+	完成所有源码的下载之后，webqq需要获得一个叫做vc_type的变量。这个变量在
+后面的通讯中有用。首先，发送GET请求http://ptlogin2.webqq.com/check?uin=xxxxxx&
+appid=1003903&r=xx其中，uin是qq号。appid是前面加载验证码图片的ptui_changeImg函
+数的第二个参数。r是一个小于1的随机数。服务器返回下面的数据：ptui_checkVC('1',
+'44657d96f141ad5fc9ced861e2ba1a48b32e0dc974505ad7');。第二个参数就是vc_type的
+值。这同时也是检测是否需要输入验证码。
+	在加载验证码图片的时候，会调用imgLoadReport函数来检测是否需要验证码。
+服务器会返回前面提到的vc_type的值。通过下面的请求获取新的验证码图片:
+http://captcha.qq.com/getimage?&uin=xxx&vc_type=xxx&aid=1002101&random。
+aid后面紧跟着一个小于1的随机数。验证码的生成估计和这个发送的随机数有关。
 	当用户点击提交，也就是登录之后。如果用户选择记住密码，那么调用函数
 ptui_onLoginEx(form, "qq.com")来完成登录，否则调用ptui_onLogin(form)。最终调用函数
 ajax_Submit提交登录申请。在ajax_Submit中拼接发送个登录网址的参数。

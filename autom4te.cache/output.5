@@ -902,6 +902,8 @@ PKG_CONFIG_PATH
 PKG_CONFIG_LIBDIR
 GTK_CFLAGS
 GTK_LIBS
+GLIB_CFLAGS
+GLIB_LIBS
 GTHREAD_CFLAGS
 GTHREAD_LIBS
 LIBXML_CFLAGS
@@ -1574,6 +1576,8 @@ Some influential environment variables:
               path overriding pkg-config's built-in search path
   GTK_CFLAGS  C compiler flags for GTK, overriding pkg-config
   GTK_LIBS    linker flags for GTK, overriding pkg-config
+  GLIB_CFLAGS C compiler flags for GLIB, overriding pkg-config
+  GLIB_LIBS   linker flags for GLIB, overriding pkg-config
   GTHREAD_CFLAGS 
               C compiler flags for GTHREAD, overriding pkg-config
   GTHREAD_LIBS 
@@ -12079,11 +12083,11 @@ fi
 # checks for glib2.0
 
 pkg_failed=no
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GTK" >&5
-$as_echo_n "checking for GTK... " >&6; }
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for GLIB" >&5
+$as_echo_n "checking for GLIB... " >&6; }
 
-if test -n "$GTK_CFLAGS"; then
-    pkg_cv_GTK_CFLAGS="$GTK_CFLAGS"
+if test -n "$GLIB_CFLAGS"; then
+    pkg_cv_GLIB_CFLAGS="$GLIB_CFLAGS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
     { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.16\""; } >&5
@@ -12091,15 +12095,15 @@ if test -n "$GTK_CFLAGS"; then
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.16" 2>/dev/null`
+  pkg_cv_GLIB_CFLAGS=`$PKG_CONFIG --cflags "glib-2.0 >= 2.16" 2>/dev/null`
 else
   pkg_failed=yes
 fi
  else
     pkg_failed=untried
 fi
-if test -n "$GTK_LIBS"; then
-    pkg_cv_GTK_LIBS="$GTK_LIBS"
+if test -n "$GLIB_LIBS"; then
+    pkg_cv_GLIB_LIBS="$GLIB_LIBS"
  elif test -n "$PKG_CONFIG"; then
     if test -n "$PKG_CONFIG" && \
     { { $as_echo "$as_me:${as_lineno-$LINENO}: \$PKG_CONFIG --exists --print-errors \"glib-2.0 >= 2.16\""; } >&5
@@ -12107,7 +12111,7 @@ if test -n "$GTK_LIBS"; then
   ac_status=$?
   $as_echo "$as_me:${as_lineno-$LINENO}: \$? = $ac_status" >&5
   test $ac_status = 0; }; then
-  pkg_cv_GTK_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.16" 2>/dev/null`
+  pkg_cv_GLIB_LIBS=`$PKG_CONFIG --libs "glib-2.0 >= 2.16" 2>/dev/null`
 else
   pkg_failed=yes
 fi
@@ -12127,22 +12131,22 @@ else
         _pkg_short_errors_supported=no
 fi
         if test $_pkg_short_errors_supported = yes; then
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "glib-2.0 >= 2.16" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "glib-2.0 >= 2.16" 2>&1`
         else 
-	        GTK_PKG_ERRORS=`$PKG_CONFIG --print-errors "glib-2.0 >= 2.16" 2>&1`
+	        GLIB_PKG_ERRORS=`$PKG_CONFIG --print-errors "glib-2.0 >= 2.16" 2>&1`
         fi
 	# Put the nasty error message in config.log where it belongs
-	echo "$GTK_PKG_ERRORS" >&5
+	echo "$GLIB_PKG_ERRORS" >&5
 
 	as_fn_error $? "Package requirements (glib-2.0 >= 2.16) were not met:
 
-$GTK_PKG_ERRORS
+$GLIB_PKG_ERRORS
 
 Consider adjusting the PKG_CONFIG_PATH environment variable if you
 installed software in a non-standard prefix.
 
-Alternatively, you may set the environment variables GTK_CFLAGS
-and GTK_LIBS to avoid the need to call pkg-config.
+Alternatively, you may set the environment variables GLIB_CFLAGS
+and GLIB_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details." "$LINENO" 5         
 elif test $pkg_failed = untried; then
      	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
@@ -12153,15 +12157,15 @@ as_fn_error $? "The pkg-config script could not be found or is too old.  Make su
 is in your PATH or set the PKG_CONFIG environment variable to the full
 path to pkg-config.
 
-Alternatively, you may set the environment variables GTK_CFLAGS
-and GTK_LIBS to avoid the need to call pkg-config.
+Alternatively, you may set the environment variables GLIB_CFLAGS
+and GLIB_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.
 
 To get pkg-config, see <http://pkg-config.freedesktop.org/>.
 See \`config.log' for more details" "$LINENO" 5 ; }        
 else
-	GTK_CFLAGS=$pkg_cv_GTK_CFLAGS
-	GTK_LIBS=$pkg_cv_GTK_LIBS
+	GLIB_CFLAGS=$pkg_cv_GLIB_CFLAGS
+	GLIB_LIBS=$pkg_cv_GLIB_LIBS
         { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
 $as_echo "yes" >&6; }
 	

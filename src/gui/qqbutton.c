@@ -215,6 +215,10 @@ gboolean button_release_event_cb(GtkWidget *widget, GdkEventButton *event
 	expose_event_cb(widget, NULL, NULL);
 	return FALSE;
 }
+
+/*
+ * Render the button.
+ */
 gboolean expose_event_cb(GtkWidget *widget
 			, GdkEventExpose *event, gpointer data)
 {

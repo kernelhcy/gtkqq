@@ -60,7 +60,7 @@ PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.16], [
 			] ,
 			)
 # checks for glib2.0
-PKG_CHECK_MODULES(GTK, [glib-2.0 >= 2.16], [
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.16], [
 			AC_DEFINE(USE_GLIB, 1, [Use GLIB])
 			AC_SUBST(GLIB_CFLAGS)
 			AC_SUBST(GLIB_LIBS)

@@ -71,9 +71,10 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libwebqq_la_DEPENDENCIES = $(am__DEPENDENCIES_1)
+libwebqq_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libwebqq_la_OBJECTS = libwebqq_la-http.lo libwebqq_la-json.lo \
-	libwebqq_la-url.lo
+	libwebqq_la-url.lo libwebqq_la-qqlogin.lo \
+	libwebqq_la-qqtypes.lo
 libwebqq_la_OBJECTS = $(am_libwebqq_la_OBJECTS)
 DEFAULT_INCLUDES = -I.@am__isrc@ -I$(top_builddir)
 depcomp = $(SHELL) $(top_srcdir)/build-aux/depcomp
@@ -228,9 +229,11 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libwebqq.la
-libwebqq_la_CPPFLAGS = $(GTK_CFLAGS)
-libwebqq_la_LIBADD = $(GTK_LIBS)
-libwebqq_la_SOURCES = http.h http.c json.h json.c url.h url.c
+libwebqq_la_CPPFLAGS = $(GTHREAD_CFLAGS) $(GLIB_CFLAGS)
+libwebqq_la_LIBADD = $(GTHREAD_LIBS) $(GLIB_LIBS)
+libwebqq_la_SOURCES = http.h http.c json.h json.c url.h url.c\
+			qq.h qqlogin.c qqtypes.h qqtypes.c
+
 all: all-am
 
 .SUFFIXES:
@@ -307,6 +310,8 @@ distclean-compile:
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-http.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-json.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqlogin.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqtypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-url.Plo@am__quote@
 
 .c.o:
@@ -350,6 +355,20 @@ libwebqq_la-url.lo: url.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='url.c' object='libwebqq_la-url.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-url.lo `test -f 'url.c' || echo '$(srcdir)/'`url.c
+
+libwebqq_la-qqlogin.lo: qqlogin.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwebqq_la-qqlogin.lo -MD -MP -MF $(DEPDIR)/libwebqq_la-qqlogin.Tpo -c -o libwebqq_la-qqlogin.lo `test -f 'qqlogin.c' || echo '$(srcdir)/'`qqlogin.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libwebqq_la-qqlogin.Tpo $(DEPDIR)/libwebqq_la-qqlogin.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='qqlogin.c' object='libwebqq_la-qqlogin.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-qqlogin.lo `test -f 'qqlogin.c' || echo '$(srcdir)/'`qqlogin.c
+
+libwebqq_la-qqtypes.lo: qqtypes.c
+@am__fastdepCC_TRUE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwebqq_la-qqtypes.lo -MD -MP -MF $(DEPDIR)/libwebqq_la-qqtypes.Tpo -c -o libwebqq_la-qqtypes.lo `test -f 'qqtypes.c' || echo '$(srcdir)/'`qqtypes.c
+@am__fastdepCC_TRUE@	$(am__mv) $(DEPDIR)/libwebqq_la-qqtypes.Tpo $(DEPDIR)/libwebqq_la-qqtypes.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='qqtypes.c' object='libwebqq_la-qqtypes.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL)  --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-qqtypes.lo `test -f 'qqtypes.c' || echo '$(srcdir)/'`qqtypes.c
 
 mostlyclean-libtool:
 	-rm -f *.lo

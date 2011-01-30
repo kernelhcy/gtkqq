@@ -36,12 +36,12 @@ Connection* connect_to_host(const char *hostname, int port)
 	hint.ai_socktype = SOCK_STREAM;
 	
 	if((err = getaddrinfo(hostname, NULL, &hint, &ailist)) != 0){
-		g_warning("Can't get the address information of %s (%s, %d)\n"
+		g_warning("Can't get the address information of %s (%s, %d)"
 				,hostname , __FILE__, __LINE__);
 		return NULL;
 	}
 	
-	g_debug("Got addrinfo.\n");
+	g_debug("Got addrinfo.");
 	struct sockaddr_in *sinp;
 	#define BUFLEN 200
 	gchar buf[BUFLEN];
@@ -49,12 +49,12 @@ Connection* connect_to_host(const char *hostname, int port)
 	for(aip = ailist; aip != NULL; aip = aip -> ai_next){
 		
 		if((sockfd =socket(aip -> ai_family, SOCK_STREAM, 0)) < 0){
-			g_warning("Can't create a socket.(%s, %d)\n"
+			g_warning("Can't create a socket.(%s, %d)"
 					, __FILE__, __LINE__);
 			return NULL;
 		}
 		
-		g_debug("create a socket %d\n", sockfd);
+		g_debug("create a socket %d", sockfd);
 		sinp = (struct sockaddr_in *)aip -> ai_addr;
 		
 		/*
@@ -62,7 +62,7 @@ Connection* connect_to_host(const char *hostname, int port)
 		 */
 		sinp -> sin_port = htons((gint16)port);
 		
-		g_debug("Address: %s Port %d\n"
+		g_debug("Address: %s Port %d"
 				, inet_ntop(AF_INET, &sinp -> sin_addr
 						, buf, BUFLEN)
 				, ntohs(sinp -> sin_port));
@@ -70,7 +70,7 @@ Connection* connect_to_host(const char *hostname, int port)
 		if(connect(sockfd,aip -> ai_addr, aip -> ai_addrlen) < 0){
 			close(sockfd);
 			sockfd = -1;
-			g_warning("Can't connect to the server.(%s, %d)\n"
+			g_warning("Can't connect to the server.(%s, %d)"
 					, __FILE__, __LINE__);
 			continue;
 		}
@@ -132,30 +132,30 @@ int send_request(Connection *con, Request *r)
 		case G_IO_STATUS_NORMAL:
 			//write success.
 			has_written += bytes_written;
-			g_debug("Write %d bytes data.(%s, %d)\n"
+			g_debug("Write %d bytes data.(%s, %d)"
 					, bytes_written, __FILE__
 					, __LINE__);
 			break;
 		case G_IO_STATUS_EOF:
-			g_warning("Write data EOF!! What's happenning??\n");
+			g_warning("Write data EOF!! What's happenning??");
 			return -1;
 		case G_IO_STATUS_ERROR:
-			g_warning("Write data ERROR!! code:%d msg:%s\n"
+			g_warning("Write data ERROR!! code:%d msg:%s"
 					, err -> code, err -> message);
 			return -1;
 		case G_IO_STATUS_AGAIN:
-			g_debug("Channel temporarily unavailable.\n");
+			g_debug("Channel temporarily unavailable.");
 			break;
 		default:
-			g_warning("Unknown io status!\n");
+			g_warning("Unknown io status!");
 			return -1;
 		}
 	}
 	status = g_io_channel_flush(con -> channel, &err);
 	if(status != G_IO_STATUS_NORMAL){
-		g_warning("Flush io channel error! But don't warry...\n");
+		g_warning("Flush io channel error! But don't warry...");
 	}	
-	g_debug("Write all date.(%s, %d)\n", __FILE__, __LINE__);
+	g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
 	g_string_free(rq, TRUE);
 	return 0;
 }
@@ -181,7 +181,7 @@ int rcv_response(Connection *con, Response **rp)
 	GError *err = NULL;
 	gsize bytes_read = 0;
 	
-	g_debug("Begin to read data.(%s, %d)\n", __FILE__, __LINE__);
+	g_debug("Begin to read data.(%s, %d)", __FILE__, __LINE__);
 	while(need_to_read > 0){
 		status = g_io_channel_read_chars(con -> channel, buf
 				, BUFSIZE < need_to_read? 
@@ -196,7 +196,7 @@ int rcv_response(Connection *con, Response **rp)
 		switch(status)
 		{
 		case G_IO_STATUS_NORMAL:
-			g_debug("Read %d bytes data.(%s, %d)\n"
+			g_debug("Read %d bytes data.(%s, %d)"
 					,bytes_read,  __FILE__, __LINE__);
 			//read success.
 			need_to_read -= bytes_read;
@@ -212,24 +212,24 @@ int rcv_response(Connection *con, Response **rp)
 				break;
 			}
 			g_warning("Read data EOF!! What's happenning??"
-					"(%s, %d)\n"
+					"(%s, %d)"
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
 			g_string_free(content, TRUE);
 			return -1;
 		case G_IO_STATUS_ERROR:
 			g_warning("Read data ERROR!! code:%d msg:%s"
-					"(%s, %d)\n"
+					"(%s, %d)"
 					, err -> code, err -> message
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
 			g_string_free(content, TRUE);
 			return -1;
 		case G_IO_STATUS_AGAIN:
-			g_debug("Channel temporarily unavailable.\n");
+			g_debug("Channel temporarily unavailable.");
 			break;
 		default:
-			g_warning("Unknown io status!(%s, %d)\n"
+			g_warning("Unknown io status!(%s, %d)"
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
 			g_string_free(content, TRUE);
@@ -247,7 +247,7 @@ int rcv_response(Connection *con, Response **rp)
 			GString *clen = response_get_header(r, content);
 			if(clen == NULL){
 				g_debug("No Content-Length!!"
-						"(%s, %d)\n"
+						"(%s, %d)"
 						, __FILE__, __LINE__);
 				nocontentlength = TRUE;
 				cl = 0;
@@ -255,19 +255,19 @@ int rcv_response(Connection *con, Response **rp)
 			}
 			//calculate the message we have not read.
 			cl = atoi(clen -> str);
-			g_debug("Content-Length: %d.(%s, %d)\n"
+			g_debug("Content-Length: %d.(%s, %d)"
 					, cl, __FILE__, __LINE__);
 			need_to_read = cl - r -> msg -> len;
-			g_debug("Message need to read %d bytes.(%s, %d)\n"
+			g_debug("Message need to read %d bytes.(%s, %d)"
 					, need_to_read, __FILE__, __LINE__);
 		}
 	}
-	g_debug("Read all data.(%s, %d)\n", __FILE__, __LINE__);
+	g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
 	if(r == NULL){
 		//we do not find "\r\n\r\n".
 		//Should not happen.
 		g_warning("Read all data, but not find all headers.!"
-				"(%s, %d)\n", __FILE__, __LINE__);
+				"(%s, %d)", __FILE__, __LINE__);
 		g_string_free(data, TRUE);
 		g_string_free(content, TRUE);
 		return -1;
@@ -275,18 +275,18 @@ int rcv_response(Connection *con, Response **rp)
 	//copy the message to r -> msg;
 	g_string_append_len(r -> msg, data -> str, data -> len);
 	g_debug("Append %d bytes message to r -> msg."
-			"r -> msg -> len: %d (%s, %d)\n"
+			"r -> msg -> len: %d (%s, %d)"
 			, data -> len, r -> msg -> len, __FILE__, __LINE__);
 	#undef BUFSIZE
 	*rp = r;
 	if(!nocontentlength && r -> msg -> len != cl){
 		g_warning("No read all the message!! content length:%d"
-				" msg -> len: %d. (%s, %d)\n"
+				" msg -> len: %d. (%s, %d)"
 				, cl, r -> msg -> len, __FILE__, __LINE__);
 	}
 	g_string_free(data, TRUE);
 	g_string_free(content, TRUE);
-	g_debug("Free the temporary memory.(%s, %d)\n", __FILE__, __LINE__);
+	g_debug("Free the temporary memory.(%s, %d)", __FILE__, __LINE__);
 	return 0;
 }
 

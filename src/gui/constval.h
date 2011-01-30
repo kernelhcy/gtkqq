@@ -1,21 +1,8 @@
+#ifndef __GTKQQ_CONSTVAL_H
+#define __GTKQQ_CONSTVAL_H
 /*
- *                                                                                      
- *
- *       Filename:  constval.h
- *
- *    Description:  The const values used in the program
- *
- *        Version:  1.0
- *        Created:  01/25/2011 01:01:04 PM
- *       Revision:  none
- *       Compiler:  gcc
- *
- *         Author:  hcy
- *        Company:  
- *
- *                                                                                      
+ * const values used in the program
  */
-
 
 #define CLOSEBTN_NOR_IMG	"Button_colse_normal.bmp" 
 #define CLOSEBTN_HL_IMG		"Button_close_highlightBackground.bmp" 
@@ -32,3 +19,5 @@
 #define RESTOREBTN_NOR_IMG	"Button_restore_normal.bmp" 
 #define RESTOREBTN_HL_IMG	"Button_restore_highlightBackground.bmp" 
 #define RESTOREBTN_PUSH_IMG	"Button_restore_pushedBackground.bmp" 
+
+#endif
