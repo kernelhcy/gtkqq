@@ -36,6 +36,9 @@
 /* Define to 1 if you have the `ssl' library (-lssl). */
 #undef HAVE_LIBSSL
 
+/* Define to 1 if you have the `zlib' library (-lzlib). */
+#undef HAVE_LIBZLIB
+
 /* Define to 1 if your system has a GNU libc compatible `malloc' function, and
    to 0 otherwise. */
 #undef HAVE_MALLOC
@@ -106,6 +109,9 @@
 /* Define to 1 if `vfork' works. */
 #undef HAVE_WORKING_VFORK
 
+/* Define to 1 if you have the <zlib.h> header file. */
+#undef HAVE_ZLIB_H
+
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
@@ -157,6 +163,9 @@
 
 /* Use XScreenSaver for idleness */
 #undef USE_LIBXSS
+
+/* Use ZLIB */
+#undef USE_ZLIB
 
 /* Version number of package */
 #undef VERSION

@@ -237,7 +237,7 @@ Response* response_new_parse(GString* s)
 	gsize i;
 	for(i = 0; i < s -> len; ++i){
 		if(ismsg){
-			msgbegin = i + 3;
+			msgbegin = i + 2;
 			break;
 		}
 		if(!isheader){	//status line
@@ -291,27 +291,27 @@ Response* response_new_parse(GString* s)
 				break;
 			case '\r':
 				if(rps[i + 1] != '\n'){
-					g_printf("Headers.Need \\r\\n!!\n");
+					g_debug("Headers.Need \\r\\n!!");
 					response_del(r);
 					return NULL;
 				}
 				if(rps[i + 2] == '\r' && rps[i + 3] == '\n'){
 					//the end of headers
 					ismsg = TRUE;
-					break;
 				}
 				rps[i] = '\0';
 				GString* n = g_string_new(name);
 				GString* v = g_string_new(value);
-				
+				g_debug("Header: %s:%s", n -> str, v -> str);
+
 				GString* tmpv = g_tree_lookup(r -> headers, n);
 				if(tmpv != NULL){
 					//already has the key, append value
 					//use \r\n to split them
 					g_string_append(tmpv, CRLF);
 					g_string_append(tmpv, value);
-					g_string_free(n, FALSE);
-					g_string_free(v, FALSE);
+					g_string_free(n, TRUE);
+					g_string_free(v, TRUE);
 				}else{	//insert 				
 					g_tree_insert(r -> headers, n, v);
 				}
@@ -380,4 +380,12 @@ GString* response_get_header(Response *rp, const GString *header)
 	}
 
 	return (GString*)g_tree_lookup(rp -> headers, header);
+}
+
+gchar* response_get_header_chars(Response *rp, const gchar *header)
+{
+	GString *hr = g_string_new(header);
+	GString *re = response_get_header(rp, hr);
+	g_string_free(hr, TRUE);
+	return re != NULL ? re -> str : NULL;
 }

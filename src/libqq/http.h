@@ -93,6 +93,7 @@ Response* response_new_parse(GString* s);
  * get the value of header
  */
 GString* response_get_header(Response *rp, const GString *header);
+gchar* response_get_header_chars(Response *rp, const gchar *header);
 /*
  * convert response to the string format
  */

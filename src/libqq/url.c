@@ -6,6 +6,9 @@
 #include <unistd.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <stdlib.h>
+
+#include <zlib.h>
 
 Connection* connection_new()
 {
@@ -106,7 +109,7 @@ void close_con(Connection *con)
 	close(con -> fd);
 }
 
-int send_request(Connection *con, Request *r)
+gint send_request(Connection *con, Request *r)
 {
 	if(con == NULL || r == NULL){
 		return -1;
@@ -160,7 +163,83 @@ int send_request(Connection *con, Request *r)
 	return 0;
 }
 
-int rcv_response(Connection *con, Response **rp)
+/*
+ * Ungzip data.
+ * use zlib
+ */
+static int ungzip(GString *in, GString *out)
+{
+	if(in == NULL || out == NULL){
+		return 0;
+	}
+
+	gulong inlen = in -> len;
+	g_string_truncate(out, 0);
+
+	int ret;
+#define BUFSIZE 500
+	gchar buf[BUFSIZE];
+
+	z_stream strm;
+	strm.zalloc = Z_NULL;
+	strm.zfree = Z_NULL;
+	strm.opaque = Z_NULL;
+	strm.avail_in = 0;
+	strm.next_in = Z_NULL;
+	
+	/*
+	 * 47 enable zlib and gzip decoding with automatic header detection.
+	 */
+	ret = inflateInit2(&strm, 47);
+	switch(ret)
+	{
+	case Z_OK:
+		g_debug("Initial zlib. done.");
+		break;
+	case Z_MEM_ERROR:
+	case Z_VERSION_ERROR:
+	case Z_STREAM_ERROR:
+		g_debug("inflateInit2() Error!. %s (%s, %d)", strm.msg, __FILE__
+					, __LINE__);
+		return -1;
+	default:
+		g_debug("Unknown return!!(%s, %d)", __FILE__, __LINE__);
+		return -1;
+	}
+	
+	gboolean done = FALSE;
+	strm.avail_in = inlen;
+	strm.next_in = in -> str;
+	while(!done){
+		strm.avail_out = BUFSIZE;
+		strm.next_out = buf;
+		ret = inflate(&strm, Z_NO_FLUSH);
+		switch(ret)
+		{
+		case Z_STREAM_END:
+			done = TRUE;
+			break;
+		case Z_OK:
+		case Z_BUF_ERROR:
+			break;
+		case Z_DATA_ERROR:
+		case Z_MEM_ERROR:
+		case Z_STREAM_ERROR:
+			g_debug("Ungzip error! %s(%s, %d)", strm.msg, __FILE__
+					, __LINE__);
+			g_string_truncate(out, 0);
+			return -1;
+		}
+		g_string_append_len(out, buf, BUFSIZE - strm.avail_out);
+	}
+
+#undef BUFSIZE
+	
+	return 1;
+
+}
+
+gint rcv_response(Connection *con, Response **rp)
 {
 	if(con == NULL || rp == NULL){
 		return -1;
@@ -170,43 +249,47 @@ int rcv_response(Connection *con, Response **rp)
 						//the data that need to read.
 	//store the data that has read
 	GString *data = g_string_new(NULL);
-	GString *content = g_string_new("Content-Length");
+	gchar *tev = NULL;			//the transfer encoding
 	gint cl = -1;				//the content length
-	gboolean nocontentlength = FALSE;	//no content lenght
+	gboolean gotcl = FALSE;			//got content lenght or not
 						//so, we should do sth
+	gboolean gotte = FALSE;			//got transfer encoding or not
+	gboolean ischunked = FALSE;
+	gint chunkbegin, chunkend, idx;
+	gint chunklen = -1;			//the chunk length
+	gint totalchunklen = 0;
+
+	gboolean conclose = FALSE;		//connection close
+	gboolean gotallheaders = FALSE;
+	gboolean isgzip = FALSE;
 
 	#define BUFSIZE 500
 	gchar buf[BUFSIZE];
 	GIOStatus status;
 	GError *err = NULL;
 	gsize bytes_read = 0;
+	gsize want_read = 0;
 	
 	g_debug("Begin to read data.(%s, %d)", __FILE__, __LINE__);
 	while(need_to_read > 0){
+		want_read = BUFSIZE < need_to_read ? BUFSIZE : need_to_read;
 		status = g_io_channel_read_chars(con -> channel, buf
-				, BUFSIZE < need_to_read? 
-					BUFSIZE : need_to_read
-				, &bytes_read, &err);
-		if(nocontentlength && bytes_read < BUFSIZE){
-			//no content length sent to us.
-			//So, we think we got all the data.
-			g_string_append_len(data, buf, bytes_read);
-			break;
-		}
+				, want_read, &bytes_read, &err);
 		switch(status)
 		{
 		case G_IO_STATUS_NORMAL:
-			g_debug("Read %d bytes data.(%s, %d)"
-					,bytes_read,  __FILE__, __LINE__);
+			g_debug("Read %d bytes data. total data len %d(%s, %d)"
+					, bytes_read, data -> len
+					, __FILE__, __LINE__);
 			//read success.
 			need_to_read -= bytes_read;
 			break;
 		case G_IO_STATUS_EOF:
-			if(nocontentlength){
+			if(conclose){
 				/*
-				 * no content lenght.
-				 * So, the server will close the connection
-				 * after send all the data.
+				 * The Connection header is close.
+				 * The server will close the conntion after 
+				 * send all the data.
 				 */
 				//we got all the data.
 				break;
@@ -215,7 +298,6 @@ int rcv_response(Connection *con, Response **rp)
 					"(%s, %d)"
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
-			g_string_free(content, TRUE);
 			return -1;
 		case G_IO_STATUS_ERROR:
 			g_warning("Read data ERROR!! code:%d msg:%s"
@@ -223,7 +305,6 @@ int rcv_response(Connection *con, Response **rp)
 					, err -> code, err -> message
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
-			g_string_free(content, TRUE);
 			return -1;
 		case G_IO_STATUS_AGAIN:
 			g_debug("Channel temporarily unavailable.");
@@ -232,60 +313,153 @@ int rcv_response(Connection *con, Response **rp)
 			g_warning("Unknown io status!(%s, %d)"
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
-			g_string_free(content, TRUE);
 			return -1;
 		}
 		g_string_append_len(data, buf, bytes_read);
 		
-		if(cl == -1 && g_strstr_len(data -> str, data -> len
+		if(!gotallheaders && g_strstr_len(data -> str, data -> len
 							, "\r\n\r\n") 
 						!= NULL){
 			//We have gotten all the headers;
-			//Find the Content-Length 's value
 			r = response_new_parse(data);
 			g_string_truncate(data, 0);
-			GString *clen = response_get_header(r, content);
-			if(clen == NULL){
-				g_debug("No Content-Length!!"
-						"(%s, %d)"
+			gotallheaders = TRUE;
+			//Find the Content-Length 's value
+			gchar *clen = response_get_header_chars(r
+						, "Content-Length");
+			if(clen != NULL){
+				gotcl = TRUE;
+				//calculate the message we have not read.
+				cl = atoi(clen);
+				g_debug("Content-Length: %d.(%s, %d)"
+						, cl, __FILE__, __LINE__);
+				need_to_read = cl - r -> msg -> len;
+				g_debug("Message need to read %d bytes."
+						"(%s, %d)", need_to_read
 						, __FILE__, __LINE__);
-				nocontentlength = TRUE;
-				cl = 0;
-				continue;
 			}
-			//calculate the message we have not read.
-			cl = atoi(clen -> str);
-			g_debug("Content-Length: %d.(%s, %d)"
-					, cl, __FILE__, __LINE__);
-			need_to_read = cl - r -> msg -> len;
-			g_debug("Message need to read %d bytes.(%s, %d)"
-					, need_to_read, __FILE__, __LINE__);
+
+			//Find the Transfering-Encoding 's value
+			tev = response_get_header_chars(r
+						, "Transfer-Encoding");
+			if(tev != NULL && g_strstr_len(tev, -1
+							, "chunked") != NULL){
+				g_debug("The message body is chunked.(%s, %d)"
+						, __FILE__, __LINE__);
+				gotte = TRUE;
+				ischunked = TRUE;
+
+				//copy the message back to data
+				g_string_append_len(data, r -> msg -> str
+						, r -> msg -> len);
+				g_string_truncate(r -> msg, 0);
+
+				idx = 0;
+				chunklen = -1;
+			}
+
+			gchar *connection = response_get_header_chars(r
+						, "Connection");	
+			if(connection != NULL){
+				g_debug("Connection: %s", connection);
+				if(g_strstr_len(connection, -1, "close") 
+							!= NULL){
+					conclose = TRUE;
+				}
+			}
+
+			gchar *ce = response_get_header_chars(r
+					, "Content-Encoding");
+			if(ce != NULL){
+				g_debug("Content-Encoding: %s", ce);
+				if(g_strstr_len(ce, -1, "gzip") != NULL){
+					isgzip = TRUE;
+				}
+			}
+			GString *rtos = response_tostring(r);
+			g_debug("RESPONSE: (%s, %d)\n%s", __FILE__, __LINE__
+					, rtos -> str);
+			g_string_free(rtos, TRUE);
 		}
-	}
+
+		if(ischunked){
+			gchar *tmp = g_strstr_len(data -> str + idx, -1, "\r\n");
+			if(tmp != NULL){
+				/*
+				 * we got the length
+				 */
+				*tmp = '\0';
+				chunkbegin = tmp - data -> str;
+				chunkbegin += 2;
+
+				chunklen = strtol(data -> str + idx, NULL, 16);
+				g_debug("Chunk length: %d idx %d", chunklen, idx);
+				/*
+				 * We will read the data according to the
+				 * chunked
+				 */
+				need_to_read = G_MAXSIZE;
+			}
+
+			if(chunklen != -1 && chunkbegin + chunklen <= data -> len){
+				idx += (chunkbegin + chunklen + 2);
+				totalchunklen += chunklen;
+				g_string_append_len(r -> msg, data -> str + chunkbegin
+							, chunklen);
+				g_debug("Append chunk. lenght : %d", chunklen);
+
+				chunklen = -1;
+			}
+		}
+		if(bytes_read < want_read){
+			g_debug("bytes_read < want_read. %d %d", bytes_read
+					, want_read);
+			break;
+		}	
+	}//end of while(need_to_read > 0)...
 	g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
+	g_debug("Data len %d(%s, %d): %s",data -> len,  __FILE__
+				, __LINE__, data -> str);
+
 	if(r == NULL){
 		//we do not find "\r\n\r\n".
 		//Should not happen.
 		g_warning("Read all data, but not find all headers.!"
 				"(%s, %d)", __FILE__, __LINE__);
 		g_string_free(data, TRUE);
-		g_string_free(content, TRUE);
 		return -1;
 	}
-	//copy the message to r -> msg;
-	g_string_append_len(r -> msg, data -> str, data -> len);
-	g_debug("Append %d bytes message to r -> msg."
-			"r -> msg -> len: %d (%s, %d)"
-			, data -> len, r -> msg -> len, __FILE__, __LINE__);
+
+	if(!ischunked){
+		//copy the message to r -> msg;
+		g_string_append_len(r -> msg, data -> str, data -> len);
+		g_debug("Append %d bytes message to r -> msg."
+				"r -> msg -> len: %d (%s, %d)"
+				, data -> len, r -> msg -> len, __FILE__, __LINE__);
+	}else{
+		g_debug("Total chunk length: %d", totalchunklen);
+	}
 	#undef BUFSIZE
+	
+	if(isgzip){
+		/*
+		 * ungzip the data
+		 */
+		GString *out = g_string_new(NULL);
+		ungzip(r -> msg, out);
+		g_string_truncate(r -> msg, 0);
+		g_string_append(r -> msg, out -> str);
+		g_string_free(out, TRUE);
+		g_debug("Ungzip data. After len %d." , r -> msg -> len);
+	}
+
 	*rp = r;
-	if(!nocontentlength && r -> msg -> len != cl){
+	if(gotcl && r -> msg -> len != cl && tev == NULL){
 		g_warning("No read all the message!! content length:%d"
 				" msg -> len: %d. (%s, %d)"
 				, cl, r -> msg -> len, __FILE__, __LINE__);
 	}
 	g_string_free(data, TRUE);
-	g_string_free(content, TRUE);
 	g_debug("Free the temporary memory.(%s, %d)", __FILE__, __LINE__);
 	return 0;
 }

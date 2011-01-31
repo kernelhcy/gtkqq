@@ -36,11 +36,11 @@ void close_con(Connection* con);
 /*
  * sent the request to fd.
  */
-int send_request(Connection* con, Request *r);
+gint send_request(Connection* con, Request *r);
 
 /*
  * read the response from fd.
  * the response will store in **r.
  */
-int rcv_response(Connection* con, Response **rp);
+gint rcv_response(Connection* con, Response **rp);
 #endif
