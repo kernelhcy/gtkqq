@@ -98,6 +98,10 @@ gchar* response_get_header_chars(Response *rp, const gchar *header);
  * convert response to the string format
  */
 GString* response_tostring(Response* r);
+/*
+ * only convert the headers and status line to the string format
+ */
+GString* response_headers_tostring(Response* r);
 
 
 /*

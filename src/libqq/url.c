@@ -376,10 +376,6 @@ gint rcv_response(Connection *con, Response **rp)
 					isgzip = TRUE;
 				}
 			}
-			GString *rtos = response_tostring(r);
-			g_debug("RESPONSE: (%s, %d)\n%s", __FILE__, __LINE__
-					, rtos -> str);
-			g_string_free(rtos, TRUE);
 		}
 
 		if(ischunked){
@@ -418,8 +414,6 @@ gint rcv_response(Connection *con, Response **rp)
 		}	
 	}//end of while(need_to_read > 0)...
 	g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
-	g_debug("Data len %d(%s, %d): %s",data -> len,  __FILE__
-				, __LINE__, data -> str);
 
 	if(r == NULL){
 		//we do not find "\r\n\r\n".
@@ -441,6 +435,12 @@ gint rcv_response(Connection *con, Response **rp)
 	}
 	#undef BUFSIZE
 	
+	if(gotcl && r -> msg -> len != cl && tev == NULL){
+		g_warning("No read all the message!! content length:%d"
+				" msg -> len: %d. (%s, %d)"
+				, cl, r -> msg -> len, __FILE__, __LINE__);
+	}
+
 	if(isgzip){
 		/*
 		 * ungzip the data
@@ -454,11 +454,6 @@ gint rcv_response(Connection *con, Response **rp)
 	}
 
 	*rp = r;
-	if(gotcl && r -> msg -> len != cl && tev == NULL){
-		g_warning("No read all the message!! content length:%d"
-				" msg -> len: %d. (%s, %d)"
-				, cl, r -> msg -> len, __FILE__, __LINE__);
-	}
 	g_string_free(data, TRUE);
 	g_debug("Free the temporary memory.(%s, %d)", __FILE__, __LINE__);
 	return 0;

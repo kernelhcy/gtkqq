@@ -302,7 +302,6 @@ Response* response_new_parse(GString* s)
 				rps[i] = '\0';
 				GString* n = g_string_new(name);
 				GString* v = g_string_new(value);
-				g_debug("Header: %s:%s", n -> str, v -> str);
 
 				GString* tmpv = g_tree_lookup(r -> headers, n);
 				if(tmpv != NULL){
@@ -331,7 +330,7 @@ Response* response_new_parse(GString* s)
 	return r;
 }
 
-GString* response_tostring(Response *r)
+GString* response_headers_tostring(Response *r)
 {
 	if(r == NULL){
 		return NULL;
@@ -348,8 +347,17 @@ GString* response_tostring(Response *r)
 	g_tree_foreach(r -> headers, toStringTraverseFunc, s);
 	g_string_append(s, CRLF);
 	
-	//g_string_append(s, r -> msg -> str);
-	
+	return s;
+}
+
+GString* response_tostring(Response *r)
+{
+	if(r == NULL){
+		return NULL;
+	}
+
+	GString *s = response_headers_tostring(r);
+	g_string_append(s, r -> msg -> str);
 	return s;
 }
 

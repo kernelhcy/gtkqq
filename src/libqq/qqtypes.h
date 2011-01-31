@@ -18,6 +18,14 @@ struct _QQInfo{
 	GThread *mainloopthread;
 	GMainLoop *mainloop;
 	GMainContext *mainctx;	
+
+	GString *uin;
+	GString *status;
+
+	GString *verify_code;		//the verify code return from server
+	GString *vc_type;		//vc_type
+	gboolean need_vcimage;		//if we need get the verify code image
+	GString *ptvfsession;		
 };
 
 QQInfo* qq_info_new();

@@ -11,6 +11,13 @@ QQInfo* qq_info_new()
 	info -> mainctx = NULL;
 	info -> mainloopthread = NULL;
 
+	info -> uin = NULL;
+	info -> status = NULL;
+	info -> vc_type = NULL;
+	info -> verify_code = NULL;
+	info -> ptvfsession = NULL;
+	info -> need_vcimage = FALSE;
+
 	return info;
 }
 
@@ -22,6 +29,12 @@ void qq_info_free(QQInfo *info)
 	
 	g_main_loop_unref(info -> mainloop);
 	g_main_context_unref(info -> mainctx);
+
+	g_string_free(info -> uin, TRUE);
+	g_string_free(info -> status, TRUE);
+	g_string_free(info -> vc_type, TRUE);
+	g_string_free(info -> verify_code, TRUE);
+	g_string_free(info -> ptvfsession, TRUE);
 
 	g_slice_free(QQInfo, info);
 }

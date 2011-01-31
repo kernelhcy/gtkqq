@@ -18,19 +18,14 @@ typedef enum{
 typedef void (*QQCallBack)(CallBackResult re, gpointer data);
 
 /*
- * Init
- * Get html, js information from the server
- */
-void QQ_init(QQInfo *info, QQCallBack cb);
-
-/*
  * Login
+ * @param info store the information used by this program
  * @param uin the QQ number
  * @param passwd the QQ password
  * @param verifycode the verify code
  */
-void QQ_login(const gchar *uin, const gchar *passwd, const gchar *verifycode
-			, QQCallBack cb);
+void QQ_login(QQInfo *info, const gchar *uin, const gchar *passwd
+		, const gchar *verifycode, QQCallBack cb);
 
 /*
  * Logout
