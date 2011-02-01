@@ -14,6 +14,7 @@ QQInfo* qq_info_new()
 	info -> uin = NULL;
 	info -> status = NULL;
 	info -> vc_type = NULL;
+	info -> vc_image_data = NULL;
 	info -> verify_code = NULL;
 	info -> ptvfsession = NULL;
 	info -> need_vcimage = FALSE;
@@ -33,6 +34,7 @@ void qq_info_free(QQInfo *info)
 	g_string_free(info -> uin, TRUE);
 	g_string_free(info -> status, TRUE);
 	g_string_free(info -> vc_type, TRUE);
+	g_string_free(info -> vc_image_data, TRUE);
 	g_string_free(info -> verify_code, TRUE);
 	g_string_free(info -> ptvfsession, TRUE);
 

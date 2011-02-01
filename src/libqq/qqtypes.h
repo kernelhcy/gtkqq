@@ -25,6 +25,7 @@ struct _QQInfo{
 	GString *verify_code;		//the verify code return from server
 	GString *vc_type;		//vc_type
 	gboolean need_vcimage;		//if we need get the verify code image
+	GString *vc_image_data;		//store the verify code image data
 	GString *ptvfsession;		
 };
 

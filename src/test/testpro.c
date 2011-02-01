@@ -6,8 +6,8 @@ int main(int argc, char **argv)
 {
 	log_init();
 	QQInfo *info = qq_info_new();
-	//qq_login(info, "1421032531", "1234567890", "asdf",NULL);
-	qq_login(info, "494498045", "1234567890", "asdf",NULL);
+	qq_login(info, "1421032531", "1234567890", "asdf",NULL);
+//	qq_login(info, "494498045", "1234567890", "asdf",NULL);
  
 	sleep(100000);
 	return 0;

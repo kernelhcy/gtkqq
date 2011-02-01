@@ -39,7 +39,7 @@ static gpointer start_main_loop(gpointer *data)
  */
 static gint check_verify_code(QQInfo *info)
 {
-	g_debug("Check veriry code...");
+	g_debug("Check veriry code...(%s, %d)", __FILE__, __LINE__);
 	gint ret = 0;
 	gchar params[300];
 
@@ -146,6 +146,40 @@ error:
 }
 
 /*
+ * Get the verify code image form the server
+ */
+static gint get_vc_image(QQInfo *info)
+{
+	gint ret = 0;
+	gchar params[300];
+
+	Request *req = request_new();
+	Response *rps = NULL;
+	request_set_method(req, "GET");
+	request_set_version(req, "HTTP/1.1");
+	g_sprintf(params, IMAGEPATH"?uin=%s&aid="APPID"&r=%.16f&vc_type=%s"
+			, info -> uin -> str, g_random_double()
+			, info -> vc_type -> str);
+	request_set_uri(req, params);
+	request_set_default_headers(req);
+	request_add_header(req, "Host", IMAGEHOST);
+
+	Connection *con = connect_to_host(IMAGEHOST, 80);
+	send_request(con, req);
+	rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	info -> vc_image_data = g_string_new(NULL);
+	g_string_append_len(info -> vc_image_data, rps -> msg -> str
+				, rps -> msg -> len);
+
+	request_del(req);
+	response_del(rps);
+	return ret;
+}
+
+/*
  * do_init function parameter struct
  */
 struct InitParam{
@@ -182,9 +216,6 @@ static gboolean do_init(gpointer data)
 			"&no_verifyimg=1&style=4&s_url="LOGIN_S_URL);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINPAGEHOST);
-	GString *qs = request_tostring(req);
-	g_debug(qs-> str);
-	g_string_free(qs, TRUE);
 
 	Connection *con = connect_to_host(LOGINPAGEHOST, 80);
 	send_request(con, req);
@@ -195,9 +226,15 @@ static gboolean do_init(gpointer data)
 	request_del(req);
 	response_del(rps);
 
-	if(check_verify_code(info) < 0){
-	}
+	check_verify_code(info);
 
+	if(info -> need_vcimage){
+		g_debug("Get verify code image...(%s, %d)", __FILE__, __LINE__);
+		get_vc_image(info);
+		g_debug("Verify code image length: %d (%s, %d)"
+				, info -> vc_image_data -> len
+				, __FILE__, __LINE__);
+	}
 	g_debug("Get javascript sources...");
 	g_debug("Parse the information...");
 	g_debug("Initial done.");

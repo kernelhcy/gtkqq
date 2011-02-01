@@ -57,18 +57,17 @@ Connection* connect_to_host(const char *hostname, int port)
 			return NULL;
 		}
 		
-		g_debug("create a socket %d", sockfd);
 		sinp = (struct sockaddr_in *)aip -> ai_addr;
-		
 		/*
 		 * the http protocol uses port 80
 		 */
 		sinp -> sin_port = htons((gint16)port);
 		
-		g_debug("Address: %s Port %d"
+		g_debug("Address: %s Port %d (%s, %d)"
 				, inet_ntop(AF_INET, &sinp -> sin_addr
 						, buf, BUFLEN)
-				, ntohs(sinp -> sin_port));
+				, ntohs(sinp -> sin_port)
+				, __FILE__, __LINE__);
 		
 		if(connect(sockfd,aip -> ai_addr, aip -> ai_addrlen) < 0){
 			close(sockfd);
@@ -78,14 +77,10 @@ Connection* connect_to_host(const char *hostname, int port)
 			continue;
 		}
 		//connect to the host success.
-		//break;
+		break;
 	}
 	#undef BUFLEN
-	if(aip != NULL){
-		for(aip = aip -> ai_next; aip != NULL; aip = aip -> ai_next){
-			freeaddrinfo(aip);
-		}
-	}
+	freeaddrinfo(ailist);
 	
 	Connection *con = connection_new();
 	con -> fd = sockfd;

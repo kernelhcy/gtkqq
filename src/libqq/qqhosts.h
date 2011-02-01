@@ -18,4 +18,7 @@
 
 #define APPID		"1003903"
 
+#define IMAGEHOST	"captcha.qq.com"
+#define IMAGEPATH	"/getimage"
+
 #endif
