@@ -211,6 +211,8 @@ AC_CONFIG_FILES([Makefile
 		 src/libqq/Makefile 
 		 src/cli/Makefile
 		 src/gui/Makefile
+		 src/gui/tencent/Makefile
+		 src/gui/test/Makefile
 		 src/tool/Makefile
 		 src/misc/Makefile
 		 src/test/Makefile])
