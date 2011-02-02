@@ -1,6 +1,9 @@
 #ifndef __GTKQQ_QQTYPES_H
 #define __GTKQQ_QQTYPES_H
 #include <glib.h>
+
+#define SL g_debug("(%s, %d)", __FILE__, __LINE__);
+
 /*
  * The data structures of gtkqq
  */
@@ -26,7 +29,12 @@ struct _QQInfo{
 	GString *vc_type;		//vc_type
 	gboolean need_vcimage;		//if we need get the verify code image
 	GString *vc_image_data;		//store the verify code image data
+	GString *vc_image_type;		//the verify code image file type
 	GString *ptvfsession;		
+
+	GString *version;
+	GString *ptwebqq;
+	GString *ptuserinfo;
 };
 
 QQInfo* qq_info_new();

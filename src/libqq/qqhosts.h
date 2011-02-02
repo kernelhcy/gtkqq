@@ -10,7 +10,10 @@
 #define LOGINPAGEHOST	"ui.ptlogin2.qq.com"
 #define LOGINPAGEPATH	"/cgi-bin/login"
 #define LOGINPROXY	"web2.qq.com/loginproxy.html"
-#define LOGIN_S_URL	"http://web2.qq.com/loginproxy.html"
+#define LOGIN_S_URL	"http%3A%2F%2Fweb2.qq.com%2Floginproxy.html%3"\
+					"Flogin_level%3D3"
+
+#define VERPATH		"/cgi-bin/ver"
 
 #define LOGINHOST	"ptlogin2.qq.com"
 #define VCCHECKPATH	"/check"

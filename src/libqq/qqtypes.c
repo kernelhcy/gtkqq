@@ -15,9 +15,14 @@ QQInfo* qq_info_new()
 	info -> status = NULL;
 	info -> vc_type = NULL;
 	info -> vc_image_data = NULL;
+	info -> vc_image_type = NULL;
 	info -> verify_code = NULL;
 	info -> ptvfsession = NULL;
 	info -> need_vcimage = FALSE;
+
+	info -> ptwebqq = NULL;
+	info -> version = NULL;
+	info -> ptuserinfo = NULL;
 
 	return info;
 }
@@ -35,8 +40,12 @@ void qq_info_free(QQInfo *info)
 	g_string_free(info -> status, TRUE);
 	g_string_free(info -> vc_type, TRUE);
 	g_string_free(info -> vc_image_data, TRUE);
+	g_string_free(info -> vc_image_type, TRUE);
 	g_string_free(info -> verify_code, TRUE);
 	g_string_free(info -> ptvfsession, TRUE);
+	g_string_free(info -> version, TRUE);
+	g_string_free(info -> ptuserinfo, TRUE);
+	g_string_free(info -> ptwebqq, TRUE);
 
 	g_slice_free(QQInfo, info);
 }

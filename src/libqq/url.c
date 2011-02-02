@@ -44,7 +44,7 @@ Connection* connect_to_host(const char *hostname, int port)
 		return NULL;
 	}
 	
-	g_debug("Got addrinfo.");
+	g_debug("Got addrinfo.(%s, %d)", __FILE__, __LINE__);
 	struct sockaddr_in *sinp;
 	#define BUFLEN 200
 	gchar buf[BUFLEN];
@@ -135,23 +135,28 @@ gint send_request(Connection *con, Request *r)
 					, __LINE__);
 			break;
 		case G_IO_STATUS_EOF:
-			g_warning("Write data EOF!! What's happenning??");
+			g_warning("Write data EOF!! What's happenning??(%s, %d)"
+					, __FILE__, __LINE__);
 			return -1;
 		case G_IO_STATUS_ERROR:
-			g_warning("Write data ERROR!! code:%d msg:%s"
-					, err -> code, err -> message);
+			g_warning("Write data ERROR!! code:%d msg:%s (%s, %d)"
+					, err -> code, err -> message
+					, __FILE__, __LINE__);
 			return -1;
 		case G_IO_STATUS_AGAIN:
-			g_debug("Channel temporarily unavailable.");
+			g_debug("Channel temporarily unavailable.(%s, %d)"
+					, __FILE__, __LINE__);
 			break;
 		default:
-			g_warning("Unknown io status!");
+			g_warning("Unknown io status!(%s, %d)"
+					, __FILE__, __LINE__);
 			return -1;
 		}
 	}
 	status = g_io_channel_flush(con -> channel, &err);
 	if(status != G_IO_STATUS_NORMAL){
-		g_warning("Flush io channel error! But don't warry...");
+		g_warning("Flush io channel error! But don't warry...(%s, %d)"
+				, __FILE__, __LINE__);
 	}	
 	g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
 	g_string_free(rq, TRUE);
@@ -189,7 +194,7 @@ static int ungzip(GString *in, GString *out)
 	switch(ret)
 	{
 	case Z_OK:
-		g_debug("Initial zlib. done.");
+		g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
 		break;
 	case Z_MEM_ERROR:
 	case Z_VERSION_ERROR:
@@ -356,7 +361,8 @@ gint rcv_response(Connection *con, Response **rp)
 			gchar *connection = response_get_header_chars(r
 						, "Connection");	
 			if(connection != NULL){
-				g_debug("Connection: %s", connection);
+				g_debug("Connection: %s (%s, %d)", connection
+						, __FILE__, __LINE__);
 				if(g_strstr_len(connection, -1, "close") 
 							!= NULL){
 					conclose = TRUE;
@@ -366,7 +372,8 @@ gint rcv_response(Connection *con, Response **rp)
 			gchar *ce = response_get_header_chars(r
 					, "Content-Encoding");
 			if(ce != NULL){
-				g_debug("Content-Encoding: %s", ce);
+				g_debug("Content-Encoding: %s (%s, %d)", ce
+						, __FILE__, __LINE__);
 				if(g_strstr_len(ce, -1, "gzip") != NULL){
 					isgzip = TRUE;
 				}
@@ -384,7 +391,9 @@ gint rcv_response(Connection *con, Response **rp)
 				chunkbegin += 2;
 
 				chunklen = strtol(data -> str + idx, NULL, 16);
-				g_debug("Chunk length: %d idx %d", chunklen, idx);
+				g_debug("Chunk length: %d idx %d (%s, %d)"
+						, chunklen, idx
+						, __FILE__, __LINE__);
 				/*
 				 * We will read the data according to the
 				 * chunked
@@ -397,14 +406,15 @@ gint rcv_response(Connection *con, Response **rp)
 				totalchunklen += chunklen;
 				g_string_append_len(r -> msg, data -> str + chunkbegin
 							, chunklen);
-				g_debug("Append chunk. lenght : %d", chunklen);
+				g_debug("Append chunk. lenght : %d(%s, %d)", chunklen
+						, __FILE__, __LINE__);
 
 				chunklen = -1;
 			}
 		}
 		if(bytes_read < want_read){
-			g_debug("bytes_read < want_read. %d %d", bytes_read
-					, want_read);
+			g_warning("bytes_read < want_read. %d %d(%s, %d)", bytes_read
+					, want_read, __FILE__, __LINE__);
 			break;
 		}	
 	}//end of while(need_to_read > 0)...
@@ -426,7 +436,8 @@ gint rcv_response(Connection *con, Response **rp)
 				"r -> msg -> len: %d (%s, %d)"
 				, data -> len, r -> msg -> len, __FILE__, __LINE__);
 	}else{
-		g_debug("Total chunk length: %d", totalchunklen);
+		g_debug("Total chunk length: %d (%s, %d)", totalchunklen
+				, __FILE__, __LINE__);
 	}
 	#undef BUFSIZE
 	
@@ -445,7 +456,8 @@ gint rcv_response(Connection *con, Response **rp)
 		g_string_truncate(r -> msg, 0);
 		g_string_append(r -> msg, out -> str);
 		g_string_free(out, TRUE);
-		g_debug("Ungzip data. After len %d." , r -> msg -> len);
+		g_debug("Ungzip data. After len %d.(%s, %d)" , r -> msg -> len
+				, __FILE__, __LINE__);
 	}
 
 	*rp = r;
