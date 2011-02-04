@@ -106,7 +106,7 @@ GString* request_tostring(Request *r)
 	g_tree_foreach(r -> headers, toStringTraverseFunc, s);
 	g_string_append(s, CRLF);
 	
-	g_string_append(s, r -> msg -> str);
+	g_string_append_len(s, r -> msg -> str, r -> msg -> len);
 	
 	return s;
 }
@@ -173,6 +173,9 @@ void request_append_msg(Request* r, const gchar* msg
 {
 	if(r == NULL || msg == NULL || len <= 0){
 		return;
+	}
+	if(r -> msg == NULL){
+		r -> msg = g_string_new(NULL);
 	}
 	g_string_append_len(r -> msg, msg, len);
 }
@@ -306,8 +309,8 @@ Response* response_new_parse(GString* s)
 				GString* tmpv = g_tree_lookup(r -> headers, n);
 				if(tmpv != NULL){
 					//already has the key, append value
-					//use \r\n to split them
-					g_string_append(tmpv, CRLF);
+					//use space to split them
+					g_string_append(tmpv, "  ");
 					g_string_append(tmpv, value);
 					g_string_free(n, TRUE);
 					g_string_free(v, TRUE);

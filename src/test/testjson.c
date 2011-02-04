@@ -21,9 +21,7 @@ int main(int argc, char ** argv)
 	JSON *j = JSON_new();
 	JSON_set_raw_data_c(j, input -> str, input -> len);
 	JSON_parse(j);
-	JSON_data *re = JSON_get_result(j);
-	JSON_data_print(re);
-	JSON_data_free(re);
+	JSON_print(j);
 	
 	return 0;
 }

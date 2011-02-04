@@ -24,6 +24,7 @@ struct _QQInfo{
 
 	GString *uin;
 	GString *status;
+	GString *prestatus;		//last login status
 
 	GString *verify_code;		//the verify code return from server
 	GString *vc_type;		//vc_type
@@ -34,11 +35,27 @@ struct _QQInfo{
 
 	GString *version;
 	GString *ptwebqq;
+
 	GString *ptuserinfo;
+	GString *ptcz;
+	GString *skey;
+
+	GString *psessionid;
+	GString *seskey;
+	GString *cip;
+	GString *index;
+	GString *port;
+	GString *vfwebqq;
+
+	GString *clientid;		
+	GString *cookie;
+
+	gchar errmsg[500];		//store error message.
 };
 
 QQInfo* qq_info_new();
 void qq_info_free(QQInfo *);
+void qq_append_cookie(QQInfo *, const gchar *);
 
 struct _QQMsg{
 	QQUser *to, *from;

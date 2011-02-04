@@ -44,7 +44,6 @@ Connection* connect_to_host(const char *hostname, int port)
 		return NULL;
 	}
 	
-	g_debug("Got addrinfo.(%s, %d)", __FILE__, __LINE__);
 	struct sockaddr_in *sinp;
 	#define BUFLEN 200
 	gchar buf[BUFLEN];
@@ -130,9 +129,9 @@ gint send_request(Connection *con, Request *r)
 		case G_IO_STATUS_NORMAL:
 			//write success.
 			has_written += bytes_written;
-			g_debug("Write %d bytes data.(%s, %d)"
-					, bytes_written, __FILE__
-					, __LINE__);
+			//g_debug("Write %d bytes data.(%s, %d)"
+			//		, bytes_written, __FILE__
+			//		, __LINE__);
 			break;
 		case G_IO_STATUS_EOF:
 			g_warning("Write data EOF!! What's happenning??(%s, %d)"
@@ -292,13 +291,12 @@ gint rcv_response(Connection *con, Response **rp)
 				 * send all the data.
 				 */
 				//we got all the data.
+				g_debug("Server close the connection. "
+					"data has gotten: %d(%s, %d)"
+					,bytes_read ,__FILE__, __LINE__);
 				break;
 			}
-			g_warning("Read data EOF!! What's happenning??"
-					"(%s, %d)"
-					, __FILE__, __LINE__);
-			g_string_free(data, TRUE);
-			return -1;
+			break;
 		case G_IO_STATUS_ERROR:
 			g_warning("Read data ERROR!! code:%d msg:%s"
 					"(%s, %d)"
@@ -462,7 +460,6 @@ gint rcv_response(Connection *con, Response **rp)
 
 	*rp = r;
 	g_string_free(data, TRUE);
-	g_debug("Free the temporary memory.(%s, %d)", __FILE__, __LINE__);
 	return 0;
 }
 

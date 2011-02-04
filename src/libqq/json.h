@@ -60,20 +60,6 @@ typedef struct{
 	JSON_DATA_T type;
 }JSON_data;
 
-/*
- * create a new JSON_data instance;
- */
-JSON_data* JSON_data_new();
-/*
- * free all the data in jd.
- */
-void JSON_data_free(JSON_data *jd);
-
-/*
- * print all the data.
- */
-void JSON_data_print(JSON_data *jd);
-
 //json
 typedef struct{
 	GString *data;		//origin data, need to parse
@@ -93,7 +79,7 @@ typedef struct{
  */
 JSON* JSON_new();
 void JSON_free(JSON *j);
-
+void JSON_print(JSON *j);
 /*
  * reset the JSON instance
  * delete all the data.
@@ -101,15 +87,17 @@ void JSON_free(JSON *j);
 void JSON_reset(JSON *j);
 
 /*
+ * Find the value of key whoes type is type.
+ *
+ * Return NULL, if not found or type not match
+ */
+gpointer JSON_find_pair_value(JSON *j, JSON_DATA_T type, const gchar *key);
+
+/*
  * set the data need to parse
  */
 void JSON_set_raw_data(JSON *j, GString *raw);
 void JSON_set_raw_data_c(JSON *j, const gchar *raw, gsize len);
-
-/*
- * get the result
- */
-JSON_data* JSON_get_result(JSON *j);
 
 /*
  * parse the data.

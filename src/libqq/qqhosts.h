@@ -24,4 +24,7 @@
 #define IMAGEHOST	"captcha.qq.com"
 #define IMAGEPATH	"/getimage"
 
+#define PSIDHOST	"d.web2.qq.com"
+#define PSIDPATH	"/channel/login2"
+
 #endif

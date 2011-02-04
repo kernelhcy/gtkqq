@@ -1,0 +1,163 @@
+写下这个标题的时候，您可能要问，webqq登录协议有什么用？很简单，qq所有产品都是采用统一的登录协议加密登录的。也就是说，当您能够通过使用它的协议来登录并获取到令牌后，那么就可以任意的使用qq的各项产品了，如webqq，空间，微博，校友。。等等的。而本文主要就是讲述下如何通过技术手段来使用webqq的协议，从而获取到登录令牌。所有完整的源代码，可以从我的开源项目 CDM SYSTEM中的pushblog插件获取并且试用。地址是：http://code.google.com/p/linblog/
+
+一、腾讯产品的登录与验证过程
+
+       腾讯产品的登录一共需要经过三次验证，分别是在登录页面1、验证帐号状态，并通过帐号获取令牌的原始密钥；2、对原始密钥进行运算生成令牌密钥并提交服务器，服务器进行一次验证；3、经过第二次验证通过，服务器自动跳转，进行第三此验证，最后返回登录令牌……终成功后才能获取到加密过后的登录令牌，而利用此令牌就可以顺利的操作任何腾讯的产品与服务了。接下来我们以腾讯微博为例来进行一些在合法的限度内的讲解，旨在开拓各位读者的思维与分享技术思路，因此如果您抱着想要通过本文的讲解来进行获利的目的，那我建议您可以就此打住了。因为，接下来的内容中我并不会去讲解或者说分享那些您会感兴趣的东西。
+
+二、协议详解
+
+       1、言归正传，首先第一次的登录是发生在我们打开登录页面的时候。   还是以腾讯微博为例，当我们打开微博的登录页面时，页面上的js会触发一个地址：http://ptlogin2.qq.com/check?uin=939567050&appid=46000101&r=0.5354662109559408
+
+这个地址是用来判断您的用户名是否是正常状态，以及是否有效用户名，并返回一个状态值以及一个验证码。其中uin就是你的用户名，appid指的是腾讯产品的编码。r是一个随机生成的数字，用来避免浏览器缓存。
+
+ 
+
+   正常时，请求这个地址，会获得类似ptui_checkVC('0','!AFO');这样的返回值，这其中0是代表正常状态，不采用图片验证。但是如果短时间内这个帐号多次在不同的ip登录，那么返回值就是另外的一种返回值了，那表明需要进行图片验证码验证。
+此外，0还有可能变为其他的数值，用来标明诸如帐号不存在，帐号状态不正确，帐号已锁定等等的。。。。。而后面的!AFO是四位则是我们需要获得的原始令牌值，它是由腾讯服务器随机生成的一个令牌的原始密钥。当然也许您在获取的时候会发现这个值并不是4位，而是很多位。那么就要恭喜您了，您获得也是令牌的原始密钥，只不过不同的是，您获得是图片验证码的原始密钥而已。
+
+当然其实图形验证码的自动识别也很简单，只是这已经超出本文的范围了，以后有机会可以与大家再次分享下。此时，当我们正确的获得!AFO时就已经完成了第一次的验证！但是有一点需要注意的是：腾讯的令牌是存储在cookies中的，
+
+所以请注意每次操作都必须要保存好服务器返回来的cookies。以下为python语言写的的示例代码，此代码可以从http://code.google.com/p/linblog/ 中的pushmodel.py文件中获取。
+
+ 
+
+def Get_qq_msg_val(self,username,password):
+				verifyURL = 'http://ptlogin2.qq.com/check?uin=%s&appid=46000101&r=%s'% (username,random.random())
+				loginURL = 'http://ptlogin2.qq.com/login?'
+				redirectURL = ''
+				cookie = ''
+				qqn = username
+				md5Pass = ''
+				verifyCode = ''
+				result = urlfetch.fetch(url=verifyURL,method=urlfetch.GET,
+						follow_redirects = False,headers={
+						'Content-Type': 'application/x-www-form-urlencoded',
+						'user-agent':'Mozilla/5.0 (Linux; U; Linux i686; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.4.2.80 Safari/525.13',
+						},)
+				cookie1 = Cookie.SimpleCookie(result.headers.get('set-cookie', ''))
+				verifyCode=result.content[18:-3]
+				if len(verifyCode)>4:
+						return False,None
+				loginURL += "u=%s&p="% username
+				loginURL+=self.EncodePasswordWithVerifyCode(password,verifyCode)
+				loginURL += "&verifycode="+verifyCode+"&aid=46000101&u1=http%3A%2F%2Ft.qq.com&ptredirect=1&h=1&from_ui=1&fp=loginerroralert"
+				result=urlfetch.fetch(url=loginURL,
+						headers={'Referer':'http://t.qq.com',
+						'Cookie' : self.make_cookie_header(cookie1),
+						'Content-Type': 'application/x-www-form-urlencoded',
+						'user-agent':'Mozilla/5.0 (Linux; U; Linux i686; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.4.2.80 Safari/525.13',
+						},
+						method=urlfetch.GET,
+						follow_redirects = False,
+				)
+				setCookies = result.headers.get('set-cookie', '').split(';')
+				cookie2 = ''
+				cookie2+=setCookies[29]
+				cookie2+=setCookies[7]
+				cookie2+=setCookies[4]
+				cookie2+=';'+setCookies[0]
+				cookie2 = cookie2.replace(',', ';')
+				cookie2 = cookie2[1:]
+				callback_url = result.headers.get('location','http://t.qq.com')
+				result,cookies = self.do_redirect(callback_url, cookie2)
+
+				return result,cookies
+ 
+
+ 
+
+ 
+
+     2、此时我们需要对获取到的原始密钥进行一系列的运算，从而得到令牌密钥。这个算法其实也很简单，就是先把用户密码连续进行两次md5加密，每次md5加密输出二进制的结果，然后在对经过两次md5加密后的结果在进行一次md5加密，最后输出16进制大写的结果。在把我们第一步获取到的原始密钥合并在此结果之后，形成一个新的字符串。并且再次对此字符串进行md5加密，并输出16进制大写的字符串。此时，此字符串就为令牌密钥了。示例代码如下
+
+ 
+
+                def md5hash(self,str):
+				return hashlib.md5(str).digest()
+		def hex_md5hash(self,str):
+				return hashlib.md5(str).hexdigest().upper()
+		def md5hash_3(self,str):
+				return self.hex_md5hash(self.md5hash(self.md5hash(str)))
+		def EncodePasswordWithVerifyCode(self,pwd, verifyCode):
+				return self.hex_md5hash(self.md5hash_3(pwd) + verifyCode.upper())
+EncodePasswordWithVerifyCode()即为此加密算法，pwd是密码，verifyCode为我们第一步获取到的4位的原始密钥。
+  3、接下来，我们需要把这个原始密钥送到腾讯的服务器进行验证，并返回令牌结果。服务器的地址为：http://ptlogin2.qq.com/login?u=alexliyu2012@qq.com&p=D265C1F4C6C1D36AF17A086448FA996D&verifycode=!NDJ&aid=46000101&u1=http%3A%2F%2Ft.qq.com&ptredirect=1&h=1&from_ui=1&dumy=&fp=loginerroralert
+
+这其中，u代表是用户帐号，p就是我们第二步所生成的令牌密钥，verifycode为我们第一步获取的原始密钥，u1为我们登录的产品地址，至于后面的那些参数不用管它，写什么都无所谓的。我们只要生成此链接并请求后，服务器通过验证就会返回给我们最终的令牌。只是此令牌并不是返回一组数据，而是全部以cookies的形式返回。这是我们需要注意的第一点，其次是当我们请求此地址时，此地址会返回如下的cookies
+
+ 
+
+pt2gguin	o0939567050	/	qq.com	Fri, 02-Jan-2020 00:00:00 GMT
+uin	o0939567050	/	qq.com	End Of Session
+skey	@aw6EH0ljo	/	qq.com	End Of Session
+clientuin		/	qq.com	Fri, 02-Jan-1970 00:00:00 GMT
+clientkey		/	qq.com	Fri, 02-Jan-1970 00:00:00 GMT
+zzpaneluin		/	qq.com	Fri, 02-Jan-1970 00:00:00 GMT
+zzpanelkey		/	qq.com	Fri, 02-Jan-1970 00:00:00 GMT
+ptisp	ctc	/	qq.com	End Of Session
+ptcz	f41721c4e7bc752fdeae10c9cb2db66ca66af1049a4835185acfdfe2a26860e5	/	qq.com	Fri, 02-Jan-2020 00:00:00 GMT
+airkey		/	qq.com	Fri, 02-Jan-1970 00:00:00 GMT
+这其中其他的都不用解释了，看命名就知道作用了。我要提醒的是，skey这个cookie以及ptcz是关键。为什么呢？因为skey这个值，在很多地方都非常有用，比如添加好友，或者qzone发布日志，都需要对此值进行验证。当然最保险的方法仍旧是cookies每次一次的都保留起来，一个都不放过，哈哈。
+
+接下来当此地址验证通过后，腾讯会给你添加如上的cookies然后自动跳转到最后一个验证页面，一般来说此页面为你登录服务的主页，但是也有例外，比如qzone，就是一个successd的页面。这个自己嗅探一下就可以了。
+
+还是以qq微博为例，这一步会跳转到t.qq.com页面去，在这个页面中会返回给一个诸如：mb_june SjrVWJyAbfrtNS5yh0cbbcZtCr%2FIvvqtBwVtFE6JCG4G0CY46WdpVX1%2FnGuAfXZE / t.qq.com Mon, 20-Sep-2010 14:48:27 GMT 这样的cookies值。此时，算是令牌已经获取到了。解析来，只要你一直保存有这些cookies，就可以操作腾讯任意的服务了。需要提醒大家注意一点就是，这个令牌是通用的，也就是你是在t.qq.com登录与获取的令牌,但是通过此令牌一样的可以操作webqq或者qzone，而不用再次的进行登录了。
+
+ 
+
+def do_redirect(self,url, cookie):
+				logging.info(url)
+				result = urlfetch.fetch(
+				url=url,
+				headers={'Cookie':cookie,
+					'Content-Type': 'application/x-www-form-urlencoded',
+					'user-agent':'Mozilla/5.0 (Linux; U; Linux i686; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.4.2.80 Safari/525.13',},
+					method=urlfetch.GET,
+					follow_redirects = False,
+					)
+				return result,cookie
+三、如何操作腾讯的应用服务
+
+      这个其实就是苦功夫了，你可以通过socket直接与服务器进行通讯，或者使用webqq的协议，或者使用腾讯每个服务自己的web页面的接口来实现。但是，这些都需要您去进行嗅探并且分析协议的内容。相对来说，web页面直接的接口是最简单的，无非就是post表单过去，或者对页面进行get请求，然后得到返回值，在对返回值进行操作并再次的发起请求而已。其次是webqq协议也相对好解决它是通过与http://web-proxy24.qq.com/ （24这个数字是可以变化的，具体看你使用哪个服务器了，这只是腾讯的通信代理服务器）进行json格式的数据交换而已，而且所有信息都是明文的，也很好理解。自己尝试一段时间，就能搞清楚协议中每个参数以及api的含义了。对此，李昱有利用业余时间做了一个qq聊天机器人玩，但是讲起来太多了，也太敏感了，因此本文并不进行探讨，以后有空在与大家进行分享。下面就简单的给出发布qq微博与qzone文章的代码以便于大家理解，具体不再进行解释了。
+
+qq微博的发送代码：
+
+ 
+
+def send_qq_msgs(self,username,password,msg,memcachekey):
+			"""
+			send sina msgs. use qq username, password.
+			the msgs parameter is a message list, not a single string.
+			"""
+			cookie=''
+			if memcache.get(memcachekey):
+				cookie=memcache.get(memcachekey)
+			else:
+				result,oldcookie=self.Get_qq_msg_val(username,password)
+				if result==False:
+					return False
+				cookie='%s;%s'% (result.headers.get('set-cookie', ''),oldcookie)
+				memcache.set(memcachekey,cookie,36000)
+			msg=unescape(msg)
+			form_fields = {
+			  "content": msg,
+			  "pic":'',
+			  "countType":'',
+			  "viewModel":1
+			}
+			form_data = urllib.urlencode(form_fields)
+			try:
+				result = urlfetch.fetch(url="http://t.qq.com/publish.php?rnd=0.5100760071072727",
+								payload=form_data,
+								method=urlfetch.POST,
+								headers={'Referer':'http://t.qq.com',
+								'Cookie' : cookie,
+								'user-agent':'Mozilla/5.0 (Linux; U; Linux i686; en-US) AppleWebKit/525.13 (KHTML, like Gecko) Chrome/0.4.2.80 Safari/525.13',
+
+								},follow_redirects = False)
+			except:
+						return False
+			if result.status_code == 200:
+						return True
+			else:
+						return False

@@ -7,6 +7,7 @@
 #include <fcntl.h>
 #include <errno.h>
 #include <string.h>
+#include <json.h>
 
 /*
  * The main loop thread's main function.
@@ -37,6 +38,33 @@ static gpointer start_main_loop(gpointer *data)
 	 */
 	g_debug("Quit main event loop.(%s, %d)", __FILE__, __LINE__);
 	return NULL;
+}
+
+/*
+ * Get cookie from r.
+ * The cookie key is key
+ */
+static GString* get_cookie(Response *r, const gchar *key)
+{
+	gchar *cookie = response_get_header_chars(r, "Set-Cookie");
+	if(cookie == NULL){
+		g_warning("Server not set cookie!!(%s, %d)"
+				,__FILE__, __LINE__);
+		return NULL;
+	}
+	
+	gchar *val = g_strstr_len(cookie, -1, key);
+	if(val == NULL){
+		g_warning("No cookie! %s(%s, %d)", key, __FILE__, __LINE__);
+		return NULL;
+	}
+	val += (strlen(key) + 1);	//pass 'key='
+	gchar *end = g_strstr_len(val, -1, ";");
+	*end = '\0';
+	GString *re = g_string_new(val);
+	g_debug("Cookie %s=%s (%s, %d)", key, val, __FILE__, __LINE__);
+	*end = ';';
+	return re;
 }
 
 /*
@@ -107,26 +135,9 @@ static gint check_verify_code(QQInfo *info)
 		g_debug("Verify code : %s (%s, %d)", info -> verify_code -> str
 				, __FILE__, __LINE__);
 		/*
-		 * We need get the vc_type form the header "Set-Cookie"
+		 * We need get the ptvfsession from the header "Set-Cookie"
 		 */
-		gchar *cookie = response_get_header_chars(rps, "Set-Cookie");
-		if(cookie == NULL){
-			g_warning("Not found cookie when find ptvfsession!"
-					"(%s, %d)", __FILE__, __LINE__);
-			ret = -1;
-			goto error;
-		}
-		
-		g_debug("check vc cookie: %s(%s, %d)", cookie, __FILE__
-				, __LINE__);
-		gchar *ptvf = g_strstr_len(cookie, -1, "ptvfsession=");
-		ptvf += (sizeof("ptvfsession=") - 1);
-		gchar *end = g_strstr_len(ptvf, -1, ";");
-		*end = '\0';
-		info -> ptvfsession = g_string_new(ptvf);
-		g_debug("ptvfsession: %s(%s, %d)", ptvf, __FILE__, __LINE__);
-		*end = ';';
-
+		info -> ptvfsession = get_cookie(rps, "ptvfsession");
 	}else if(*c == '1'){
 		/*
 		 * We need get the verify image.
@@ -159,7 +170,7 @@ error:
 static gint get_vc_image(QQInfo *info)
 {
 	gint ret = 0;
-	gchar params[500];
+	gchar params[500];  
 
 	Request *req = request_new();
 	Response *rps = NULL;
@@ -332,8 +343,9 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc)
 	cs = g_checksum_new(G_CHECKSUM_MD5);
 	g_checksum_update(cs, buf, bsize);
 	const gchar * md5_3 = g_checksum_get_string(cs);
+	md5_3 = g_ascii_strup(md5_3, strlen(md5_3));
 	gchar buf2[100];
-	g_sprintf(buf2, "%s%s", md5_3, g_ascii_strup(vc, strlen(vc)));
+	g_sprintf(buf2, "%s%s", md5_3, vc);
 	g_checksum_free(cs);
 
 	gchar *tmp1;
@@ -347,7 +359,12 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc)
 	return re;
 }
 
-static int send_login_req(QQInfo *info, const gchar *p)
+/*
+ * Get ptca and skey
+ * return the status returned by the server.
+ * If error occured, store the error message in info -> errmsg
+ */
+static int get_ptcz_skey(QQInfo *info, const gchar *p)
 {
 	int ret = 0;
 	gchar params[300];
@@ -357,7 +374,7 @@ static int send_login_req(QQInfo *info, const gchar *p)
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
 	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=1&"
-			"remember_uin=0&aid="APPID"&u1=%s&h1=&"
+			"remember_uin=0&aid="APPID"&u1=%s&h=1&"
 			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
 			"&dumy=&fp=loginerroralert&mibao_css="
 			, info -> uin -> str, p, info -> verify_code -> str
@@ -365,6 +382,11 @@ static int send_login_req(QQInfo *info, const gchar *p)
 	request_set_uri(req, params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
+	if(info -> ptvfsession != NULL){
+		g_sprintf(params, "ptvfsession=%s; "
+				, info -> ptvfsession -> str);
+		request_add_header(req, "Cookie", params);
+	}
 
 	Connection *con = connect_to_host(LOGINHOST, 80);
 	send_request(con, req);
@@ -372,8 +394,189 @@ static int send_login_req(QQInfo *info, const gchar *p)
 	close_con(con);
 	connection_free(con);
 
-	GString *s = response_tostring(rps);
-	g_debug(s -> str);
+	gint status;
+	gchar *sbe = g_strstr_len(rps -> msg -> str, -1, "'");
+	++sbe;
+	gchar *sen = g_strstr_len(sbe, -1, "'");
+	*sen = '\0';
+	status = strtol(sbe, NULL, 10);
+	*sen = '\'';
+	ret = status;
+	if(status == 0){
+		g_debug("Success.(%s, %d)", __FILE__, __LINE__);
+	}else if(status == 1){
+		g_debug("Server busy! Please try again.(%s, %d)"
+				, __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Server busy!");
+		goto error;
+	}else if(status == 2){
+		g_debug("Out of date QQ number!(%s, %d)"
+				, __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Out of date QQ number.");
+		goto error;
+	}else if(status == 3){
+		g_debug("Wrong password!(%s, %d)", __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Wrong password.");
+		goto error;
+	}else if(status == 4){
+		g_debug("Wrong verify code!(%s, %d)", __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Wrong verify code.");
+		goto error;
+	}else if(status == 5){
+		g_debug("Verify failed!(%s, %d)", __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Verify failed.");
+		goto error;
+	}else if(status == 6){
+		g_debug("You may need to try login again.(%s, %d)", __FILE__
+				, __LINE__);
+		g_sprintf(info -> errmsg, "Please try again.");
+		goto error;
+	}else if(status == 7){
+		g_debug("Wrong input!(%s, %d)", __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Wrong input.");
+		goto error;
+	}else if(status == 8){
+		g_debug("Too many logins on this IP. Please try again.(%s, %d)"
+				, __FILE__, __LINE__);
+		g_sprintf(info -> errmsg, "Too many logins on this IP.");
+		goto error;
+	}else{
+		g_debug("Server response message:(%s, %d)\n\t%s"
+				, __FILE__, __LINE__, rps -> msg -> str);
+		goto error;
+	}
+
+	info -> ptcz = get_cookie(rps, "ptcz");
+	info -> skey = get_cookie(rps, "skey");
+	info -> ptwebqq = get_cookie(rps, "ptwebqq");
+	info -> ptuserinfo = get_cookie(rps, "ptuserinfo");
+	//sotre the cookie
+	info -> cookie = g_string_new(response_get_header_chars(rps
+				, "Set-Cookie"));
+error:
+	request_del(req);
+	response_del(rps);
+	return ret;
+}
+
+/*
+ * Generate the clientid
+ *
+ * In eqq.all.js, webqq.eqq.rpcservice: getclientid
+ * JS code:
+ * 	clientid = String(k.random(0, 99)) + String((new Date()).getTime() %
+ * 						1000000)
+ */
+static GString *generate_clientid()
+{
+	gint32 r = g_random_int_range(10, 99);
+	GTimeVal now;
+	g_get_current_time(&now);
+	glong t = now.tv_usec % 1000000;
+
+	gchar buf[20];
+	g_sprintf(buf, "%d%d", r, t);
+
+	return g_string_new(buf);
+}
+
+/*
+ * Get the psessionid.
+ *
+ * This function is the last step of loginning
+ */
+static int get_psessionid(QQInfo *info)
+{
+	int ret = 0;
+	
+	Request *req = request_new();
+	Response *rps = NULL;
+	request_set_method(req, "POST");
+	request_set_version(req, "HTTP/1.1");
+	request_set_uri(req, PSIDPATH);
+	request_set_default_headers(req);
+	request_add_header(req, "Host", PSIDHOST);
+	request_add_header(req, "Cookie2", "$Version=1");
+	request_add_header(req, "Referer"
+			, "http://d.web2.qq.com/proxy.html?v=20101025002");
+	GString *clientid = generate_clientid();
+	info -> clientid = clientid;
+	g_debug("clientid: %s", clientid -> str);
+
+	gchar* msg = g_malloc(500);
+	g_snprintf(msg, 500, "{\"status\":\"\",\"ptwebqq\":\"%s\","
+			"\"passwd_sig\":""\"\",\"clientid\":\"%s\"}"
+			, info -> ptwebqq -> str, clientid -> str);
+	gchar *escape = g_uri_escape_string(msg, NULL, FALSE);
+	g_snprintf(msg, 500, "r=%s", escape);
+	g_free(escape);
+
+	request_append_msg(req, msg, strlen(msg));
+	gchar cl[10];
+	g_sprintf(cl, "%d", strlen(msg));
+	request_add_header(req, "Content-Length", cl);
+	request_add_header(req, "Content-Type"
+			, "application/x-www-form-urlencoded");
+	g_free(msg);
+
+	gchar *cookie = g_malloc(2000);
+	gint idx = 0;
+	if(info -> ptvfsession != NULL){
+		idx += g_snprintf(cookie + idx, 2000 - idx, "ptvfsession=%s; "
+				, info -> ptvfsession -> str);
+	}
+	idx += g_snprintf(cookie + idx, 2000 - idx, "%s"
+			, info -> cookie -> str);
+	request_add_header(req, "Cookie", cookie);
+	g_free(cookie);
+
+	Connection *con = connect_to_host(PSIDHOST, 80);
+	send_request(con, req);
+	rcv_response(con, &rps);
+
+	JSON *json = JSON_new();
+	JSON_set_raw_data_c(json, rps -> msg -> str, rps -> msg -> len);
+	if(JSON_parse(json) != 0){
+		g_warning("Parse JSON data error!!(%s, %d)", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
+	JSON_DATA_T type;
+	JSON_data *jd = (JSON_data*)json -> result;
+	if(jd -> type != JSON_OBJECT){
+		g_warning("JSON data format error!!(%s, %d)", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
+	GString *val;
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "retcode");
+	if(val -> str[0] != '0'){
+		g_warning("Server return code %s", val -> str);
+		ret = -1;
+		goto error;
+	}
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "seskey");
+	g_debug("seskey: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	info -> seskey = g_string_new(val -> str);
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "cip");
+	info -> cip = g_string_new(val -> str);
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "index");
+	info -> index = g_string_new(val -> str);
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "port");
+	info -> port = g_string_new(val -> str);
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "status");
+	g_debug("status: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "vfwebqq");
+	g_debug("vfwebqq: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	info -> vfwebqq = g_string_new(val -> str);
+	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "psessionid");
+	g_debug("psessionid: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	info -> psessionid = g_string_new(val -> str);
+
+error:
+	JSON_free(json);
+	close_con(con);
+	connection_free(con);
 	request_del(req);
 	response_del(rps);
 	return ret;
@@ -401,32 +604,11 @@ static gboolean do_login(gpointer data)
 	QQInfo *info = ((struct InitParam *)data) -> info;
 	gchar *passwd = ((struct InitParam *)data) -> passwd;
 
-	g_debug("Do init...(%s, %d)", __FILE__, __LINE__);
 	if(cb != NULL){
 		g_debug("Call the callback function in do_init.(%s, %d)"
 				, __FILE__, __LINE__);
 		cb(CB_SUCCESS, NULL);
 	}
-	g_debug("Get login page source...(%s, %d)", __FILE__, __LINE__);
-	
-	Request *req = request_new();
-	Response *rps = NULL;
-	request_set_method(req, "GET");
-	request_set_version(req, "HTTP/1.1");
-	request_set_uri(req, LOGINPAGEPATH 
-			"?target=self&appid=1003903&enable_qlogin=0"
-			"&no_verifyimg=1&style=4&s_url="LOGIN_S_URL);
-	request_set_default_headers(req);
-	request_add_header(req, "Host", LOGINPAGEHOST);
-
-	Connection *con = connect_to_host(LOGINPAGEHOST, 80);
-	send_request(con, req);
-	rcv_response(con, &rps);
-	close_con(con);
-	connection_free(con);
-
-	request_del(req);
-	response_del(rps);
 
 	check_verify_code(info);
 
@@ -444,10 +626,25 @@ static gboolean do_login(gpointer data)
 	get_version(info);
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
+	if(info -> need_vcimage){
+		gchar vc[10];
+		g_printf("Please input the verify code:\n");
+		scanf("%s", vc);
+		info -> verify_code = g_string_new(vc);
+
+	}
 	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str);
-	g_debug("MD5: %s(%s, %d)", md5 -> str, __FILE__, __LINE__);
-	send_login_req(info, md5 -> str);
+
+	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
+	if(get_ptcz_skey(info, md5 -> str) != 0){
+		g_string_free(md5, TRUE);
+		return FALSE;
+	}
 	g_string_free(md5, TRUE);
+
+	g_debug("Get psessionid...(%s, %d)", __FILE__, __LINE__);
+	get_psessionid(info);
+
 	g_debug("Initial done.");
 
 	g_slice_free(struct InitParam, data);

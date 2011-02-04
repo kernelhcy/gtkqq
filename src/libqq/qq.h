@@ -9,6 +9,9 @@
 typedef enum{
 	CB_SUCCESS,	//success
 	CB_FAILED,	//failed
+	CB_WRONGPASSWD,	//wrong password
+	CB_WRONGVC,	//wrong verify code
+	CB_NETWORDERR,	//network error
 	CB_UNKNOWN	//unknown result
 }CallBackResult;
 

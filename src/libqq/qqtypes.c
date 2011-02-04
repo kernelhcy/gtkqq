@@ -5,25 +5,8 @@
  */
 QQInfo* qq_info_new()
 {
-	QQInfo *info = g_slice_new(QQInfo);
-
-	info -> mainloop = NULL;
-	info -> mainctx = NULL;
-	info -> mainloopthread = NULL;
-
-	info -> uin = NULL;
-	info -> status = NULL;
-	info -> vc_type = NULL;
-	info -> vc_image_data = NULL;
-	info -> vc_image_type = NULL;
-	info -> verify_code = NULL;
-	info -> ptvfsession = NULL;
+	QQInfo *info = g_slice_new0(QQInfo);
 	info -> need_vcimage = FALSE;
-
-	info -> ptwebqq = NULL;
-	info -> version = NULL;
-	info -> ptuserinfo = NULL;
-
 	return info;
 }
 
@@ -38,6 +21,7 @@ void qq_info_free(QQInfo *info)
 
 	g_string_free(info -> uin, TRUE);
 	g_string_free(info -> status, TRUE);
+	g_string_free(info -> prestatus, TRUE);
 	g_string_free(info -> vc_type, TRUE);
 	g_string_free(info -> vc_image_data, TRUE);
 	g_string_free(info -> vc_image_type, TRUE);
@@ -46,6 +30,16 @@ void qq_info_free(QQInfo *info)
 	g_string_free(info -> version, TRUE);
 	g_string_free(info -> ptuserinfo, TRUE);
 	g_string_free(info -> ptwebqq, TRUE);
+	g_string_free(info -> ptcz, TRUE);
+	g_string_free(info -> skey, TRUE);
+	g_string_free(info -> cookie, TRUE);
+	g_string_free(info -> clientid, TRUE);
+	g_string_free(info -> seskey, TRUE);
+	g_string_free(info -> cip, TRUE);
+	g_string_free(info -> index, TRUE);
+	g_string_free(info -> port, TRUE);
+	g_string_free(info -> psessionid, TRUE);
+	g_string_free(info -> vfwebqq, TRUE);
 
 	g_slice_free(QQInfo, info);
 }

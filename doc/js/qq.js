@@ -324,8 +324,72 @@ function ajax_Submit(){
 	return 
 }
 
-
-function ptuiCB(C,A,B,G,F){$("p").blur();g_time.time13=new Date();var E={"15":g_time.time13-g_time.time12};ptui_speedReport(E);first=false;if(B!=""){switch(G){case"0":window.location.href=B;break;case"1":top.location.href=B;break;case"2":parent.location.href=B;break;default:top.location.href=B}return }g_submitting=false;if(C==0){top.location=document.forms[0].ul.value;return }else{if(A==0){if(F&&F!=""){pt.show_err(F)}else{pt.show_err("您的输入有误，请重试。")}}else{pt.show_err(F);$("p").value="";$("p").focus();$("p").select()}if(isLoadVC){ptui_changeImg(g_domain,g_appid,true);$("verifycode").value="";loadVC(true);$("verifycode").focus();$("verifycode").select()}else{if(A==0){g_uin=0}}if(C==3||C==4){if(navigator.userAgent.toLowerCase().indexOf("webkit")>-1){$("u").focus()}if(C==3){$("p").value=""}$("p").focus();$("p").select();if(C==4){try{$("verifycode").focus();$("verifycode").select()}catch(D){}}if(A!=0){$("verifycode").value="";loadVC(true);g_submitting=true}}}}
+//ptuiCB('7','0','','0','您的输入有误, 请重试。');
+function ptuiCB(C,A,B,G,F){
+	$("p").blur();
+	g_time.time13=new Date();
+	var E={"15":g_time.time13-g_time.time12};
+	ptui_speedReport(E);
+	first=false;
+	if(B!=""){
+		switch(G)	
+		{	
+			case"0":window.location.href=B;break;
+			case"1":top.location.href=B;break;
+			case"2":parent.location.href=B;break;
+			default:top.location.href=B
+		}
+		return 
+	}
+	g_submitting=false;
+	if(C==0){
+		top.location=document.forms[0].ul.value;return 
+	}else{
+		if(A==0){
+			if(F&&F!=""){
+				pt.show_err(F)
+			}else{
+				pt.show_err("您的输入有误，请重试。")
+			}
+		}else{
+			pt.show_err(F);
+			$("p").value="";
+			$("p").focus();
+			$("p").select()
+		}
+		if(isLoadVC){
+			ptui_changeImg(g_domain,g_appid,true);
+			$("verifycode").value="";
+			loadVC(true);
+			$("verifycode").focus();
+			$("verifycode").select()
+		}else{
+			if(A==0){g_uin=0}
+		}
+		if(C==3||C==4){
+			if(navigator.userAgent.toLowerCase().indexOf("webkit")>-1)
+			{
+				$("u").focus()
+			}
+			if(C==3){
+				$("p").value=""
+			}
+			$("p").focus();
+			$("p").select();
+			if(C==4){
+				try{
+					$("verifycode").focus();
+					$("verifycode").select()
+				}catch(D){}
+			}
+			if(A!=0){
+				$("verifycode").value="";
+				loadVC(true);
+				g_submitting=true
+			}
+		}
+	}
+}
 
 function browser_version(){
 	var A=navigator.userAgent.toLowerCase();

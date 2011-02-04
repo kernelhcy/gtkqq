@@ -2,7 +2,7 @@
 #include <glib/gprintf.h>
 #include <string.h>
 
-JSON_data* JSON_data_new()
+static JSON_data* JSON_data_new()
 {
 	JSON_data *d;
 	d = g_slice_new(JSON_data);
@@ -14,7 +14,7 @@ JSON_data* JSON_data_new()
 /*
  * cascaded free the JSON_data.
  */
-void JSON_data_free(JSON_data *data)
+static void JSON_data_free(JSON_data *data)
 {
 	if(data == NULL){
 		return;
@@ -62,7 +62,7 @@ static void printalgn(gint a)
 {
 	gint i;
 	for(i = 0; i < a; ++i){
-		g_printf("\t");
+		g_print("\t");
 	}
 }
 
@@ -80,7 +80,7 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 	{
 	case JSON_STRING:
 		printalgn(alg);
-		g_printf("%s\n", ((GString*)jd -> data) -> str);
+		g_print("%s\n", ((GString*)jd -> data) -> str);
 		break;
 		
 	case JSON_ARRAY:
@@ -89,14 +89,14 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 			break;
 		}
 		printalgn(alg);
-		g_printf("[\n");
+		g_print("[\n");
 		++alg;
 		for(i = 0; i < array -> len; ++i){
 			JSON_data_print_help(array -> pdata[i], alg);
 		}
 		--alg;
 		printalgn(alg);
-		g_printf("]\n");
+		g_print("]\n");
 		break;
 	case JSON_OBJECT:
 		array = (GPtrArray*)(jd -> data);
@@ -104,19 +104,19 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 			break;
 		}
 		printalgn(alg);
-		g_printf("{\n");
+		g_print("{\n");
 		++alg;
 		for(i = 0; i < array -> len; ++i){
 			JSON_data_print_help(array -> pdata[i], alg);
 		}
 		--alg;
 		printalgn(alg);
-		g_printf("}\n");
+		g_print("}\n");
 		break;
 	case JSON_PAIR:
 		p = (JPair*)jd -> data;
 		printalgn(alg);
-		g_printf("%s : ", ((GString*)p -> key) -> str);
+		g_print("%s : ", ((GString*)p -> key) -> str);
 		
 		JSON_data_print_help(p -> value, 1);
 		break;
@@ -126,7 +126,7 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 	}
 }
 
-void JSON_data_print(JSON_data *jd)
+static void JSON_data_print(JSON_data *jd)
 {
 	JSON_data_print_help(jd, 0);
 }
@@ -148,9 +148,59 @@ void JSON_free(JSON *j)
 		return;
 	}
 	g_string_free(j -> data, TRUE);
+	JSON_data_free(j -> result);
 	j -> result = NULL;
 	g_slice_free(JSON, j);
 }
+
+
+static gpointer find_help(JSON_data *jd, JSON_DATA_T type, const gchar *key)
+{
+	JSON_data *tmp;
+	JPair *pair;
+	gint i;
+	gpointer re;
+	GPtrArray *pa;;
+	switch(jd -> type)
+	{
+	case JSON_PAIR:
+		pair = (JPair *)jd -> data;
+		tmp = (JSON_data*)pair -> value;
+		if(g_strstr_len(pair -> key -> str, -1, key) != NULL){
+			if(tmp -> type == type){
+				return tmp -> data;
+			}
+		}else{
+			re = find_help(tmp, type, key);
+			if(re != NULL){
+				return re;
+			}
+		}
+		break;
+	case JSON_OBJECT:
+		pa = (GPtrArray*)(jd -> data);
+		for(i = 0; i < pa -> len; ++i){
+			tmp = (JSON_data*)(pa -> pdata[i]);
+			re = find_help(tmp, type, key);
+			if(re != NULL){
+				return re;
+			}
+		}
+		break;
+	default:
+		break;
+	}	
+	return NULL;
+}
+
+gpointer JSON_find_pair_value(JSON *j, JSON_DATA_T type, const gchar *key)
+{
+	if(j == NULL || key == NULL){
+		return NULL;
+	}
+	return find_help(j -> result, type, key);
+}
+
 
 /*
  * reset the JSON instance
@@ -166,10 +216,14 @@ void JSON_reset(JSON *j){
 	j -> result = NULL;
 }
 
+void JSON_print(JSON *j)
+{
+	JSON_data_print(j -> result);
+}
 /*
  * set the data need to parse
  */
-void JSON_set_rawdata(JSON *j, GString *raw)
+void JSON_set_raw_data(JSON *j, GString *raw)
 {
 	if(j == NULL || raw == NULL){
 		return;
@@ -186,17 +240,6 @@ void JSON_set_raw_data_c(JSON *j, const gchar *raw, gsize len)
 	
 	g_string_truncate(j -> data, 0);
 	g_string_append_len(j -> data, raw, len);
-}
-
-/*
- * get the result
- */
-JSON_data* JSON_get_result(JSON *j)
-{
-	if(j == NULL){
-		return NULL;
-	}
-	return j -> result;
 }
 
 static gboolean is_space(gchar c)

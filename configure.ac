@@ -219,7 +219,6 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 echo
-echo Use XScreenSaver Extension.... : $enable_screensaver
 echo Use libnotify................. : $enable_libnotify
 echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
