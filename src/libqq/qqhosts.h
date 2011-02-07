@@ -27,4 +27,9 @@
 #define PSIDHOST	"d.web2.qq.com"
 #define PSIDPATH	"/channel/login2"
 
+#define LOGOUTPATH	"/channel/logout2"
+#define LOGOUTHOST	PSIDHOST
+
+#define REFERER		"http://"LOGOUTHOST"/proxy.html?v=2010102002"
+
 #endif

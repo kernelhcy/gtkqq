@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <string.h>
 #include <json.h>
+#include <stdlib.h>
 
 /*
  * The main loop thread's main function.
@@ -90,8 +91,17 @@ static gint check_verify_code(QQInfo *info)
 	request_add_header(req, "Host", LOGINHOST);
 
 	Connection *con = connect_to_host(LOGINHOST, 80);
+
 	send_request(con, req);
 	rcv_response(con, &rps);
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		g_warning("Server status %s (%s, %d)", retstatus
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
+
 	close_con(con);
 	connection_free(con);
 
@@ -184,8 +194,23 @@ static gint get_vc_image(QQInfo *info)
 	request_add_header(req, "Host", IMAGEHOST);
 
 	Connection *con = connect_to_host(IMAGEHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		request_del(req);
+		return -1;
+	}
+
 	send_request(con, req);
 	rcv_response(con, &rps);
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		g_warning("Server status %s (%s, %d)", retstatus
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
+
 	close_con(con);
 	connection_free(con);
 
@@ -293,8 +318,22 @@ static gint get_version(QQInfo *info)
 	request_add_header(req, "Host", LOGINPAGEHOST);
 
 	Connection *con = connect_to_host(LOGINPAGEHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		request_del(req);
+		return -1;
+	}
 	send_request(con, req);
 	rcv_response(con, &rps);
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		g_warning("Server status %s (%s, %d)", retstatus
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
+
 	close_con(con);
 	connection_free(con);
 	
@@ -389,8 +428,23 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	}
 
 	Connection *con = connect_to_host(LOGINHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		request_del(req);
+		return -1;
+	}
+
 	send_request(con, req);
 	rcv_response(con, &rps);
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		g_warning("Server status %s (%s, %d)", retstatus
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
+
 	close_con(con);
 	connection_free(con);
 
@@ -504,9 +558,11 @@ static int get_psessionid(QQInfo *info)
 	g_debug("clientid: %s", clientid -> str);
 
 	gchar* msg = g_malloc(500);
-	g_snprintf(msg, 500, "{\"status\":\"\",\"ptwebqq\":\"%s\","
+	g_snprintf(msg, 500, "{\"status\":\"%s\",\"ptwebqq\":\"%s\","
 			"\"passwd_sig\":""\"\",\"clientid\":\"%s\"}"
-			, info -> ptwebqq -> str, clientid -> str);
+			, info -> status -> str, info -> ptwebqq -> str
+			, clientid -> str);
+
 	gchar *escape = g_uri_escape_string(msg, NULL, FALSE);
 	g_snprintf(msg, 500, "r=%s", escape);
 	g_free(escape);
@@ -531,8 +587,22 @@ static int get_psessionid(QQInfo *info)
 	g_free(cookie);
 
 	Connection *con = connect_to_host(PSIDHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		request_del(req);
+		return -1;
+	}
+
 	send_request(con, req);
 	rcv_response(con, &rps);
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		g_warning("Server status %s (%s, %d)", retstatus
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
 
 	JSON *json = JSON_new();
 	JSON_set_raw_data_c(json, rps -> msg -> str, rps -> msg -> len);
@@ -588,8 +658,7 @@ error:
 struct InitParam{
 	QQCallBack cb;
 	QQInfo *info;
-	gchar *passwd;
-	
+	const gchar *passwd;
 };
 /*
  * Do the real login.
@@ -602,7 +671,7 @@ static gboolean do_login(gpointer data)
 	}
 	QQCallBack cb = ((struct InitParam *)data) -> cb;
 	QQInfo *info = ((struct InitParam *)data) -> info;
-	gchar *passwd = ((struct InitParam *)data) -> passwd;
+	const gchar *passwd = ((struct InitParam *)data) -> passwd;
 
 	if(cb != NULL){
 		g_debug("Call the callback function in do_init.(%s, %d)"
@@ -610,7 +679,12 @@ static gboolean do_login(gpointer data)
 		cb(CB_SUCCESS, NULL);
 	}
 
-	check_verify_code(info);
+	if(check_verify_code(info) == -1){
+		if(cb != NULL){
+			cb(CB_ERROR, "Check verify code error.");
+		}
+		return FALSE;
+	}
 
 	if(info -> need_vcimage){
 		g_debug("Get verify code image...(%s, %d)", __FILE__, __LINE__);
@@ -623,7 +697,12 @@ static gboolean do_login(gpointer data)
 		save_vc_to_file(info);
 	}
 	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
-	get_version(info);
+	if(get_version(info) == -1){
+		if(cb != NULL){
+			cb(CB_ERROR, "Get version error.");
+		}
+		return FALSE;
+	}
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
 	if(info -> need_vcimage){
@@ -636,14 +715,53 @@ static gboolean do_login(gpointer data)
 	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str);
 
 	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
-	if(get_ptcz_skey(info, md5 -> str) != 0){
+	gint ret = get_ptcz_skey(info, md5 -> str);
+	if(ret != 0){
 		g_string_free(md5, TRUE);
+		CallBackResult cbr;
+		const gchar * msg;
+		switch(ret)
+		{
+		case 1:
+			cbr = CB_ERROR;
+			msg = "System busy! Please try again.";
+			break;
+		case 2:
+			cbr = CB_ERROR;
+			msg = "Out of date QQ number.";
+			break;
+		case 3:
+		case 6:
+			cbr = CB_WRONGPASSWD;
+			msg = "Wrong password.";
+			break;
+		case 4:
+			cbr = CB_WRONGVC;
+			msg = "Wrong verify code.";
+			break;
+		case 5:
+			cbr = CB_ERROR;
+			msg = "Verify failed.";
+			break;
+		default:
+			cbr = CB_ERROR;
+			msg = "Error occured! Please try again.";
+			break;
+		}
+		if(cb != NULL){
+			cb(cbr, (gpointer)msg);
+		}
 		return FALSE;
 	}
 	g_string_free(md5, TRUE);
 
 	g_debug("Get psessionid...(%s, %d)", __FILE__, __LINE__);
-	get_psessionid(info);
+	if(get_psessionid(info) == -1){
+		if(cb != NULL){
+			cb(CB_ERROR, "Get psession error.");
+		}
+		return FALSE;
+	}
 
 	g_debug("Initial done.");
 
@@ -654,7 +772,7 @@ static gboolean do_login(gpointer data)
 }
 
 void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		, QQCallBack cb)
+		, const gchar *status , QQCallBack cb)
 {
 	if(info == NULL){
 		g_warning("info == NULL. (%s, %d)", __FILE__, __LINE__);
@@ -665,8 +783,13 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 				, __FILE__, __LINE__);
 		return;
 	}
-	GString *usrnum = g_string_new(uin);
-	info -> uin = usrnum;
+
+	info -> uin = g_string_new(uin);
+	if(status != NULL){
+		info -> status = g_string_new(status);
+	}else{
+		info -> status = g_string_new(NULL);
+	}
 	/*
 	 * When call gtk_init(), the g_thread_init() also be called.
 	 * This liberary may not be used with gtk, so we call g_thread_init()
@@ -676,7 +799,7 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		g_thread_init(NULL);
 	}else{
 		if(cb){
-			cb(CB_FAILED, "Need thread supported!!");
+			cb(CB_ERROR, (gpointer)"Need thread supported!!");
 		}
 		g_error("Need thread supported!");
 		return;
@@ -707,10 +830,104 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	par -> passwd = passwd;
 	g_source_set_callback(src, (GSourceFunc)do_login, (gpointer)par, NULL);
 	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach initial source error.(%s, %d)"
+		g_error("Attach login source error.(%s, %d)"
 				, __FILE__, __LINE__);
 	}
-	g_debug("Attach the initial source. done.(%s, %d)", __FILE__
-					, __LINE__);
 	g_source_unref(src);
+}
+
+/*
+ * As the parameter of do_logout
+ */
+struct LogoutParam{
+	QQInfo *info;
+	QQCallBack cb;
+};
+static gboolean do_logout(gpointer data)
+{
+	struct LogoutParam *par = (struct LogoutParam*)data;
+	if(par == NULL){
+		return FALSE;
+	}
+
+	QQInfo *info = par -> info;
+	QQCallBack cb = par -> cb;
+
+	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
+	gchar params[300];
+	GTimeVal now;
+
+	Request *req = request_new();
+	Response *rps = NULL;
+	request_set_method(req, "GET");
+	request_set_version(req, "HTTP/1.1");
+	g_get_current_time(&now);
+	g_sprintf(params, LOGOUTPATH"?clientid=%s&psessionid=%s&t=%d"
+			, info -> clientid -> str
+			, info -> psessionid -> str, now.tv_sec);
+	request_set_uri(req, params);
+	request_set_default_headers(req);
+	request_add_header(req, "Host", LOGOUTHOST);
+	request_add_header(req, "Cookie", info -> cookie -> str);
+	request_add_header(req, "Referer", REFERER);
+
+	Connection *con = connect_to_host(LOGOUTHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_NETWORKERR, "Can not connect to server!");
+		}
+		request_del(req);
+		g_free(par);
+		return FALSE;
+	}
+
+	send_request(con, req);
+	rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		/*
+		 * Maybe some error occured.
+		 */
+		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
+				, retstatus, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "Response error!");
+		}
+		goto error;
+	}
+
+	JSON *json = JSON_new();
+	JSON_set_raw_data(json, rps -> msg);
+	JSON_parse(json);
+	JSON_print(json);
+
+error:
+	request_del(req);
+	response_del(rps);
+	g_free(par);
+	return FALSE;
+}
+
+
+void qq_logout(QQInfo *info, QQCallBack cb)
+{
+	if(info == NULL){
+		return;
+	}
+	GSource *src = g_idle_source_new();
+	struct LogoutParam *par = g_malloc(sizeof(*par));
+	par -> info = info;
+	par -> cb = cb;
+	g_source_set_callback(src, (GSourceFunc)do_logout, (gpointer)par, NULL);
+	if(g_source_attach(src, info -> mainctx) <= 0){
+		g_error("Attach logout source error.(%s, %d)"
+				, __FILE__, __LINE__);
+	}
+	g_source_unref(src);
+	return;
 }

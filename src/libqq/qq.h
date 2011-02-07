@@ -8,10 +8,10 @@
  */
 typedef enum{
 	CB_SUCCESS,	//success
-	CB_FAILED,	//failed
+	CB_ERROR,	//error occured
 	CB_WRONGPASSWD,	//wrong password
 	CB_WRONGVC,	//wrong verify code
-	CB_NETWORDERR,	//network error
+	CB_NETWORKERR,	//network error
 	CB_UNKNOWN	//unknown result
 }CallBackResult;
 
@@ -25,14 +25,16 @@ typedef void (*QQCallBack)(CallBackResult re, gpointer data);
  * @param info store the information used by this program
  * @param uin the QQ number
  * @param passwd the QQ password
+ * @param status the status of the user. If NULL, this func
+ * 	will not change the status.
  */
 void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		, QQCallBack cb);
+		, const gchar *status , QQCallBack cb);
 
 /*
  * Logout
  */
-void qq_logout(QQUser *usr, QQCallBack cb);
+void qq_logout(QQInfo *info, QQCallBack cb);
 
 void qq_get_user_info(QQUser *usr, QQCallBack cb);
 void qq_get_group_info();

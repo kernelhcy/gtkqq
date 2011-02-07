@@ -134,7 +134,7 @@ gint send_request(Connection *con, Request *r)
 			//		, __LINE__);
 			break;
 		case G_IO_STATUS_EOF:
-			g_warning("Write data EOF!! What's happenning??(%s, %d)"
+			g_warning("Write data EOF!! What's happenning?(%s, %d)"
 					, __FILE__, __LINE__);
 			return -1;
 		case G_IO_STATUS_ERROR:
@@ -411,8 +411,6 @@ gint rcv_response(Connection *con, Response **rp)
 			}
 		}
 		if(bytes_read < want_read){
-			g_warning("bytes_read < want_read. %d %d(%s, %d)", bytes_read
-					, want_read, __FILE__, __LINE__);
 			break;
 		}	
 	}//end of while(need_to_read > 0)...

@@ -78,7 +78,37 @@ glib会以正确的形式输出和现实。）
 52510a211"}}其中，vfwebqq和pesssionid是每次通讯必需使用的。
 
 	至此，登录成功。
-	
+
+  获取好友和分组：
+　　地址：http://web2-b.qq.com/api/get_user_friends
+     提交参数 r=%7B%22vfwebqq%22%3A%22{0}%22%7D ｛0｝为登陆成功后返回的vfwebqq
+     提交方式：post
+     返回结果包含了好友分组   好友   好友信息 
+     
+      这里获取的好友唯一一点不足就是无法区别好友是否在线，还得专门去获取在线好友。倒是QQ空间获取好友的方式比较适用
+ 
+   获取在线好友：
+    地址：http://web2-b.qq.com/channel/get_online_buddies?clientid={0}&psessionid={1}&t={2}
+    ｛0｝登陆时生成的clientid，｛1｝登陆后获取的psessionid参数 ｛2｝时间戳
+   提交方式：get
+ 
+   获取群：
+   地址：http://web2-b.qq.com/api/get_group_name_list_mask
+   参数：r=%7B%22vfwebqq%22%3A%22{0}%22%7D ｛0｝为登陆后获取的vfwebqq
+   提交方式：post
+   
+    获取个性签名：
+   地址：http://web2-b.qq.com/api/get_single_long_nick?tuin={0}&t={1}  ｛0｝QQ号码  ｛1｝时间戳
+   提交方式 get
+ 
+   设置个性签名：
+   地址："http://web2-b.qq.com/api/set_long_nick
+    提交参数：r=%7B%22nlk%22%3A%22{0}%22%2C%22vfwebqq%22%3A%22{1}%22%7D
+     ｛0｝为签名内容  ｛1｝为登陆后获取的vfwwebqq参数
+    提交方式 post
+ 
+    以下给出部分代码：
+
 2.登出
 3.获取个人信息
 4.获取好友列表及信息
