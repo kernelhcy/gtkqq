@@ -62,7 +62,7 @@ static void printalgn(gint a)
 {
 	gint i;
 	for(i = 0; i < a; ++i){
-		g_print("\t");
+		g_printf("\t");
 	}
 }
 
@@ -80,7 +80,7 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 	{
 	case JSON_STRING:
 		printalgn(alg);
-		g_print("%s\n", ((GString*)jd -> data) -> str);
+		g_printf("%s\n", ((GString*)jd -> data) -> str);
 		break;
 		
 	case JSON_ARRAY:
@@ -89,14 +89,14 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 			break;
 		}
 		printalgn(alg);
-		g_print("[\n");
+		g_printf("[\n");
 		++alg;
 		for(i = 0; i < array -> len; ++i){
 			JSON_data_print_help(array -> pdata[i], alg);
 		}
 		--alg;
 		printalgn(alg);
-		g_print("]\n");
+		g_printf("]\n");
 		break;
 	case JSON_OBJECT:
 		array = (GPtrArray*)(jd -> data);
@@ -104,19 +104,19 @@ static void JSON_data_print_help(JSON_data *jd, gint alg)
 			break;
 		}
 		printalgn(alg);
-		g_print("{\n");
+		g_printf("{\n");
 		++alg;
 		for(i = 0; i < array -> len; ++i){
 			JSON_data_print_help(array -> pdata[i], alg);
 		}
 		--alg;
 		printalgn(alg);
-		g_print("}\n");
+		g_printf("}\n");
 		break;
 	case JSON_PAIR:
 		p = (JPair*)jd -> data;
 		printalgn(alg);
-		g_print("%s : ", ((GString*)p -> key) -> str);
+		g_printf("%s : ", ((GString*)p -> key) -> str);
 		
 		JSON_data_print_help(p -> value, 1);
 		break;
@@ -353,7 +353,6 @@ static GString* JSON_parse_string(JSON *j)
 		++end;
 	}
 	j -> curr = end;
-	
 	return v;
 }
 

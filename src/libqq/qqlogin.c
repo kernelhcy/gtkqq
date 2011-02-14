@@ -85,7 +85,7 @@ static gint check_verify_code(QQInfo *info)
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
 	g_sprintf(params, VCCHECKPATH"?uin=%s&appid="APPID"&r=%.16f"
-			, info -> uin -> str, g_random_double());
+			, info -> me -> uin -> str, g_random_double());
 	request_set_uri(req, params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
@@ -187,7 +187,7 @@ static gint get_vc_image(QQInfo *info)
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
 	g_sprintf(params, IMAGEPATH"?uin=%s&aid="APPID"&r=%.16f&vc_type=%s"
-			, info -> uin -> str, g_random_double()
+			, info -> me -> uin -> str, g_random_double()
 			, info -> vc_type -> str);
 	request_set_uri(req, params);
 	request_set_default_headers(req);
@@ -416,7 +416,7 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 			"remember_uin=0&aid="APPID"&u1=%s&h=1&"
 			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
 			"&dumy=&fp=loginerroralert&mibao_css="
-			, info -> uin -> str, p, info -> verify_code -> str
+			, info -> me -> uin -> str, p, info -> verify_code -> str
 			, LOGIN_S_URL);
 	request_set_uri(req, params);
 	request_set_default_headers(req);
@@ -544,6 +544,7 @@ static int get_psessionid(QQInfo *info)
 	int ret = 0;
 	
 	Request *req = request_new();
+	JSON *json = JSON_new();
 	Response *rps = NULL;
 	request_set_method(req, "POST");
 	request_set_version(req, "HTTP/1.1");
@@ -559,8 +560,9 @@ static int get_psessionid(QQInfo *info)
 
 	gchar* msg = g_malloc(500);
 	g_snprintf(msg, 500, "{\"status\":\"%s\",\"ptwebqq\":\"%s\","
-			"\"passwd_sig\":""\"\",\"clientid\":\"%s\"}"
-			, info -> status -> str, info -> ptwebqq -> str
+			"\"passwd_sig\":""\"\",\"clientid\":\"%s\""
+			", \"psessionid\":null}"
+			, info -> me -> status -> str, info -> ptwebqq -> str
 			, clientid -> str);
 
 	gchar *escape = g_uri_escape_string(msg, NULL, FALSE);
@@ -596,6 +598,7 @@ static int get_psessionid(QQInfo *info)
 
 	send_request(con, req);
 	rcv_response(con, &rps);
+
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
@@ -604,7 +607,6 @@ static int get_psessionid(QQInfo *info)
 		goto error;
 	}
 
-	JSON *json = JSON_new();
 	JSON_set_raw_data_c(json, rps -> msg -> str, rps -> msg -> len);
 	if(JSON_parse(json) != 0){
 		g_warning("Parse JSON data error!!(%s, %d)", __FILE__, __LINE__);
@@ -626,22 +628,39 @@ static int get_psessionid(QQInfo *info)
 		goto error;
 	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "seskey");
-	g_debug("seskey: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-	info -> seskey = g_string_new(val -> str);
+	if(val != NULL){
+		g_debug("seskey: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+		info -> seskey = g_string_new(val -> str);
+	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "cip");
-	info -> cip = g_string_new(val -> str);
+	if(val != NULL){
+		info -> cip = g_string_new(val -> str);
+	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "index");
-	info -> index = g_string_new(val -> str);
+	if(val != NULL){
+		info -> index = g_string_new(val -> str);
+	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "port");
-	info -> port = g_string_new(val -> str);
+	if(val != NULL){
+		info -> port = g_string_new(val -> str);
+	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "status");
-	g_debug("status: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	{
+		g_debug("status: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "vfwebqq");
-	g_debug("vfwebqq: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-	info -> vfwebqq = g_string_new(val -> str);
+	if(val != NULL){
+		g_debug("vfwebqq: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+		info -> vfwebqq = g_string_new(val -> str);
+	}
 	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "psessionid");
-	g_debug("psessionid: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-	info -> psessionid = g_string_new(val -> str);
+	if(val != NULL){
+		g_debug("psessionid: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+		info -> psessionid = g_string_new(val -> str);
+	}else{
+		g_debug("Can not find pesssionid!(%s, %d): %s", __FILE__, __LINE__
+				, rps -> msg -> str);
+	}
 
 error:
 	JSON_free(json);
@@ -672,12 +691,6 @@ static gboolean do_login(gpointer data)
 	QQCallBack cb = ((struct InitParam *)data) -> cb;
 	QQInfo *info = ((struct InitParam *)data) -> info;
 	const gchar *passwd = ((struct InitParam *)data) -> passwd;
-
-	if(cb != NULL){
-		g_debug("Call the callback function in do_init.(%s, %d)"
-				, __FILE__, __LINE__);
-		cb(CB_SUCCESS, NULL);
-	}
 
 	if(check_verify_code(info) == -1){
 		if(cb != NULL){
@@ -764,32 +777,12 @@ static gboolean do_login(gpointer data)
 	}
 
 	g_debug("Initial done.");
-
 	g_slice_free(struct InitParam, data);
-	g_debug("Free the struct InitParam.(%s, %d)", __FILE__, __LINE__);
-
 	return FALSE;
 }
 
-void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		, const gchar *status , QQCallBack cb)
+gint qq_init()
 {
-	if(info == NULL){
-		g_warning("info == NULL. (%s, %d)", __FILE__, __LINE__);
-		return;
-	}
-	if(uin == NULL || passwd == NULL){
-		g_warning("uin or passwd == NULL.(%s, %d)"
-				, __FILE__, __LINE__);
-		return;
-	}
-
-	info -> uin = g_string_new(uin);
-	if(status != NULL){
-		info -> status = g_string_new(status);
-	}else{
-		info -> status = g_string_new(NULL);
-	}
 	/*
 	 * When call gtk_init(), the g_thread_init() also be called.
 	 * This liberary may not be used with gtk, so we call g_thread_init()
@@ -798,13 +791,37 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	if(!g_thread_supported()){
 		g_thread_init(NULL);
 	}else{
-		if(cb){
-			cb(CB_ERROR, (gpointer)"Need thread supported!!");
-		}
 		g_error("Need thread supported!");
-		return;
+		return -1;
 	}
 	g_debug("Initial the thread done.(%s, %d)", __FILE__, __LINE__);
+	return 0;
+}
+void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
+		, const gchar *status , QQCallBack cb)
+{
+	if(info == NULL){
+		g_warning("info == NULL. (%s, %d)", __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "info == NULL");
+		}
+		return;
+	}
+	if(uin == NULL || passwd == NULL){
+		g_warning("uin or passwd == NULL.(%s, %d)"
+				, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "uin or password == NULL");
+		}
+		return;
+	}
+
+	info -> me -> uin = g_string_new(uin);
+	if(status != NULL){
+		info -> me -> status = g_string_new(status);
+	}else{
+		info -> me -> status = g_string_new(NULL);
+	}
 
 	info -> mainloop = g_main_loop_new(NULL, FALSE);
 	info -> mainctx = g_main_loop_get_context(info -> mainloop);
@@ -818,6 +835,9 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	if(info -> mainloopthread == NULL){
 		g_error("Error code %d, msg: %s (%s, %d)", err -> code
 					, err -> message, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "Create mainloop thread error.");
+		}
 		return;
 	}
 	g_debug("Start the main event loop thread. done.(%s, %d)", __FILE__
@@ -836,35 +856,25 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	g_source_unref(src);
 }
 
-/*
- * As the parameter of do_logout
- */
-struct LogoutParam{
-	QQInfo *info;
-	QQCallBack cb;
-};
 static gboolean do_logout(gpointer data)
 {
-	struct LogoutParam *par = (struct LogoutParam*)data;
+	DoFuncParam *par = (DoFuncParam*)data;
 	if(par == NULL){
 		return FALSE;
 	}
 
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
-
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
-	gchar params[300];
-	GTimeVal now;
 
+	gchar params[300];
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_get_current_time(&now);
-	g_sprintf(params, LOGOUTPATH"?clientid=%s&psessionid=%s&t=%d"
+	g_sprintf(params, LOGOUTPATH"?clientid=%s&psessionid=%s&t=%lld"
 			, info -> clientid -> str
-			, info -> psessionid -> str, now.tv_sec);
+			, info -> psessionid -> str, get_now_millisecond());
 	request_set_uri(req, params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGOUTHOST);
@@ -904,8 +914,21 @@ static gboolean do_logout(gpointer data)
 	JSON *json = JSON_new();
 	JSON_set_raw_data(json, rps -> msg);
 	JSON_parse(json);
-	JSON_print(json);
-
+	GString *retcode, *result;
+	retcode = (GString *)JSON_find_pair_value(json, JSON_STRING, "retcode");
+	result = (GString *)JSON_find_pair_value(json, JSON_STRING, "result");
+	if(retcode != NULL && result != NULL){
+		if(g_strstr_len(result -> str, -1, "ok") != NULL){
+			g_debug("Logout ok!(%s, %d)", __FILE__, __LINE__);
+			if(cb != NULL){
+				cb(CB_SUCCESS, "Logout ok!");
+			}
+		}
+	}else{
+		g_debug("(%s, %d)%s", __FILE__, __LINE__, rps -> msg -> str);
+	}
+	
+	JSON_free(json);
 error:
 	request_del(req);
 	response_del(rps);
@@ -917,10 +940,13 @@ error:
 void qq_logout(QQInfo *info, QQCallBack cb)
 {
 	if(info == NULL){
+		if(cb != NULL){
+			cb(CB_ERROR, "info == NULL in qq_logout");
+		}
 		return;
 	}
 	GSource *src = g_idle_source_new();
-	struct LogoutParam *par = g_malloc(sizeof(*par));
+	DoFuncParam *par = g_malloc(sizeof(*par));
 	par -> info = info;
 	par -> cb = cb;
 	g_source_set_callback(src, (GSourceFunc)do_logout, (gpointer)par, NULL);

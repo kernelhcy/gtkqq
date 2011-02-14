@@ -428,9 +428,6 @@ gint rcv_response(Connection *con, Response **rp)
 	if(!ischunked){
 		//copy the message to r -> msg;
 		g_string_append_len(r -> msg, data -> str, data -> len);
-		g_debug("Append %d bytes message to r -> msg."
-				"r -> msg -> len: %d (%s, %d)"
-				, data -> len, r -> msg -> len, __FILE__, __LINE__);
 	}else{
 		g_debug("Total chunk length: %d (%s, %d)", totalchunklen
 				, __FILE__, __LINE__);

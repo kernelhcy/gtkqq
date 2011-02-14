@@ -5,7 +5,7 @@ AC_PREREQ([2.63])
 AC_INIT([GtkQQ], [0.1], [huangcongyu2006@gmail.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror])
+AM_INIT_AUTOMAKE([foreign -Wall -Werror silent-rules])
 AC_CONFIG_HEADERS([config.h])
 LT_INIT(disable-static)
 

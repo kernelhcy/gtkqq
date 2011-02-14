@@ -32,4 +32,7 @@
 
 #define REFERER		"http://"LOGOUTHOST"/proxy.html?v=2010102002"
 
+#define SWQQHOST	"s.web2.qq.com"
+#define GETMYINFO	"/api/get_friend_info2"
+
 #endif
