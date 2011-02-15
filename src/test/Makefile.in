@@ -63,10 +63,9 @@ am_testhttp_OBJECTS = testhttp.$(OBJEXT)
 testhttp_OBJECTS = $(am_testhttp_OBJECTS)
 testhttp_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la \
 	$(am__DEPENDENCIES_1)
-am_testjson_OBJECTS = testjson.$(OBJEXT)
+am_testjson_OBJECTS = testjson.$(OBJEXT) json.$(OBJEXT)
 testjson_OBJECTS = $(am_testjson_OBJECTS)
-testjson_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la \
-	$(am__DEPENDENCIES_1)
+testjson_DEPENDENCIES = $(am__DEPENDENCIES_1)
 am_testlog_OBJECTS = cprint.$(OBJEXT) log.$(OBJEXT) testlog.$(OBJEXT)
 testlog_OBJECTS = $(am_testlog_OBJECTS)
 testlog_DEPENDENCIES = ${srcdir}/../libqq/libwebqq.la \
@@ -252,19 +251,19 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 AM_CFLAGS = -I${srcdir}/../libqq/ -I${srcdir}/../comm/ \
-	-I${srcdir}/../gui/ ${GTK_CFLAGS}
+	-I${srcdir}/../gui/ ${GLIB_CFLAGS}
 testhttp_SOURCES = testhttp.c
-testhttp_LDADD = ${srcdir}/../libqq/libwebqq.la $(GTK_LIBS)
-testjson_SOURCES = testjson.c
-testjson_LDADD = ${srcdir}/../libqq/libwebqq.la $(GTK_LIBS)
+testhttp_LDADD = ${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)
+testjson_SOURCES = testjson.c  ${srcdir}/../libqq/json.c ${srcidr}/../libqq/json.h
+testjson_LDADD = $(GLIB_LIBS)
 testcprint_SOURCES = ${srcdir}/../comm/cprint.c testcprint.c 
-testcprint_LDADD = ${srcdir}/../libqq/libwebqq.la $(GTK_LIBS)
+testcprint_LDADD = ${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)
 testlog_SOURCES = ${srcdir}/../comm/cprint.c ${srcdir}/../comm/log.c testlog.c
-testlog_LDADD = ${srcdir}/../libqq/libwebqq.la $(GTK_LIBS)
+testlog_LDADD = ${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)
 testurl_SOURCES = ${srcdir}/../comm/log.c testurl.c ${srcdir}/../comm/cprint.c 
-testurl_LDADD = ${srcdir}/../libqq/libwebqq.la $(GTK_LIBS)
+testurl_LDADD = ${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)
 testpro_SOURCES = ${srcdir}/../comm/cprint.c testpro.c ${srcdir}/../comm/log.c
-testpro_LDADD = ${srcdir}/../libqq/libwebqq.la $(GTK_LIBS)
+testpro_LDADD = ${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)
 all: all-am
 
 .SUFFIXES:
@@ -334,6 +333,7 @@ distclean-compile:
 	-rm -f *.tab.c
 
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cprint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/json.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testcprint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/testhttp.Po@am__quote@
@@ -381,6 +381,22 @@ cprint.obj: ${srcdir}/../comm/cprint.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/cprint.c' object='cprint.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cprint.obj `if test -f '${srcdir}/../comm/cprint.c'; then $(CYGPATH_W) '${srcdir}/../comm/cprint.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/cprint.c'; fi`
+
+json.o: ${srcdir}/../libqq/json.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT json.o -MD -MP -MF $(DEPDIR)/json.Tpo -c -o json.o `test -f '${srcdir}/../libqq/json.c' || echo '$(srcdir)/'`${srcdir}/../libqq/json.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/json.Tpo $(DEPDIR)/json.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../libqq/json.c' object='json.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o json.o `test -f '${srcdir}/../libqq/json.c' || echo '$(srcdir)/'`${srcdir}/../libqq/json.c
+
+json.obj: ${srcdir}/../libqq/json.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT json.obj -MD -MP -MF $(DEPDIR)/json.Tpo -c -o json.obj `if test -f '${srcdir}/../libqq/json.c'; then $(CYGPATH_W) '${srcdir}/../libqq/json.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../libqq/json.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/json.Tpo $(DEPDIR)/json.Po
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../libqq/json.c' object='json.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o json.obj `if test -f '${srcdir}/../libqq/json.c'; then $(CYGPATH_W) '${srcdir}/../libqq/json.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../libqq/json.c'; fi`
 
 log.o: ${srcdir}/../comm/log.c
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT log.o -MD -MP -MF $(DEPDIR)/log.Tpo -c -o log.o `test -f '${srcdir}/../comm/log.c' || echo '$(srcdir)/'`${srcdir}/../comm/log.c

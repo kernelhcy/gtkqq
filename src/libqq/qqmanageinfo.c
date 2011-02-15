@@ -29,7 +29,6 @@ static gboolean do_get_my_info(gpointer data)
 	QQCallBack cb = par -> cb;
 	g_free(par);
 
-	JSON *json = JSON_new();
 	gchar params[300];
 	g_debug("Get my information!(%s, %d)", __FILE__, __LINE__);
 
@@ -80,91 +79,100 @@ static gboolean do_get_my_info(gpointer data)
 	}
 
 	g_printf("(%s, %d)%s\n", __FILE__, __LINE__, rps -> msg -> str);
-	JSON_set_raw_data(json, rps -> msg);
-	JSON_parse(json);
-	JSON_print(json);
-
-	GString *val;
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "nick");
-	if(val != NULL){
-		g_debug("nick: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> nick = val;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "country");
-	if(val != NULL){
-		g_debug("country: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> country = val;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "province");
-	if(val != NULL){
-		g_debug("province: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> province = val;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "city");
-	if(val != NULL){
-		g_debug("city: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> city = val;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "gender");
-	if(val != NULL){
-		g_debug("gender: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> gender = val;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "phone");
-	if(val != NULL){
-		g_debug("phone: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> phone = val;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "mobile");
-	if(val != NULL){
-		g_debug("mobile: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> me -> mobile = val;
+	json_t *json = NULL;
+	switch(json_parse_document(&json, rps -> msg -> str))
+	{
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parser_document: syntax error. (%s, %d)"
+				, __FILE__, __LINE__);
+		goto error;
 	}
 
-	GString *year, *month, *day;
-	year = (GString *)JSON_find_pair_value(json, JSON_STRING, "year");
-	month = (GString *)JSON_find_pair_value(json, JSON_STRING, "month");
-	day = (GString *)JSON_find_pair_value(json, JSON_STRING, "day");
+	json_t *val;
+	val = json_find_first_label_all(json, "nick");
+	if(val != NULL){
+		g_debug("nick: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> nick = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "country");
+	if(val != NULL){
+		g_debug("country: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> country = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "province");
+	if(val != NULL){
+		g_debug("province: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> province = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "city");
+	if(val != NULL){
+		g_debug("city: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> city = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "gender");
+	if(val != NULL){
+		g_debug("gender: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> gender = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "phone");
+	if(val != NULL){
+		g_debug("phone: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> phone = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "mobile");
+	if(val != NULL){
+		g_debug("mobile: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> mobile = g_string_new(val -> child -> text);
+	}
+
+	json_t *year, *month, *day;
+	year = json_find_first_label_all(json, "year");
+	month = json_find_first_label_all(json, "month");
+	day = json_find_first_label_all(json, "day");
 	if(year != NULL && month != NULL && day != NULL){
-		g_debug("year:%smonth:%sday:%s", year -> str, month -> str
-				, day -> str);
 		gint tmpi;
 		gchar *endptr;
-		tmpi = strtol(year -> str, &endptr, 10);
-		if(endptr == year -> str){
+		tmpi = strtol(year -> child -> text, &endptr, 10);
+		if(endptr == year -> child -> text){
 			g_warning("strtol error. input: %s (%s, %d)"
-					, year -> str, __FILE__, __LINE__);
+					, year -> child -> text, __FILE__, __LINE__);
 		}else{
 			info -> me -> birthday.year = tmpi;
 		}
-		tmpi = strtol(month -> str, &endptr, 10);
-		if(endptr == month -> str){
+
+		tmpi = strtol(month -> child -> text, &endptr, 10);
+		if(endptr == month -> child -> text){
 			g_warning("strtol error. input: %s (%s, %d)"
-					, month -> str, __FILE__, __LINE__);
+					, month -> child -> text, __FILE__, __LINE__);
 		}else{
 			info -> me -> birthday.month = tmpi;
 		}
-		tmpi = strtol(day -> str, &endptr, 10);
-		if(endptr == day -> str){
+
+		tmpi = strtol(day -> child -> text, &endptr, 10);
+		if(endptr == day -> child -> text){
 			g_warning("strtol error. input: %s (%s, %d)"
-					, day -> str, __FILE__, __LINE__);
+					, day -> child -> text, __FILE__, __LINE__);
 		}else{
 			info -> me -> birthday.day = tmpi;
 		}
-		g_debug("Birthday:%d/%d/%d", info -> me -> birthday.year
+
+		g_debug("Birthday:%d/%d/%d (%s, %d)", info -> me -> birthday.year
 				, info -> me -> birthday.month
-				, info -> me -> birthday,day);
+				, info -> me -> birthday.day
+				, __FILE__, __LINE__);
 	}
 
 	/*
 	 * Just to check error.
 	 */
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "uin");
+	val = json_find_first_label_all(json, "uin");
 	if(val == NULL){
 		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
 	}
 error:
-	JSON_free(json);
+	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
 	return FALSE;

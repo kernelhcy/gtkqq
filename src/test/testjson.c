@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <glib.h>
 
 int main(int argc, char ** argv)
 {
@@ -18,10 +19,22 @@ int main(int argc, char ** argv)
 	
 	fclose(fd);
 	
-	JSON *j = JSON_new();
-	JSON_set_raw_data_c(j, input -> str, input -> len);
-	JSON_parse(j);
-	JSON_print(j);
-	
+	enum json_error error;
+	json_t *json = NULL;
+	error = json_parse_document(&json, input -> str);
+	switch(error)
+	{
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parse_docuemt error.");
+		break;
+	}
+	json_t *val;
+	val = json_find_first_label_all(json, "year");
+	if(val != NULL){
+		g_debug("year: %s", val -> child -> text);
+	}
+	json_free_value(&json);
 	return 0;
 }

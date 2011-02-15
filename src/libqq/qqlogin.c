@@ -544,7 +544,6 @@ static int get_psessionid(QQInfo *info)
 	int ret = 0;
 	
 	Request *req = request_new();
-	JSON *json = JSON_new();
 	Response *rps = NULL;
 	request_set_method(req, "POST");
 	request_set_version(req, "HTTP/1.1");
@@ -607,63 +606,67 @@ static int get_psessionid(QQInfo *info)
 		goto error;
 	}
 
-	JSON_set_raw_data_c(json, rps -> msg -> str, rps -> msg -> len);
-	if(JSON_parse(json) != 0){
-		g_warning("Parse JSON data error!!(%s, %d)", __FILE__, __LINE__);
-		ret = -1;
-		goto error;
-	}
-	JSON_DATA_T type;
-	JSON_data *jd = (JSON_data*)json -> result;
-	if(jd -> type != JSON_OBJECT){
-		g_warning("JSON data format error!!(%s, %d)", __FILE__, __LINE__);
-		ret = -1;
-		goto error;
-	}
-	GString *val;
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "retcode");
-	if(val -> str[0] != '0'){
-		g_warning("Server return code %s", val -> str);
-		ret = -1;
-		goto error;
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "seskey");
-	if(val != NULL){
-		g_debug("seskey: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> seskey = g_string_new(val -> str);
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "cip");
-	if(val != NULL){
-		info -> cip = g_string_new(val -> str);
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "index");
-	if(val != NULL){
-		info -> index = g_string_new(val -> str);
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "port");
-	if(val != NULL){
-		info -> port = g_string_new(val -> str);
-	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "status");
+	json_t *json = NULL;
+	switch(json_parse_document(&json, rps -> msg -> str))
 	{
-		g_debug("status: %s (%s, %d)", val -> str, __FILE__, __LINE__);
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parser_document: syntax error. (%s, %d)"
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
 	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "vfwebqq");
-	if(val != NULL){
-		g_debug("vfwebqq: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> vfwebqq = g_string_new(val -> str);
+
+	json_t *val;
+	val = json_find_first_label_all(json, "retcode");
+	if(val -> child -> text[0] != '0'){
+		g_warning("Server return code %s(%s, %d)", val -> child -> text
+				, __FILE__, __LINE__);
+		ret = -1;
+		goto error;
 	}
-	val = (GString *)JSON_find_pair_value(json, JSON_STRING, "psessionid");
+	val = json_find_first_label_all(json, "seskey");
 	if(val != NULL){
-		g_debug("psessionid: %s (%s, %d)", val -> str, __FILE__, __LINE__);
-		info -> psessionid = g_string_new(val -> str);
+		g_debug("seskey: %s (%s, %d)", val -> child -> text
+				, __FILE__, __LINE__);
+		info -> seskey = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "cip");
+	if(val != NULL){
+		info -> cip = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "index");
+	if(val != NULL){
+		info -> index = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "port");
+	if(val != NULL){
+		info -> port = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "status");
+	{
+		g_debug("status: %s (%s, %d)", val -> child -> text
+				, __FILE__, __LINE__);
+	}
+	val = json_find_first_label_all(json, "vfwebqq");
+	if(val != NULL){
+		g_debug("vfwebqq: %s (%s, %d)", val -> child -> text
+				, __FILE__, __LINE__);
+		info -> vfwebqq = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "psessionid");
+	if(val != NULL){
+		g_debug("psessionid: %s (%s, %d)", val -> child -> text
+				, __FILE__, __LINE__);
+		info -> psessionid = g_string_new(val -> child -> text);
 	}else{
-		g_debug("Can not find pesssionid!(%s, %d): %s", __FILE__, __LINE__
-				, rps -> msg -> str);
+		g_debug("Can not find pesssionid!(%s, %d): %s"
+				, __FILE__, __LINE__, rps -> msg -> str);
 	}
 
 error:
-	JSON_free(json);
+	json_free_value(&json);	
 	close_con(con);
 	connection_free(con);
 	request_del(req);
@@ -911,14 +914,22 @@ static gboolean do_logout(gpointer data)
 		goto error;
 	}
 
-	JSON *json = JSON_new();
-	JSON_set_raw_data(json, rps -> msg);
-	JSON_parse(json);
-	GString *retcode, *result;
-	retcode = (GString *)JSON_find_pair_value(json, JSON_STRING, "retcode");
-	result = (GString *)JSON_find_pair_value(json, JSON_STRING, "result");
+	json_t *json = NULL;
+	switch(json_parse_document(&json, rps -> msg -> str))
+	{
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parser_document: syntax error. (%s, %d)"
+				, __FILE__, __LINE__);
+		goto error;
+	}
+
+	json_t *retcode, *result;
+	retcode = json_find_first_label_all(json, "retcode");
+	result = json_find_first_label_all(json, "result");
 	if(retcode != NULL && result != NULL){
-		if(g_strstr_len(result -> str, -1, "ok") != NULL){
+		if(g_strstr_len(result -> child -> text, -1, "ok") != NULL){
 			g_debug("Logout ok!(%s, %d)", __FILE__, __LINE__);
 			if(cb != NULL){
 				cb(CB_SUCCESS, "Logout ok!");
@@ -928,7 +939,7 @@ static gboolean do_logout(gpointer data)
 		g_debug("(%s, %d)%s", __FILE__, __LINE__, rps -> msg -> str);
 	}
 	
-	JSON_free(json);
+	json_free_value(&json);
 error:
 	request_del(req);
 	response_del(rps);
