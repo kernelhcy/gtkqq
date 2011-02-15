@@ -123,6 +123,8 @@ struct _QQBuddy{
 	GString *personal;
 	GString *lnick;
 
+	gint allow;
+
 	/*
 	 * 1 : 桌面客户端
 	 * 21: 手机客户端

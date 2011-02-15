@@ -16,6 +16,7 @@
 #include <http.h>
 #include <json.h>
 #include <qqhosts.h>
+#include <unicode.h>
 
 static gboolean do_get_my_info(gpointer data)
 {
@@ -91,30 +92,41 @@ static gboolean do_get_my_info(gpointer data)
 	}
 
 	json_t *val;
+	GString *vs;
 	val = json_find_first_label_all(json, "nick");
 	if(val != NULL){
-		g_debug("nick: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
-		info -> me -> nick = g_string_new(val -> child -> text);
+		vs = g_string_new(NULL);
+		ucs4toutf8(vs, val -> child -> text);
+		info -> me -> nick = vs;
+		g_debug("nick: %s (%s, %d)", vs -> str, __FILE__, __LINE__);
 	}
 	val = json_find_first_label_all(json, "country");
 	if(val != NULL){
-		g_debug("country: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
-		info -> me -> country = g_string_new(val -> child -> text);
+		vs = g_string_new(NULL);
+		ucs4toutf8(vs, val -> child -> text);
+		info -> me -> country = vs;
+		g_debug("country: %s (%s, %d)", vs -> str, __FILE__, __LINE__);
 	}
 	val = json_find_first_label_all(json, "province");
 	if(val != NULL){
-		g_debug("province: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
-		info -> me -> province = g_string_new(val -> child -> text);
+		vs = g_string_new(NULL);
+		ucs4toutf8(vs, val -> child -> text);
+		info -> me -> province = vs;
+		g_debug("province: %s (%s, %d)", vs -> str, __FILE__, __LINE__);
 	}
 	val = json_find_first_label_all(json, "city");
 	if(val != NULL){
-		g_debug("city: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
-		info -> me -> city = g_string_new(val -> child -> text);
+		vs = g_string_new(NULL);
+		ucs4toutf8(vs, val -> child -> text);
+		info -> me -> city = vs;
+		g_debug("city: %s (%s, %d)", vs -> str, __FILE__, __LINE__);
 	}
 	val = json_find_first_label_all(json, "gender");
 	if(val != NULL){
-		g_debug("gender: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
-		info -> me -> gender = g_string_new(val -> child -> text);
+		vs = g_string_new(NULL);
+		ucs4toutf8(vs, val -> child -> text);
+		info -> me -> gender = vs;
+		g_debug("gender: %s (%s, %d)", vs -> str, __FILE__, __LINE__);
 	}
 	val = json_find_first_label_all(json, "phone");
 	if(val != NULL){
@@ -125,6 +137,36 @@ static gboolean do_get_my_info(gpointer data)
 	if(val != NULL){
 		g_debug("mobile: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
 		info -> me -> mobile = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "face");
+	if(val != NULL){
+		g_debug("face: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> face = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "email");
+	if(val != NULL){
+		g_debug("email: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> email = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "occupation");
+	if(val != NULL){
+		g_debug("occupation: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> occupation = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "college");
+	if(val != NULL){
+		g_debug("college: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> college = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "homepage");
+	if(val != NULL){
+		g_debug("homepage: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> homepage = g_string_new(val -> child -> text);
+	}
+	val = json_find_first_label_all(json, "personal");
+	if(val != NULL){
+		g_debug("personal: %s (%s, %d)", val -> child -> text, __FILE__, __LINE__);
+		info -> me -> personal = g_string_new(val -> child -> text);
 	}
 
 	json_t *year, *month, *day;
@@ -164,6 +206,58 @@ static gboolean do_get_my_info(gpointer data)
 				, __FILE__, __LINE__);
 	}
 
+	val = json_find_first_label_all(json, "blood");
+	if(val != NULL){
+		gint tmpi;
+		gchar *endptr;
+		tmpi = strtol(val -> child -> text, &endptr, 10);
+		if(endptr == val -> child -> text){
+			g_warning("strtol error. input: %s (%s, %d)"
+					, val -> child -> text, __FILE__, __LINE__);
+		}else{
+			info -> me -> blood = tmpi;
+			g_debug("blood: %d (%s, %d)", tmpi, __FILE__, __LINE__);
+		}
+	}
+	val = json_find_first_label_all(json, "shengxiao");
+	if(val != NULL){
+		gint tmpi;
+		gchar *endptr;
+		tmpi = strtol(val -> child -> text, &endptr, 10);
+		if(endptr == val -> child -> text){
+			g_warning("strtol error. input: %s (%s, %d)"
+					, val -> child -> text, __FILE__, __LINE__);
+		}else{
+			info -> me -> shengxiao = tmpi;
+			g_debug("shengxiao: %d (%s, %d)", tmpi, __FILE__, __LINE__);
+		}
+	}
+	val = json_find_first_label_all(json, "constel");
+	if(val != NULL){
+		gint tmpi;
+		gchar *endptr;
+		tmpi = strtol(val -> child -> text, &endptr, 10);
+		if(endptr == val -> child -> text){
+			g_warning("strtol error. input: %s (%s, %d)"
+					, val -> child -> text, __FILE__, __LINE__);
+		}else{
+			info -> me -> constel = tmpi;
+			g_debug("constel: %d (%s, %d)", tmpi, __FILE__, __LINE__);
+		}
+	}
+	val = json_find_first_label_all(json, "allow");
+	if(val != NULL){
+		gint tmpi;
+		gchar *endptr;
+		tmpi = strtol(val -> child -> text, &endptr, 10);
+		if(endptr == val -> child -> text){
+			g_warning("strtol error. input: %s (%s, %d)"
+					, val -> child -> text, __FILE__, __LINE__);
+		}else{
+			info -> me -> allow = tmpi;
+			g_debug("allow: %d (%s, %d)", tmpi, __FILE__, __LINE__);
+		}
+	}
 	/*
 	 * Just to check error.
 	 */
