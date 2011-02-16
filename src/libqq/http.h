@@ -74,6 +74,10 @@ void request_set_default_headers(Request *r);
  * get the value of header name
  */
 GString* request_get_header(Request* r, const GString* name);
+
+/*
+ * Append message body to the request.
+ */
 void request_append_msg(Request* r, const gchar* msg
 				, gsize len);
 

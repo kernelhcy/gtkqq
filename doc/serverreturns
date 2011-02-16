@@ -69,16 +69,10 @@ Host: d.web2.qq.com
 {"uin":780172215,"status":"online","client_type":21},
 {"uin":3272722447,"status":"online","client_type":1}]}
 
-POST /api/get_user_friends2 HTTP/1.1
-User-Agent: Opera/9.80 (X11; Linux i686; U; en) Presto/2.7.62 Version/11.01
+POST /api/get_group_name_list_mask2 HTTP/1.1
 Host: s.web2.qq.com
-Referer: http://s.web2.qq.com/proxy.html?v=20101025002
-Content-Length: 134
-Content-Type: application/x-www-form-urlencoded
-Content-Transfer-Encoding: binary
-
-r=%7B%22h%22%3A%22hello%22%2C%22vfwebqq%22%3A%2222fdebbc54acc776b2912f7c81e7a75f51f433a0842e324f0fe7b1bb30d4d3da17142c2aaa2401c2%22%7D
-
+r=%7B%22vfwebqq%22%3A%2222fdebbc54acc776b2912f7c81e7a75f51f433a0842e324f0fe7b1bb30d4d3da17142c2aaa2401c2%22%7D
+header同上。
 群信息：
 {"retcode":0,"result":{
 "gnamelist":[
@@ -100,14 +94,22 @@ r=%7B%22h%22%3A%22hello%22%2C%22vfwebqq%22%3A%2222fdebbc54acc776b2912f7c81e7a75f
 {"gid":447208873,"code":1075158902,"flag":1,"name":"\u81EA\u7136\u8FA9\u8BC1\u6CD513\u7EC4"},
 {"gid":386431331,"code":3515096846,"flag":17825809,"name":"\u6E05\u8F6FMSE10"},
 {"gid":1615763630,"code":2216314227,"flag":1,"name":"\u90B3\u5DDE\u5E7F\u5B89\u9A7E\u6821"}],
-"gmasklist":[{"gid":1000,"mask":0}],"gmarklist":[{"uin":1243004636,"markname":""}]}}
+"gmasklist":[{"gid":1000,"mask":0}],
+"gmarklist":[{"uin":1243004636,"markname":""}]}}
 
-POST /api/get_group_name_list_mask2 HTTP/1.1
+
+POST /api/get_user_friends2 HTTP/1.1
+User-Agent: Opera/9.80 (X11; Linux i686; U; en) Presto/2.7.62 Version/11.01
 Host: s.web2.qq.com
-r=%7B%22vfwebqq%22%3A%2222fdebbc54acc776b2912f7c81e7a75f51f433a0842e324f0fe7b1bb30d4d3da17142c2aaa2401c2%22%7D
-header同上。
+Referer: http://s.web2.qq.com/proxy.html?v=20101025002
+Content-Length: 134
+Content-Type: application/x-www-form-urlencoded
+Content-Transfer-Encoding: binary
+
+r=%7B%22h%22%3A%22hello%22%2C%22vfwebqq%22%3A%2222fdebbc54acc776b2912f7c81e7a75f51f433a0842e324f0fe7b1bb30d4d3da17142c2aaa2401c2%22%7D
 组信息：
 {"retcode":0,"result":{
+
 "categories":[{"index":1,"name":"\u8F6F\u4EF6\u5B66\u9662"},{"index":2,"name":"\u9AD8\u4E00(3)\u73ED"},{"index":3,"name":"\u9AD8\u4E09(2)\u73ED"},{"index":4,"name":"\u9AD8\u4E8C(1)\u73ED"},{"index":5,"name":"\u4EA4\u5927\u8001\u4E61"},{"index":6,"name":"ACM\u961F"},{"index":7,"name":"MSE"}],
 好友分组：
 "friends":[{"uin":2363643512,"categories":6},{"uin":2652201810,"categories":6},{"uin":4255149538,"categories":7},{"uin":2918926970,"categories":6},{"uin":3332848590,"categories":0},{"uin":3089057702,"categories":4},{"uin":2574855451,"categories":0},{"uin":2988196696,"categories":6},{"uin":818890736,"categories":0},{"uin":4172849568,"categories":0},{"uin":2437888517,"categories":0},{"uin":3434186032,"categories":2},{"uin":3083344445,"categories":3},{"uin":1653295383,"categories":0},{"uin":1583440428,"categories":7},{"uin":2612813279,"categories":7},{"uin":919803584,"categories":1},{"uin":1972502544,"categories":1},{"uin":1908702730,"categories":1},{"uin":3345135461,"categories":5},{"uin":4131789642,"categories":3},{"uin":4207883860,"categories":0},{"uin":46427816,"categories":0},{"uin":1122662043,"categories":0},{"uin":550285514,"categories":0},{"uin":3378438306,"categories":1},{"uin":1499679573,"categories":3},{"uin":3050365587,"categories":6},{"uin":3272722447,"categories":1},{"uin":830531960,"categories":3},{"uin":437000452,"categories":7},{"uin":1032744841,"categories":1},{"uin":1397594607,"categories":1},{"uin":3500604796,"categories":3},{"uin":1734736311,"categories":3},{"uin":3091634933,"categories":1},{"uin":2559478341,"categories":3},{"uin":1744225979,"categories":3},{"uin":790024960,"categories":1},{"uin":1562824002,"categories":1},{"uin":3418173760,"categories":3},{"uin":605716337,"categories":6},{"uin":3478701683,"categories":1},{"uin":153353851,"categories":0},{"uin":1231949896,"categories":1},{"uin":1436876628,"categories":0},{"uin":1862424047,"categories":1},{"uin":3888988913,"categories":1},{"uin":3975912284,"categories":3},{"uin":1884470605,"categories":0},{"uin":780172215,"categories":4},{"uin":3937519243,"categories":2},{"uin":4157157325,"categories":2},{"uin":2189998466,"categories":3},{"uin":4047459234,"categories":1},{"uin":1618409655,"categories":1},{"uin":603184030,"categories":0},{"uin":2792554321,"categories":3},{"uin":2324178233,"categories":1},{"uin":3661934775,"categories":5},{"uin":3236958326,"categories":1},{"uin":3036995815,"categories":3},{"uin":1468750576,"categories":2},{"uin":885083170,"categories":0},{"uin":4189541171,"categories":7},{"uin":1973364459,"categories":3},{"uin":628657121,"categories":7},{"uin":1025835001,"categories":1},{"uin":3196948328,"categories":1},{"uin":2130535146,"categories":4},{"uin":2581792931,"categories":0},{"uin":3217922569,"categories":1},{"uin":1650956924,"categories":3},{"uin":3961803539,"categories":3},{"uin":2950306864,"categories":4},{"uin":3049261292,"categories":3},{"uin":4173962858,"categories":2},{"uin":2879805548,"categories":1},{"uin":935838190,"categories":1},{"uin":3125614141,"categories":2},{"uin":2466806356,"categories":1},{"uin":4140534843,"categories":7},{"uin":1123709874,"categories":0},{"uin":2982117124,"categories":0},{"uin":3764041160,"categories":6},{"uin":918426735,"categories":3},{"uin":1268323405,"categories":1},{"uin":4060533587,"categories":1},{"uin":1676298391,"categories":4},{"uin":2222816736,"categories":1},{"uin":1596020224,"categories":3},{"uin":1784270028,"categories":1},{"uin":2311636875,"categories":7},{"uin":3292535778,"categories":7},{"uin":3774912791,"categories":3},{"uin":3137789652,"categories":7},{"uin":3408791583,"categories":1},{"uin":3258897755,"categories":1},{"uin":1087105170,"categories":1},{"uin":3399349591,"categories":1},{"uin":2766852072,"categories":3},{"uin":3875935477,"categories":0},{"uin":801176089,"categories":4},{"uin":3532760943,"categories":1},{"uin":3002628082,"categories":3},{"uin":396678498,"categories":5},{"uin":3924347505,"categories":2},{"uin":1354668928,"categories":3},{"uin":924838169,"categories":3},{"uin":3131022293,"categories":0},{"uin":2292689563,"categories":1},{"uin":732213356,"categories":0},{"uin":969242237,"categories":0},{"uin":208261928,"categories":1},{"uin":4201932325,"categories":3},{"uin":2984048072,"categories":3},{"uin":133432545,"categories":1},{"uin":3268631953,"categories":1},{"uin":502205038,"categories":3},{"uin":3932069109,"categories":4},{"uin":4006804131,"categories":3},{"uin":2979774802,"categories":0},{"uin":1895254862,"categories":3},{"uin":3247202636,"categories":3},{"uin":3221768421,"categories":3},{"uin":4188431466,"categories":2},{"uin":21468602,"categories":1},{"uin":1476353233,"categories":1},{"uin":3027142285,"categories":3},{"uin":1154364405,"categories":7},{"uin":1687869310,"categories":3},{"uin":4016873506,"categories":0},{"uin":2594897259,"categories":4},{"uin":3371445445,"categories":3},{"uin":3723028345,"categories":3},{"uin":3368136231,"categories":2},{"uin":3336407354,"categories":2},{"uin":370400398,"categories":2},{"uin":2011090661,"categories":4},{"uin":1559724965,"categories":7},{"uin":146027161,"categories":0},{"uin":3695396137,"categories":1},{"uin":662532050,"categories":0},{"uin":970134506,"categories":4},{"uin":3699280258,"categories":0},{"uin":2790979427,"categories":1},{"uin":1143451202,"categories":0},{"uin":2236192519,"categories":0},{"uin":865207956,"categories":5},{"uin":3316533361,"categories":3},{"uin":2770763617,"categories":0},{"uin":1424224839,"categories":5},{"uin":4283709771,"categories":0},{"uin":2335826984,"categories":0},{"uin":1626627086,"categories":0},{"uin":1420960439,"categories":0},{"uin":107866020,"categories":5},{"uin":1115186876,"categories":0},{"uin":2809107640,"categories":0},{"uin":2409707632,"categories":7},{"uin":3943988197,"categories":0}],

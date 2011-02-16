@@ -159,6 +159,8 @@ struct _QQGroup{
 	GString *code;
 	GString *flag;
 	GString *owner;
+	GString *mark;
+	GString *mask;
 	gint option;
 	glong createTime;
 	gint gclass;
@@ -176,6 +178,12 @@ void qq_group_free(QQGroup *);
 struct _QQCategory{
 	GString *name;
 	gint index;
+
+	/*
+	 * The pointers of the members
+	 * QQBuddy instance.
+	 */
+	GPtrArray *members;
 };
 QQCategory* qq_category_new();
 void qq_category_free(QQCategory *);

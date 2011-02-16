@@ -47,9 +47,25 @@ void qq_info_free(QQInfo *info)
 	g_string_free(info -> psessionid, TRUE);
 	g_string_free(info -> vfwebqq, TRUE);
 
+	gint i;
+	for(i = 0; i < info -> buddies -> len; ++i){
+		qq_buddy_free(info -> buddies -> pdata[i]);
+	}
 	g_ptr_array_free(info -> buddies, TRUE);
+
+	for(i = 0; i < info -> groups -> len; ++i){
+		qq_group_free(info -> groups -> pdata[i]);
+	}
 	g_ptr_array_free(info -> groups, TRUE);
+
+	/*
+	 * Need not to free the members.
+	 */
 	g_ptr_array_free(info -> recentcon, TRUE);
+
+	for(i = 0; i < info -> categories -> len; ++i){
+		qq_category_free(info -> categories -> pdata[i]);
+	}
 	g_ptr_array_free(info -> categories, TRUE);
 
 	g_mutex_free(info -> lock);
@@ -115,6 +131,7 @@ void qq_group_free(QQGroup *grp)
 QQCategory* qq_category_new()
 {
 	QQCategory *c = g_slice_new0(QQCategory);
+	c -> members = g_ptr_array_new();
 	return c;
 }
 void qq_category_free(QQCategory *cty)
@@ -122,6 +139,7 @@ void qq_category_free(QQCategory *cty)
 	if(cty == NULL){
 		return;
 	}
+	g_ptr_array_free(cty -> members, TRUE);
 	g_slice_free(QQCategory, cty);
 }
 

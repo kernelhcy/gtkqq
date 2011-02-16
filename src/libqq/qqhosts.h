@@ -34,5 +34,8 @@
 
 #define SWQQHOST	"s.web2.qq.com"
 #define GETMYINFO	"/api/get_friend_info2"
+#define LNICKPATH	"/api/get_single_long_nick2"
+#define FRIENDSPATH	"/api/get_user_friends2"
+#define GNAMEPATH	"/api/get_group_name_list_mask2"
 
 #endif

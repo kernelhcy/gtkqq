@@ -44,5 +44,14 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc);
  * Get information of myself
  */
 void qq_get_my_info(QQInfo *info, QQCallBack cb);
+/*
+ * Get all my friends' information.
+ * Just simple information.
+ */
+void qq_get_my_friends(QQInfo *info, QQCallBack cb);
+/*
+ * Get the group name list mask.
+ */
+void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb);
 
 #endif
