@@ -105,6 +105,7 @@ struct _QQBuddy{
 
 	GString *gender;			//male or female
 	GString *face;
+	GString *flag;
 
 	struct Birthday{
 		gint year, month, day;
@@ -131,9 +132,8 @@ struct _QQBuddy{
 	 *   : web QQ
 	 */
 	gint client_type;
+	QQCategory *cate;			// The category of this buddy
 
-	gint category_idx;			//the index of the category 
-						//contains this buddy
 };
 QQBuddy* qq_buddy_new();
 void qq_buddy_free(QQBuddy *);

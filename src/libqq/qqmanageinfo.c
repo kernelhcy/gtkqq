@@ -7,6 +7,10 @@
  * 	2.Get friends' pictures.
  * 	3.Get groups' informatin.
  * 	4.Get self information.
+ * 	5.Get online buddies
+ * 	6.Get recent connected buddies.
+ *
+ * 	***Next version***
  * 	5.Manage all above.
  */
 
@@ -18,6 +22,117 @@
 #include <qqhosts.h>
 #include <unicode.h>
 #include <string.h>
+
+struct GetLNickPar{
+	QQInfo *info;
+	QQCallBack cb;
+	QQBuddy *bdy;
+};
+static gboolean do_get_single_long_nick(gpointer data)
+{
+	struct GetLNickPar *par = (struct GetLNickPar*)data;
+	if(par == NULL){
+		g_warning("par == NULL in do_get_single_long_nick.(%s, %d)"
+				, __FILE__, __LINE__);
+		return FALSE;
+	}
+	QQInfo *info = par -> info;
+	QQCallBack cb = par -> cb;
+	QQBuddy *bdy = par -> bdy;
+	g_slice_free(struct GetLNickPar, par);
+
+	gchar params[300];
+	g_debug("Get long nick.(%s, %d)", __FILE__, __LINE__);
+
+	Request *req = request_new();
+	Response *rps = NULL;
+	request_set_method(req, "GET");
+	request_set_version(req, "HTTP/1.1");
+	g_sprintf(params, LNICKPATH"?tuin=%s&vfwebqq=%s&t=%lld"
+			, bdy -> uin -> str
+			, info -> vfwebqq -> str, get_now_millisecond());
+	request_set_uri(req, params);
+	request_set_default_headers(req);
+	request_add_header(req, "Host", SWQQHOST);
+	request_add_header(req, "Cookie", info -> cookie -> str);
+	request_add_header(req, "Content-Type", "utf-8");
+	request_add_header(req, "Referer"
+			, "http://s.web2.qq.com/proxy.html?v=20101025002");
+
+
+	Connection *con = connect_to_host(SWQQHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_NETWORKERR, "Can not connect to server!");
+		}
+		request_del(req);
+		g_free(par);
+		return FALSE;
+	}
+
+	send_request(con, req);
+	response_del(rps);
+	rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		/*
+		 * Maybe some error occured.
+		 */
+		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
+				, retstatus, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "Response error!");
+		}
+		goto error;
+	}
+
+	json_t *json = NULL;
+	switch(json_parse_document(&json, rps -> msg -> str))
+	{
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parser_document: syntax error. (%s, %d)"
+				, __FILE__, __LINE__);
+		goto error;
+	}
+	json_t *val = json_find_first_label_all(json, "lnick");
+	if(val != NULL){
+		GString *vs = g_string_new(NULL);
+		ucs4toutf8(vs, val -> child -> text);
+		bdy -> lnick = vs;
+		g_debug("lnick: %s (%s, %d)", vs -> str , __FILE__, __LINE__);
+	}
+	/*
+	 * Just to check error.
+	 */
+	val = json_find_first_label_all(json, "uin");
+	if(val == NULL){
+		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
+	}
+
+error:
+	json_free_value(&json);
+	request_del(req);
+	response_del(rps);
+	return FALSE;
+}
+
+static gboolean do_get_online_buddies(gpointer data)
+{
+	return FALSE;
+}
+
+static gboolean do_get_recent_contact(gpointer data)
+{
+	return FALSE;
+}
+
 
 static gboolean do_get_my_info(gpointer data)
 {
@@ -281,71 +396,15 @@ static gboolean do_get_my_info(gpointer data)
 	if(val == NULL){
 		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
 	}
-	json_free_value(&json);
 
 	/*
 	 * get long nick
 	 */
-	g_debug("Get long nick.(%s, %d)", __FILE__, __LINE__);
-	g_sprintf(params, LNICKPATH"?tuin=%s&vfwebqq=%s&t=%lld"
-			, info -> me -> uin -> str
-			, info -> vfwebqq -> str, get_now_millisecond());
-	request_set_uri(req, params);
-	con = connect_to_host(SWQQHOST, 80);
-	if(con == NULL){
-		g_warning("Can NOT connect to server!(%s, %d)"
-				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
-		}
-		request_del(req);
-		g_free(par);
-		return FALSE;
-	}
-
-	send_request(con, req);
-	response_del(rps);
-	rcv_response(con, &rps);
-	close_con(con);
-	connection_free(con);
-
-	retstatus = rps -> status -> str;
-	if(g_strstr_len(retstatus, -1, "200") == NULL){
-		/*
-		 * Maybe some error occured.
-		 */
-		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
-				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
-		}
-		goto error;
-	}
-
-	json = NULL;
-	switch(json_parse_document(&json, rps -> msg -> str))
-	{
-	case JSON_OK:
-		break;
-	default:
-		g_warning("json_parser_document: syntax error. (%s, %d)"
-				, __FILE__, __LINE__);
-		goto error;
-	}
-	val = json_find_first_label_all(json, "lnick");
-	if(val != NULL){
-		vs = g_string_new(NULL);
-		ucs4toutf8(vs, val -> child -> text);
-		info -> me -> lnick = vs;
-		g_debug("lnick: %s (%s, %d)", vs -> str , __FILE__, __LINE__);
-	}
-	/*
-	 * Just to check error.
-	 */
-	val = json_find_first_label_all(json, "uin");
-	if(val == NULL){
-		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
-	}
+	struct GetLNickPar *glnpar = g_slice_new(struct GetLNickPar);
+	glnpar -> info = info;
+	glnpar -> cb = cb;
+	glnpar -> bdy = info -> me;
+	do_get_single_long_nick(glnpar);
 
 error:
 	json_free_value(&json);
@@ -353,6 +412,7 @@ error:
 	response_del(rps);
 	return FALSE;
 }
+
 
 static gboolean do_get_my_friends(gpointer data)
 {
@@ -467,19 +527,36 @@ static gboolean do_get_my_friends(gpointer data)
 	if(val != NULL){
 		val = val -> child;
 		const gchar *uin, *nick, *face, *flag;
-		json_t *cur;
+		json_t *cur, *tmp;
 		GString *ns;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
-			uin = cur -> child -> child -> text;
-			nick = cur -> child -> next -> child -> text;
-			face = cur -> child -> next -> next -> child -> text;
-			flag = cur -> child -> next -> next -> next 
-				-> child -> text;
+			tmp = json_find_first_label(cur, "uin");
+			if(tmp != NULL){
+				uin = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "nick");
+			if(tmp != NULL){
+				nick = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "face");
+			if(tmp != NULL){
+				face = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "flag");
+			if(tmp != NULL){
+				flag = tmp -> child -> text;
+			}
 			ns = g_string_new(NULL);
 			ucs4toutf8(ns, nick);
 			g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
 					, uin, ns -> str, face, flag
 					, __FILE__, __LINE__);
+			QQBuddy *buddy = qq_buddy_new();
+			buddy -> uin = g_string_new(uin);
+			buddy -> nick = g_string_new(nick);
+			buddy -> face = g_string_new(face);
+			buddy -> flag = g_string_new(flag);
+			g_ptr_array_add(info -> buddies, buddy);
 		}
 	}
 	/*
@@ -487,12 +564,86 @@ static gboolean do_get_my_friends(gpointer data)
 	 */
 	val = json_find_first_label_all(json, "marknames");
 	if(val != NULL){
+		val = val -> child;
+		const gchar *uin, *markname;
+		json_t *cur, *tmp;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "uin");
+			if(tmp != NULL){
+				uin = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "markname");
+			if(tmp != NULL){
+				markname = tmp -> child -> text;
+			}
+			gint i;
+			QQBuddy *tmpb;
+			for(i = 0; i < info -> buddies -> len; ++i){
+				tmpb = (QQBuddy *)(info -> buddies -> pdata[i]);
+				if(g_strstr_len(tmpb -> uin -> str, -1, uin) 
+						!= NULL){
+					/*
+					 * Find the buddy
+					 */
+					tmpb -> markname = g_string_new(NULL);
+					ucs4toutf8(tmpb -> markname, markname);
+					g_debug("uin:%s markname:%s (%s, %d)"
+						, uin, tmpb -> markname -> str
+						, __FILE__, __LINE__);
+
+				}else{
+					g_warning("No buddy(%s) for markname:%s"
+							" (%s, %d)", uin
+							, tmpb -> markname -> str
+							, __FILE__, __LINE__);
+				}
+			}
+		}
 	}
 	/*
 	 * qq friends' categories
 	 */
 	val = json_find_first_label_all(json, "friends");
 	if(val != NULL){
+		val = val -> child;
+		const gchar *uin, *cate;
+		json_t *cur, *tmp;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "uin");
+			if(tmp != NULL){
+				uin = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "categories");
+			if(tmp != NULL){
+				cate = tmp -> child -> text;
+			}
+			g_debug("uin:%s cate:%s(%s, %d)"
+					, uin, cate, __FILE__, __LINE__);
+			gint i;
+			QQCategory *qc = NULL;
+			QQBuddy *bdy = NULL;
+			for(i = 0; i < info -> buddies -> len; ++i){
+				bdy = (QQBuddy *)info -> buddies -> pdata[i];
+				if(g_strstr_len(bdy -> uin -> str, -1, uin)
+						!= NULL){
+					g_debug("Find buddy %s (%s, %d)"
+							, uin, __FILE__
+							, __LINE__);
+					break;
+				}
+			}
+			gint idx;
+			char *endptr;
+			idx = strtol(cate, &endptr, 10);
+			if(endptr == cate){
+				g_warning("strtol error. %s:%d (%s, %d)"
+						, cate, idx, __FILE__
+						, __LINE__);
+				break;
+			}
+			bdy -> cate = info -> categories -> pdata[idx];
+			g_ptr_array_add(bdy -> cate -> members, bdy);
+		}
 	}
 error:
 	json_free_value(&json);
@@ -579,6 +730,113 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 		goto error;
 	}
 	
+	/*
+	 * gnamelist
+	 */
+	json_t *val;
+	val = json_find_first_label_all(json, "gnamelist");
+	if(val != NULL){
+		val = val -> child;
+		json_t *cur, *tmp;
+		gchar *gid, *code, *flag, *name;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "gid");
+			if(tmp != NULL){
+				gid = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "code");
+			if(tmp != NULL){
+				code = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "flag");
+			if(tmp != NULL){
+				flag = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "name");
+			if(tmp != NULL){
+				name = tmp -> child -> text;
+			}
+			QQGroup *grp = qq_group_new();
+			grp -> gid = g_string_new(gid);
+			grp -> code = g_string_new(code);
+			grp -> flag = g_string_new(flag);
+			grp -> name = g_string_new(NULL);
+			ucs4toutf8(grp -> name, name);
+			g_debug("gid: %s, code %s, flag %s, name %s (%s, %d)"
+					, gid, code, flag, grp -> name -> str
+					, __FILE__, __LINE__);
+			g_ptr_array_add(info -> groups, grp);
+		}
+	}else{
+		g_warning("No gnamelist find. (%s, %d)", __FILE__, __LINE__);
+	}
+
+	/*
+	 * gmasklist
+	 */
+	val = json_find_first_label_all(json, "gmasklist");
+	if(val != NULL){
+		val = val -> child;
+		json_t *cur, *tmp;
+		gchar *gid, *mask;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "gid");
+			if(tmp != NULL){
+				gid = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "mask");
+			if(tmp != NULL){
+				mask = tmp -> child -> text;
+			}
+			gint i;
+			QQGroup *tmpg;
+			for(i = 0; i < info -> groups -> len; ++i){
+				tmpg = (QQGroup *)info -> groups -> pdata[i];
+				if(g_strstr_len(tmpg -> gid -> str, -1, gid)
+						!= NULL){
+					g_debug("Find group %s (%s, %d)", gid
+							, __FILE__, __LINE__);
+					tmpg -> mask = g_string_new(mask);
+				}
+			}
+		}
+	}else{
+		g_warning("No gmasklist find. (%s, %d)", __FILE__, __LINE__);
+	}
+
+	/*
+	 * gmarklist
+	 */
+	val = json_find_first_label_all(json, "gmarklist");
+	if(val != NULL){
+		val = val -> child;
+		json_t *cur, *tmp;
+		gchar *gid, *mark;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "gid");
+			if(tmp != NULL){
+				gid = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "mark");
+			if(tmp != NULL){
+				mark = tmp -> child -> text;
+			}
+			gint i;
+			QQGroup *tmpg;
+			for(i = 0; i < info -> groups -> len; ++i){
+				tmpg = (QQGroup *)info -> groups -> pdata[i];
+				if(g_strstr_len(tmpg -> gid -> str, -1, gid)
+						!= NULL){
+					g_debug("Find group %s (%s, %d)", gid
+							, __FILE__, __LINE__);
+					tmpg -> mark = g_string_new(NULL);
+					ucs4toutf8(tmpg -> mark, mark);
+				}
+			}
+		}
+	}else{
+		g_warning("No gmarklist find. (%s, %d)", __FILE__, __LINE__);
+	}
 error:
 	json_free_value(&json);
 	request_del(req);
@@ -645,5 +903,57 @@ void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb)
 	dispatch(info, cb, &do_get_group_name_list_mask);
 	return;
 }
+
+void qq_get_online_buddies(QQInfo *info, QQCallBack cb)
+{
+	if(info == NULL){
+		if(cb != NULL){
+			cb(CB_ERROR, "info == NULL in qq_get_online_buddies");
+		}
+		return;
+	}
+
+	dispatch(info, cb, &do_get_online_buddies);
+	return;
+}
+
+void qq_get_recent_contact(QQInfo *info, QQCallBack cb)
+{
+	if(info == NULL){
+		if(cb != NULL){
+			cb(CB_ERROR, "info == NULL in qq_get_recent_contact");
+		}
+		return;
+	}
+
+	dispatch(info, cb, &do_get_recent_contact);
+	return;
+}
+
+void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb)
+{
+	if(info == NULL){
+		if(cb != NULL){
+			cb(CB_ERROR
+				, "info == NULL in qq_get_single_long_nick");
+		}
+		return;
+	}
+
+	GSource *src = g_idle_source_new();
+	struct GetLNickPar *par = g_slice_new(struct GetLNickPar);
+	par -> info = info;
+	par -> cb = cb;
+	par -> bdy = bdy;
+	g_source_set_callback(src, &do_get_single_long_nick, (gpointer)par
+			, NULL);
+	if(g_source_attach(src, info -> mainctx) <= 0){
+		g_error("Attach logout source error.(%s, %d)"
+				, __FILE__, __LINE__);
+	}
+	g_source_unref(src);
+	return;
+}
+
 
 #endif

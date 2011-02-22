@@ -53,5 +53,17 @@ void qq_get_my_friends(QQInfo *info, QQCallBack cb);
  * Get the group name list mask.
  */
 void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb);
+/*
+ * Get the online buddies
+ */
+void qq_get_online_buddies(QQInfo *info, QQCallBack cb);
+/*
+ * Get the recent contact.
+ */
+void qq_get_recent_contact(QQInfo *info, QQCallBack cb);
 
+/*
+ * Get the long nick of bdy.
+ */
+void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb);
 #endif
