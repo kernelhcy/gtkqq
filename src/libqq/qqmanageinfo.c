@@ -9,9 +9,11 @@
  * 	4.Get self information.
  * 	5.Get online buddies
  * 	6.Get recent connected buddies.
+ * 	7.Get face image.
+ * 	8.Get level.
  *
  * 	***Next version***
- * 	5.Manage all above.
+ * 	1.Manage all above.
  */
 
 #include <qq.h>
@@ -125,11 +127,241 @@ error:
 
 static gboolean do_get_online_buddies(gpointer data)
 {
+	DoFuncParam *par = (DoFuncParam*)data;
+	if(par == NULL){
+		g_warning("par == NULL in do_get_online_buddies.(%s, %d)"
+				, __FILE__, __LINE__);
+		return FALSE;
+	}
+	QQInfo *info = par -> info;
+	QQCallBack cb = par -> cb;
+	g_free(par);
+
+	gchar params[300];
+	g_debug("Get online buddies!(%s, %d)", __FILE__, __LINE__);
+
+	Request *req = request_new();
+	Response *rps = NULL;
+	request_set_method(req, "GET");
+	request_set_version(req, "HTTP/1.1");
+	g_sprintf(params, ONLINEPATH"?clientid=%s&psessionid=%s&t=%lld"
+			, info -> clientid -> str
+			, info -> psessionid -> str, get_now_millisecond());
+	request_set_uri(req, params);
+	request_set_default_headers(req);
+	request_add_header(req, "Host", ONLINEHOST);
+	request_add_header(req, "Cookie", info -> cookie -> str);
+	request_add_header(req, "Content-Type", "utf-8");
+	request_add_header(req, "Referer"
+			, "http://d.web2.qq.com/proxy.html?v=20101025002");
+
+	Connection *con = connect_to_host(ONLINEHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_NETWORKERR, "Can not connect to server!");
+		}
+		request_del(req);
+		g_free(par);
+		return FALSE;
+	}
+
+	send_request(con, req);
+	rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		/*
+		 * Maybe some error occured.
+		 */
+		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
+				, retstatus, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "Response error!");
+		}
+		goto error;
+	}
+
+	json_t *json = NULL;
+	switch(json_parse_document(&json, rps -> msg -> str))
+	{
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parser_document: syntax error. (%s, %d)"
+				, __FILE__, __LINE__);
+		goto error;
+	}
+
+	g_printf("%s", rps -> msg -> str);
+	json_t *val;
+	val = json_find_first_label_all(json, "result");
+	if(val != NULL){
+		val = val -> child;
+		gint i;
+		json_t *cur, *tmp;
+		gchar *uin, *status, *client_type;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "uin");	
+			if(tmp != NULL){
+				uin = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "status");	
+			if(tmp != NULL){
+				status = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "client_type");	
+			if(tmp != NULL){
+				client_type= tmp -> child -> text;
+			}
+			g_debug("uin: %s, status: %s, client_type: %s (%s, %d)"
+					, uin, status, client_type
+					, __FILE__, __LINE__);
+			QQBuddy *bdy;
+			gint ct;
+			char *endptr;
+			for(i = 0; i < info -> buddies -> len; ++i){
+				bdy = (QQBuddy *)info -> buddies -> pdata[i];
+				if(g_strstr_len(bdy -> uin -> str, -1, uin)
+						!= NULL){
+					g_string_free(bdy -> status, TRUE);
+					bdy -> status = g_string_new(status);
+					ct = strtol(client_type, &endptr, 10);
+					if(endptr == client_type){
+						g_warning("strtol error(%s,%d)"
+								, __FILE__
+								, __LINE__);
+						continue;
+					}
+					bdy -> client_type = ct;
+				}
+			}
+		}
+	}
+error:
+	json_free_value(&json);
+	request_del(req);
+	response_del(rps);
 	return FALSE;
 }
 
 static gboolean do_get_recent_contact(gpointer data)
 {
+	DoFuncParam *par = (DoFuncParam*)data;
+	if(par == NULL){
+		g_warning("par == NULL in do_recent_contact.(%s, %d)"
+				, __FILE__, __LINE__);
+		return FALSE;
+	}
+	QQInfo *info = par -> info;
+	QQCallBack cb = par -> cb;
+	g_free(par);
+
+	gchar params[300];
+	g_debug("Get recent contacts!(%s, %d)", __FILE__, __LINE__);
+
+	Request *req = request_new();
+	Response *rps = NULL;
+	request_set_method(req, "POST");
+	request_set_version(req, "HTTP/1.1");
+	request_set_uri(req, RECENTPATH);
+	request_set_default_headers(req);
+	request_add_header(req, "Host", RECENTHOST);
+	request_add_header(req, "Cookie", info -> cookie -> str);
+	request_add_header(req, "Content-Type"
+			, "application/x-www-form-urlencoded");
+	request_add_header(req, "Content-Transfer-Encoding", "binary");
+	request_add_header(req, "Referer"
+			, "http://s.web2.qq.com/proxy.html?v=20101025002");
+	g_snprintf(params, 300, "r={\"vfwebqq\":\"%s\"}"
+			, info -> vfwebqq -> str);
+	gchar *euri = g_uri_escape_string(params, "=", FALSE);
+	request_append_msg(req, euri, strlen(euri));
+	g_snprintf(params, 300, "%d", strlen(euri));
+	request_add_header(req, "Content-Length", params);
+	g_free(euri);
+
+	Connection *con = connect_to_host(RECENTHOST, 80);
+	if(con == NULL){
+		g_warning("Can NOT connect to server!(%s, %d)"
+				, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_NETWORKERR, "Can not connect to server!");
+		}
+		request_del(req);
+		g_free(par);
+		return FALSE;
+	}
+
+	send_request(con, req);
+	rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	const gchar *retstatus = rps -> status -> str;
+	if(g_strstr_len(retstatus, -1, "200") == NULL){
+		/*
+		 * Maybe some error occured.
+		 */
+		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
+				, retstatus, __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, "Response error!");
+		}
+		goto error;
+	}
+
+	json_t *json = NULL;
+	switch(json_parse_document(&json, rps -> msg -> str))
+	{
+	case JSON_OK:
+		break;
+	default:
+		g_warning("json_parser_document: syntax error. (%s, %d)"
+				, __FILE__, __LINE__);
+		goto error;
+	}
+
+	g_printf("%s", rps -> msg -> str);
+	json_t *val;
+	val = json_find_first_label_all(json, "contents");
+	if(val != NULL){
+		val = val -> child;
+		gint ti;
+		char *endptr;
+		json_t *cur, *tmp;
+		gchar *uin, *type;
+		for(cur = val -> child; cur != NULL; cur = cur -> next){
+			tmp = json_find_first_label(cur, "uin");	
+			if(tmp != NULL){
+				uin = tmp -> child -> text;
+			}
+			tmp = json_find_first_label(cur, "type");	
+			if(tmp != NULL){
+				type = tmp -> child -> text;
+			}
+			g_debug("recent con, uin: %s, type: %s (%s, %d)"
+					, uin, type, __FILE__, __LINE__);
+			
+			QQRecentCon *rc = qq_recentcon_new();
+			rc -> uin = g_string_new(uin);
+			ti = strtol(type, &endptr, 10);
+			if(endptr == type){
+				g_warning("strtol error.(%s, %s)", __FILE__
+						, __LINE__);
+				continue;
+			}	
+			rc -> type = ti;
+			g_ptr_array_add(info -> recentcons, rc);
+		}
+	}
+error:
+	json_free_value(&json);
+	request_del(req);
+	response_del(rps);
 	return FALSE;
 }
 

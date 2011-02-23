@@ -11,7 +11,7 @@ QQInfo* qq_info_new()
 	info -> me = qq_buddy_new();
 	info -> buddies = g_ptr_array_new();
 	info -> groups = g_ptr_array_new();
-	info -> recentcon = g_ptr_array_new();
+	info -> recentcons = g_ptr_array_new();
 	info -> categories = g_ptr_array_new();
 
 	info -> lock = g_mutex_new();
@@ -58,10 +58,10 @@ void qq_info_free(QQInfo *info)
 	}
 	g_ptr_array_free(info -> groups, TRUE);
 
-	/*
-	 * Need not to free the members.
-	 */
-	g_ptr_array_free(info -> recentcon, TRUE);
+	for(i = 0; i < info -> recentcons -> len; ++i){
+		qq_recentcon_free(info -> recentcons -> pdata[i]);
+	}
+	g_ptr_array_free(info -> recentcons, TRUE);
 
 	for(i = 0; i < info -> categories -> len; ++i){
 		qq_category_free(info -> categories -> pdata[i]);
@@ -98,6 +98,24 @@ void qq_buddy_free(QQBuddy *bd)
 	if(bd == NULL){
 		return;
 	}	
+	g_string_free(bd -> uin, TRUE);
+	g_string_free(bd -> status, TRUE);
+	g_string_free(bd -> nick, TRUE);
+	g_string_free(bd -> markname, TRUE);
+	g_string_free(bd -> country, TRUE);
+	g_string_free(bd -> city, TRUE);
+	g_string_free(bd -> province, TRUE);
+	g_string_free(bd -> gender, TRUE);
+	g_string_free(bd -> face, TRUE);
+	g_string_free(bd -> flag, TRUE);
+	g_string_free(bd -> phone, TRUE);
+	g_string_free(bd -> mobile, TRUE);
+	g_string_free(bd -> email, TRUE);
+	g_string_free(bd -> college, TRUE);
+	g_string_free(bd -> occupation, TRUE);
+	g_string_free(bd -> personal, TRUE);
+	g_string_free(bd -> homepage, TRUE);
+	g_string_free(bd -> lnick, TRUE);
 
 	g_slice_free(QQBuddy, bd);
 }
@@ -143,6 +161,20 @@ void qq_category_free(QQCategory *cty)
 	g_slice_free(QQCategory, cty);
 }
 
+QQRecentCon* qq_recentcon_new()
+{
+	QQRecentCon *rc = g_slice_new0(QQRecentCon);
+	rc -> type = -1;
+	return rc;
+}
+void qq_recentcon_free(QQRecentCon *rc)
+{
+	if(rc == NULL){
+		return;
+	}
+	g_string_free(rc -> uin, TRUE);
+	g_slice_free(QQRecentCon, rc);
+}
 
 /*
  * Just put here.

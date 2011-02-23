@@ -62,11 +62,11 @@ Connection* connect_to_host(const char *hostname, int port)
 		 */
 		sinp -> sin_port = htons((gint16)port);
 		
-		g_debug("Address: %s Port %d (%s, %d)"
-				, inet_ntop(AF_INET, &sinp -> sin_addr
-						, buf, BUFLEN)
-				, ntohs(sinp -> sin_port)
-				, __FILE__, __LINE__);
+//		g_debug("Address: %s Port %d (%s, %d)"
+//				, inet_ntop(AF_INET, &sinp -> sin_addr
+//						, buf, BUFLEN)
+//				, ntohs(sinp -> sin_port)
+//				, __FILE__, __LINE__);
 		
 		if(connect(sockfd,aip -> ai_addr, aip -> ai_addrlen) < 0){
 			close(sockfd);
@@ -143,8 +143,8 @@ gint send_request(Connection *con, Request *r)
 					, __FILE__, __LINE__);
 			return -1;
 		case G_IO_STATUS_AGAIN:
-			g_debug("Channel temporarily unavailable.(%s, %d)"
-					, __FILE__, __LINE__);
+//			g_debug("Channel temporarily unavailable.(%s, %d)"
+//					, __FILE__, __LINE__);
 			break;
 		default:
 			g_warning("Unknown io status!(%s, %d)"
@@ -157,7 +157,7 @@ gint send_request(Connection *con, Request *r)
 		g_warning("Flush io channel error! But don't warry...(%s, %d)"
 				, __FILE__, __LINE__);
 	}	
-	g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
+//	g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
 	g_string_free(rq, TRUE);
 	return 0;
 }
@@ -193,16 +193,16 @@ static int ungzip(GString *in, GString *out)
 	switch(ret)
 	{
 	case Z_OK:
-		g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
+//		g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
 		break;
 	case Z_MEM_ERROR:
 	case Z_VERSION_ERROR:
 	case Z_STREAM_ERROR:
-		g_debug("inflateInit2() Error!. %s (%s, %d)", strm.msg, __FILE__
+		g_warning("inflateInit2() Error!. %s (%s, %d)", strm.msg, __FILE__
 					, __LINE__);
 		return -1;
 	default:
-		g_debug("Unknown return!!(%s, %d)", __FILE__, __LINE__);
+		g_warning("Unknown return!!(%s, %d)", __FILE__, __LINE__);
 		return -1;
 	}
 	
@@ -224,7 +224,7 @@ static int ungzip(GString *in, GString *out)
 		case Z_DATA_ERROR:
 		case Z_MEM_ERROR:
 		case Z_STREAM_ERROR:
-			g_debug("Ungzip error! %s(%s, %d)", strm.msg, __FILE__
+			g_warning("Ungzip error! %s(%s, %d)", strm.msg, __FILE__
 					, __LINE__);
 			g_string_truncate(out, 0);
 			return -1;
@@ -269,7 +269,7 @@ gint rcv_response(Connection *con, Response **rp)
 	gsize bytes_read = 0;
 	gsize want_read = 0;
 	
-	g_debug("Begin to read data.(%s, %d)", __FILE__, __LINE__);
+//	g_debug("Begin to read data.(%s, %d)", __FILE__, __LINE__);
 	while(need_to_read > 0){
 		want_read = BUFSIZE < need_to_read ? BUFSIZE : need_to_read;
 		status = g_io_channel_read_chars(con -> channel, buf
@@ -277,9 +277,9 @@ gint rcv_response(Connection *con, Response **rp)
 		switch(status)
 		{
 		case G_IO_STATUS_NORMAL:
-			g_debug("Read %d bytes data. total data len %d(%s, %d)"
-					, bytes_read, data -> len
-					, __FILE__, __LINE__);
+//			g_debug("Read %d bytes data. total data len %d(%s, %d)"
+//					, bytes_read, data -> len
+//					, __FILE__, __LINE__);
 			//read success.
 			need_to_read -= bytes_read;
 			break;
@@ -291,9 +291,9 @@ gint rcv_response(Connection *con, Response **rp)
 				 * send all the data.
 				 */
 				//we got all the data.
-				g_debug("Server close the connection. "
-					"data has gotten: %d(%s, %d)"
-					,bytes_read ,__FILE__, __LINE__);
+//				g_debug("Server close the connection. "
+//					"data has gotten: %d(%s, %d)"
+//					,bytes_read ,__FILE__, __LINE__);
 				break;
 			}
 			break;
@@ -305,7 +305,7 @@ gint rcv_response(Connection *con, Response **rp)
 			g_string_free(data, TRUE);
 			return -1;
 		case G_IO_STATUS_AGAIN:
-			g_debug("Channel temporarily unavailable.");
+			g_warning("Channel temporarily unavailable.");
 			break;
 		default:
 			g_warning("Unknown io status!(%s, %d)"
@@ -329,12 +329,12 @@ gint rcv_response(Connection *con, Response **rp)
 				gotcl = TRUE;
 				//calculate the message we have not read.
 				cl = atoi(clen);
-				g_debug("Content-Length: %d.(%s, %d)"
-						, cl, __FILE__, __LINE__);
+//				g_debug("Content-Length: %d.(%s, %d)"
+//						, cl, __FILE__, __LINE__);
 				need_to_read = cl - r -> msg -> len;
-				g_debug("Message need to read %d bytes."
-						"(%s, %d)", need_to_read
-						, __FILE__, __LINE__);
+//				g_debug("Message need to read %d bytes."
+//						"(%s, %d)", need_to_read
+//						, __FILE__, __LINE__);
 			}
 
 			//Find the Transfering-Encoding 's value
@@ -342,8 +342,8 @@ gint rcv_response(Connection *con, Response **rp)
 						, "Transfer-Encoding");
 			if(tev != NULL && g_strstr_len(tev, -1
 							, "chunked") != NULL){
-				g_debug("The message body is chunked.(%s, %d)"
-						, __FILE__, __LINE__);
+//				g_debug("The message body is chunked.(%s, %d)"
+//						, __FILE__, __LINE__);
 				gotte = TRUE;
 				ischunked = TRUE;
 
@@ -359,8 +359,8 @@ gint rcv_response(Connection *con, Response **rp)
 			gchar *connection = response_get_header_chars(r
 						, "Connection");	
 			if(connection != NULL){
-				g_debug("Connection: %s (%s, %d)", connection
-						, __FILE__, __LINE__);
+//				g_debug("Connection: %s (%s, %d)", connection
+//						, __FILE__, __LINE__);
 				if(g_strstr_len(connection, -1, "close") 
 							!= NULL){
 					conclose = TRUE;
@@ -370,8 +370,8 @@ gint rcv_response(Connection *con, Response **rp)
 			gchar *ce = response_get_header_chars(r
 					, "Content-Encoding");
 			if(ce != NULL){
-				g_debug("Content-Encoding: %s (%s, %d)", ce
-						, __FILE__, __LINE__);
+//				g_debug("Content-Encoding: %s (%s, %d)", ce
+//						, __FILE__, __LINE__);
 				if(g_strstr_len(ce, -1, "gzip") != NULL){
 					isgzip = TRUE;
 				}
@@ -389,9 +389,9 @@ gint rcv_response(Connection *con, Response **rp)
 				chunkbegin += 2;
 
 				chunklen = strtol(data -> str + idx, NULL, 16);
-				g_debug("Chunk length: %d idx %d (%s, %d)"
-						, chunklen, idx
-						, __FILE__, __LINE__);
+//				g_debug("Chunk length: %d idx %d (%s, %d)"
+//						, chunklen, idx
+//						, __FILE__, __LINE__);
 				/*
 				 * We will read the data according to the
 				 * chunked
@@ -404,8 +404,8 @@ gint rcv_response(Connection *con, Response **rp)
 				totalchunklen += chunklen;
 				g_string_append_len(r -> msg, data -> str + chunkbegin
 							, chunklen);
-				g_debug("Append chunk. lenght : %d(%s, %d)", chunklen
-						, __FILE__, __LINE__);
+//				g_debug("Append chunk. lenght : %d(%s, %d)", chunklen
+//						, __FILE__, __LINE__);
 
 				chunklen = -1;
 			}
@@ -414,7 +414,7 @@ gint rcv_response(Connection *con, Response **rp)
 			break;
 		}	
 	}//end of while(need_to_read > 0)...
-	g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
+//	g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
 
 	if(r == NULL){
 		//we do not find "\r\n\r\n".
@@ -429,8 +429,8 @@ gint rcv_response(Connection *con, Response **rp)
 		//copy the message to r -> msg;
 		g_string_append_len(r -> msg, data -> str, data -> len);
 	}else{
-		g_debug("Total chunk length: %d (%s, %d)", totalchunklen
-				, __FILE__, __LINE__);
+//		g_debug("Total chunk length: %d (%s, %d)", totalchunklen
+//				, __FILE__, __LINE__);
 	}
 	#undef BUFSIZE
 	
@@ -449,8 +449,8 @@ gint rcv_response(Connection *con, Response **rp)
 		g_string_truncate(r -> msg, 0);
 		g_string_append(r -> msg, out -> str);
 		g_string_free(out, TRUE);
-		g_debug("Ungzip data. After len %d.(%s, %d)" , r -> msg -> len
-				, __FILE__, __LINE__);
+//		g_debug("Ungzip data. After len %d.(%s, %d)" , r -> msg -> len
+//				, __FILE__, __LINE__);
 	}
 
 	*rp = r;

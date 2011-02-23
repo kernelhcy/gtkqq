@@ -11,37 +11,6 @@
 #include <stdlib.h>
 
 /*
- * The main loop thread's main function.
- */
-static gpointer start_main_loop(gpointer *data)
-{
-	QQInfo *info = (QQInfo*)data;
-	if(info == NULL){
-		return NULL;
-	}
-
-	if(info -> mainloop == NULL || info -> mainctx == NULL){
-		g_warning("Havn't create the main event loop!!(%s, %d)"
-				, __FILE__, __LINE__);
-		info -> mainloop = g_main_loop_new(NULL, FALSE);
-		info -> mainctx = g_main_loop_get_context(info -> mainloop);
-		g_warning("Create the main event loop. done.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-
-
-	g_debug("Run the main event loop...(%s, %d)", __FILE__, __LINE__);
-	//start the main loop
-	g_main_loop_run(info -> mainloop);
-
-	/*
-	 * Will not arrive here untill the program exits. 
-	 */
-	g_debug("Quit main event loop.(%s, %d)", __FILE__, __LINE__);
-	return NULL;
-}
-
-/*
  * Get cookie from r.
  * The cookie key is key
  */
@@ -784,22 +753,6 @@ static gboolean do_login(gpointer data)
 	return FALSE;
 }
 
-gint qq_init()
-{
-	/*
-	 * When call gtk_init(), the g_thread_init() also be called.
-	 * This liberary may not be used with gtk, so we call g_thread_init()
-	 * here.
-	 */
-	if(!g_thread_supported()){
-		g_thread_init(NULL);
-	}else{
-		g_error("Need thread supported!");
-		return -1;
-	}
-	g_debug("Initial the thread done.(%s, %d)", __FILE__, __LINE__);
-	return 0;
-}
 void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		, const gchar *status , QQCallBack cb)
 {
@@ -825,26 +778,6 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	}else{
 		info -> me -> status = g_string_new(NULL);
 	}
-
-	info -> mainloop = g_main_loop_new(NULL, FALSE);
-	info -> mainctx = g_main_loop_get_context(info -> mainloop);
-	g_debug("Create the main event loop. done.(%s, %d)"
-				, __FILE__, __LINE__);
-
-	GError *err;
-	info -> mainloopthread = g_thread_create((GThreadFunc)start_main_loop
-						, (gpointer)info, FALSE
-						, &err);
-	if(info -> mainloopthread == NULL){
-		g_error("Error code %d, msg: %s (%s, %d)", err -> code
-					, err -> message, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Create mainloop thread error.");
-		}
-		return;
-	}
-	g_debug("Start the main event loop thread. done.(%s, %d)", __FILE__
-					, __LINE__);
 
 	GSource *src = g_idle_source_new();
 	struct InitParam *par = g_slice_new(struct InitParam);

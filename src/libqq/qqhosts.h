@@ -38,4 +38,9 @@
 #define FRIENDSPATH	"/api/get_user_friends2"
 #define GNAMEPATH	"/api/get_group_name_list_mask2"
 
+#define ONLINEHOST	PSIDHOST
+#define ONLINEPATH	"/channel/get_online_buddies2"
+
+#define RECENTHOST	SWQQHOST
+#define RECENTPATH	"/api/get_recent_contact2"
 #endif

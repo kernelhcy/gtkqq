@@ -8,9 +8,9 @@
  * Initialize the libqq.
  * NOTE:
  * 	**This function MUST be called before any other function!**
- * return 0 if success or -1 if failed
+ * return QQInfo instance if success or NULL if failed
  */
-gint qq_init();
+QQInfo* qq_init(QQCallBack cb);
 
 
 /*
@@ -66,4 +66,17 @@ void qq_get_recent_contact(QQInfo *info, QQCallBack cb);
  * Get the long nick of bdy.
  */
 void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb);
+
+/*
+ * Start the poll thread to poll the message form the server.
+ */
+void qq_start_poll(QQInfo *info, QQCallBack cb);
+
+/*
+ * Send message to friends and group
+ */
+void qq_sendmsg_to_friend(QQInfo *info, QQBuddy *to
+			, const gchar *msg, QQCallBack cb);
+void qq_sendmsg_to_group(QQInfo *info, QQGroup *to
+			, const gchar *msg, QQCallBack cb);
 #endif

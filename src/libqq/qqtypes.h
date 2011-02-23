@@ -30,20 +30,31 @@ typedef struct _QQBuddy		QQBuddy;
 typedef struct _QQGroup 	QQGroup;
 typedef struct _QQGMember	QQGMember;
 typedef struct _QQCategory 	QQCategory;
+typedef struct _QQRecentCon	QQRecentCon;
 
 /*
  * The main information
  */
 struct _QQInfo{
+	/*
+	 * The main event loop
+	 */
 	GThread *mainloopthread;
 	GMainLoop *mainloop;
 	GMainContext *mainctx;	
+
+	/*
+	 * The poll event loop
+	 */
+	GThread *pollloopthread;
+	GMainLoop *pollloop;
+	GMainContext *pollctx;	
 
 	QQBuddy *me;			//myself
 
 	GPtrArray *buddies;		//all friends;
 	GPtrArray *groups;		//all groups;
-	GPtrArray *recentcon;		//the recenet contacts
+	GPtrArray *recentcons;		//the recenet contacts
 	GPtrArray *categories;		//all categories
 
 	GString *verify_code;		//the verify code return from server
@@ -129,7 +140,7 @@ struct _QQBuddy{
 	/*
 	 * 1 : 桌面客户端
 	 * 21: 手机客户端
-	 *   : web QQ
+	 * 41: web QQ
 	 */
 	gint client_type;
 	QQCategory *cate;			// The category of this buddy
@@ -187,6 +198,18 @@ struct _QQCategory{
 };
 QQCategory* qq_category_new();
 void qq_category_free(QQCategory *);
+
+
+struct _QQRecentCon{
+	GString *uin;
+	/*
+	 * 0: friend
+	 * 1: group
+	 */
+	gint type;
+};
+QQRecentCon* qq_recentcon_new();
+void qq_recentcon_free(QQRecentCon *rc);
 
 
 /**
