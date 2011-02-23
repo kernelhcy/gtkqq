@@ -928,7 +928,6 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 			cb(CB_NETWORKERR, "Can not connect to server!");
 		}
 		request_del(req);
-		g_free(par);
 		return FALSE;
 	}
 

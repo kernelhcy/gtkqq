@@ -212,21 +212,22 @@ error:
 }
 
 /*
- * Save the verify code image to file.
- * 	~/verifycode.*ext*
+ * Save the image data to file.
+ * The file is path/fname.ext.
  */
-static gint save_vc_to_file(QQInfo *info)
+static gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
+				const gchar *path, const gchar *fname)
 {
-	if(info == NULL || info -> vc_image_type == NULL){
+	if(data == NULL || ext == NULL){
 		return -1;
 	}
 	gchar fn[100];
-	g_sprintf(fn, "/home/hcy/verifycode.%s", info -> vc_image_type -> str);
+	g_sprintf(fn, "%s/%s.%s", path, fname, ext);
 
 	g_debug("Create image file : %s (%s, %d)", fn, __FILE__, __LINE__);
 	gint fd = creat(fn, S_IRUSR | S_IWUSR);
 	if(fd == -1){
-		g_warning("Create verify code image error! %s (%s, %d)"
+		g_warning("Create image data to file error! %s (%s, %d)"
 				, strerror(errno), __FILE__, __LINE__);
 		return -1;
 	}
@@ -244,12 +245,11 @@ static gint save_vc_to_file(QQInfo *info)
 	err = NULL;
 	GIOStatus status;
 	gsize bytes_w;
-	status = g_io_channel_write_chars(ioc, info -> vc_image_data -> str,
-				info -> vc_image_data -> len, &bytes_w, &err);
+	status = g_io_channel_write_chars(ioc, data, len, &bytes_w, &err);
 	switch(status)
 	{
 	case G_IO_STATUS_NORMAL:
-		if(bytes_w < info -> vc_image_data -> len){
+		if(bytes_w < len){
 			g_warning("Not write all verify code image data "
 					"to file!(%s, %d)", __FILE__
 					, __LINE__);
@@ -679,7 +679,10 @@ static gboolean do_login(gpointer data)
 				, __FILE__, __LINE__);
 		g_debug("Write verify code image data to file ... (%s, %d)"
 				, __FILE__, __LINE__);
-		save_vc_to_file(info);
+		save_img_to_file(info -> vc_image_data -> str
+				, info -> vc_image_data -> len
+				, info -> vc_image_type -> str, "/home/hcy"
+				, "verifycode");
 	}
 	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
 	if(get_version(info) == -1){

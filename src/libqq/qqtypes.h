@@ -8,11 +8,19 @@
  * Define the result of the function
  */
 typedef enum{
-	CB_SUCCESS,	//success
+	CB_SUCCESS = 1,	//success
 	CB_ERROR,	//error occured
 	CB_WRONGPASSWD,	//wrong password
 	CB_WRONGVC,	//wrong verify code
 	CB_NETWORKERR,	//network error
+
+	/*
+	 * Poll type
+	 */
+	CB_STATUSCHG,	//status change
+	CB_BUDDYMSG,	//buddy message
+	cB_GROUPMSG,	//group message
+
 	CB_UNKNOWN	//unknown result
 }CallBackResult;
 /*
@@ -87,6 +95,7 @@ struct _QQInfo{
 	 * Maybe we need a lock...
 	 */
 	GMutex *lock;			
+	gint msg_id;			//used to send message
 };
 
 QQInfo* qq_info_new();
@@ -94,8 +103,18 @@ void qq_info_free(QQInfo *);
 void qq_append_cookie(QQInfo *, const gchar *);
 
 struct _QQMsg{
-	GString *to, *from;
-	GString *content;	
+	QQInfo *info;
+	QQBuddy *bdy;
+	QQGroup *grp;
+	GString *content;
+	struct{
+		GString *name;
+		gint size;
+		GString *color;
+		struct{
+			gint a, b, c;
+		}style;
+	}font;
 };
 QQMsg* qq_msg_new();
 void qq_msg_free(QQMsg *);

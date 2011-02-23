@@ -43,4 +43,11 @@
 
 #define RECENTHOST	SWQQHOST
 #define RECENTPATH	"/api/get_recent_contact2"
+
+#define MSGHOST		PSIDHOST
+#define MSGFRIPATH	"/channel/send_msg2"
+#define MSGGRPPATH	"/channel/send_group_msg2"
+
+#define POLLHOST	PSIDHOST
+#define POLLPATH	"/channel/poll2"
 #endif

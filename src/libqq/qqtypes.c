@@ -15,6 +15,13 @@ QQInfo* qq_info_new()
 	info -> categories = g_ptr_array_new();
 
 	info -> lock = g_mutex_new();
+
+	/*
+	 * Just set to 1000.
+	 * I don't know how to calculate the msg_id.
+	 * But this works.
+	 */
+	info -> msg_id = 1000;
 	return info;
 }
 
@@ -83,6 +90,11 @@ void qq_msg_free(QQMsg *msg)
 	if(msg == NULL){
 		return;
 	}
+
+	g_string_free(msg -> content, TRUE);
+	g_string_free(msg -> font.name, TRUE);
+	g_string_free(msg -> font.color, TRUE);
+
 	g_slice_free(QQMsg, msg);
 }
 

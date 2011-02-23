@@ -75,8 +75,6 @@ void qq_start_poll(QQInfo *info, QQCallBack cb);
 /*
  * Send message to friends and group
  */
-void qq_sendmsg_to_friend(QQInfo *info, QQBuddy *to
-			, const gchar *msg, QQCallBack cb);
-void qq_sendmsg_to_group(QQInfo *info, QQGroup *to
-			, const gchar *msg, QQCallBack cb);
+void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb);
+void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb);
 #endif

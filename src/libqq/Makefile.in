@@ -77,7 +77,7 @@ am_libwebqq_la_OBJECTS = libwebqq_la-http.lo libwebqq_la-json.lo \
 	libwebqq_la-url.lo libwebqq_la-qqlogin.lo \
 	libwebqq_la-qqtypes.lo libwebqq_la-qqmanageinfo.lo \
 	libwebqq_la-unicode.lo libwebqq_la-qqinit.lo \
-	libwebqq_la-qqpoll.lo
+	libwebqq_la-qqpoll.lo libwebqq_la-qqsendmsg.lo
 libwebqq_la_OBJECTS = $(am_libwebqq_la_OBJECTS)
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
@@ -255,7 +255,7 @@ libwebqq_la_CPPFLAGS = $(GTHREAD_CFLAGS) $(GLIB_CFLAGS) $(ZLIB_CFLAGS)
 libwebqq_la_LIBADD = $(GTHREAD_LIBS) $(GLIB_LIBS) $(ZLIB_LIBS)
 libwebqq_la_SOURCES = http.h http.c json.h json.c url.h url.c\
 			qq.h qqlogin.c qqtypes.h qqtypes.c qqmanageinfo.c\
-			unicode.c unicode.h qqinit.c qqpoll.c
+			unicode.c unicode.h qqinit.c qqpoll.c qqsendmsg.c
 
 all: all-am
 
@@ -337,6 +337,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqlogin.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqmanageinfo.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqpoll.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqsendmsg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-qqtypes.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-unicode.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libwebqq_la-url.Plo@am__quote@
@@ -436,6 +437,14 @@ libwebqq_la-qqpoll.lo: qqpoll.c
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	source='qqpoll.c' object='libwebqq_la-qqpoll.lo' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-qqpoll.lo `test -f 'qqpoll.c' || echo '$(srcdir)/'`qqpoll.c
+
+libwebqq_la-qqsendmsg.lo: qqsendmsg.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT libwebqq_la-qqsendmsg.lo -MD -MP -MF $(DEPDIR)/libwebqq_la-qqsendmsg.Tpo -c -o libwebqq_la-qqsendmsg.lo `test -f 'qqsendmsg.c' || echo '$(srcdir)/'`qqsendmsg.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libwebqq_la-qqsendmsg.Tpo $(DEPDIR)/libwebqq_la-qqsendmsg.Plo
+@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='qqsendmsg.c' object='libwebqq_la-qqsendmsg.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(libwebqq_la_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o libwebqq_la-qqsendmsg.lo `test -f 'qqsendmsg.c' || echo '$(srcdir)/'`qqsendmsg.c
 
 mostlyclean-libtool:
 	-rm -f *.lo
