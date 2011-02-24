@@ -188,3 +188,20 @@ void qq_recentcon_free(QQRecentCon *rc)
 	g_slice_free(QQRecentCon, rc);
 }
 
+QQFaceImg* qq_faceimg_new()
+{
+	QQFaceImg *img = g_slice_new0(QQFaceImg);
+	return img;
+}
+void qq_faceimg_free(QQFaceImg *img)
+{
+	if(img == NULL){
+		return;
+	}
+
+	g_string_free(img -> data, TRUE);
+	g_string_free(img -> type, TRUE);
+	g_string_free(img -> uin, TRUE);
+
+	g_slice_free(QQFaceImg, img);
+}

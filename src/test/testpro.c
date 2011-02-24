@@ -13,6 +13,24 @@ static void logoutcb(CallBackResult re, gpointer data)
 {
 	exit(0);
 }
+
+extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
+				const gchar *path, const gchar *fname);
+
+static void faceimg_cb(CallBackResult re, gpointer data)
+{
+	if(re != CB_SUCCESS){
+		g_printf("Error: %s\n", (const gchar *)data);
+		return;
+	}
+
+	QQFaceImg *img = (QQFaceImg*)data;
+	save_img_to_file(img -> data -> str, img -> data -> len
+			, img -> type -> str, "/home/hcy"
+			, img -> uin -> str);
+	qq_faceimg_free(img);
+}
+
 int main(int argc, char **argv)
 {
 	log_init();
@@ -50,6 +68,10 @@ int main(int argc, char **argv)
 	g_message("start poll ...");
 	qq_start_poll(info, callback);
 	qq_sendmsg_to_friend(info, msg, NULL);
+	const gchar *uin = ((QQBuddy*)info -> buddies -> pdata[0]) -> 
+		uin -> str;
+	qq_get_face_img(info, "65359140", faceimg_cb);
+	qq_get_face_img(info, "1421032531", faceimg_cb);
 	sleep(10);
 	g_message("Will logout...");
 	qq_logout(info, logoutcb);

@@ -39,6 +39,18 @@ typedef struct _QQGroup 	QQGroup;
 typedef struct _QQGMember	QQGMember;
 typedef struct _QQCategory 	QQCategory;
 typedef struct _QQRecentCon	QQRecentCon;
+typedef struct _QQFaceImg	QQFaceImg;
+
+/*
+ * Store the face image data and type
+ */
+struct _QQFaceImg{
+	GString *uin;
+	GString *data;
+	GString *type;
+};
+QQFaceImg* qq_faceimg_new();
+void qq_faceimg_free(QQFaceImg *img);
 
 /*
  * The main information

@@ -50,4 +50,7 @@
 
 #define POLLHOST	PSIDHOST
 #define POLLPATH	"/channel/poll2"
+
+#define FIMGHOST	"face2.qun.qq.com"
+#define FIMGPATH	"/cgi/svr/face/getface"
 #endif
