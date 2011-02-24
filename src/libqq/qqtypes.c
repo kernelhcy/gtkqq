@@ -188,15 +188,3 @@ void qq_recentcon_free(QQRecentCon *rc)
 	g_slice_free(QQRecentCon, rc);
 }
 
-/*
- * Just put here.
- */
-glong get_now_millisecond()
-{
-	glong re;
-	GTimeVal now;
-	g_get_current_time(&now);
-	re = now.tv_usec / 1000;
-	re += now.tv_sec;
-	return re;
-}

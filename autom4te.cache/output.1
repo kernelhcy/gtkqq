@@ -889,9 +889,9 @@ enable_fast_install
 enable_dependency_tracking
 with_gnu_ld
 enable_libtool_lock
+enable_debug
 enable_libnotify
 enable_gst
-enable_debug
 '
       ac_precious_vars='build_alias
 host_alias
@@ -1556,11 +1556,11 @@ Optional Features:
   --disable-dependency-tracking  speeds up one-time build
   --enable-dependency-tracking   do not reject slow dependency extractors
   --disable-libtool-lock  avoid locking (might break parallel builds)
+ --enable-debug turn on debug
   --enable-libnotify      Enable libnotify support (used to show message
                           notifications) @<:@default=yes@:>@
   --enable-gst            Enable gstreamer support (used to play alert sounds)
                           @<:@default=yes@:>@
- --enable-debug turn on debug
 
 Optional Packages:
   --with-PACKAGE[=ARG]    use PACKAGE [ARG=yes]
@@ -11919,6 +11919,12 @@ fi
 done
 
 
+@%:@ Check whether --enable-debug was given.
+if test "${enable_debug+set}" = set; then :
+  enableval=$enable_debug; CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb"
+fi
+
+
 @%:@ Check whether --enable-libnotify was given.
 if test "${enable_libnotify+set}" = set; then :
   enableval=$enable_libnotify; 
@@ -13184,12 +13190,6 @@ else
 $as_echo "yes" >&6; }
 	
 fi
-
-@%:@ Check whether --enable-debug was given.
-if test "${enable_debug+set}" = set; then :
-  enableval=$enable_debug; CPPFLAGS+="-DGTKQQ_DEBUG -ggdb"
-fi
-
 
 # Checks for typedefs, structures, and compiler characteristics.
 

@@ -43,6 +43,10 @@ AC_CHECK_LIB([zlib], [compress])
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdint.h\
 		  stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h zlib.h])
 
+AC_ARG_ENABLE(debug,
+        [ --enable-debug turn on debug],
+        CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb")
+
 AC_ARG_ENABLE(libnotify,
               AS_HELP_STRING([--enable-libnotify],
                              [Enable libnotify support (used to show message\
@@ -192,10 +196,6 @@ PKG_CHECK_MODULES(GLIB2, [
 PKG_CHECK_MODULES(GOBJECT2, [
         gobject-2.0 >= 2.14
 ])
-
-AC_ARG_ENABLE(debug,
-        [ --enable-debug turn on debug],
-        CPPFLAGS+="-DGTKQQ_DEBUG -ggdb")
 
 # Checks for typedefs, structures, and compiler characteristics.
 
