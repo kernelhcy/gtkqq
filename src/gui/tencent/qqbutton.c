@@ -223,7 +223,7 @@ gboolean expose_event_cb(GtkWidget *widget
 			, GdkEventExpose *event, gpointer data)
 {
 	QQButton *btn = QQ_BUTTON(widget);
-	GtkImage *img = btn -> curr_img;
+	GtkImage *img = (GtkImage*)btn -> curr_img;
 	cairo_t *ct = gdk_cairo_create(widget -> window);
 	GdkPixbuf *pb = gtk_image_get_pixbuf(img);
 

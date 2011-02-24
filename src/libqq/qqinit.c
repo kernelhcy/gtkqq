@@ -14,9 +14,6 @@ static gpointer start_main_loop(gpointer *data)
 		return NULL;
 	}
 
-	info -> mainctx = g_main_context_new();
-	info -> mainloop = g_main_loop_new(info -> mainctx, FALSE);
-	
 	if(info -> mainloop == NULL || info -> mainctx == NULL){
 		g_warning("Create the main event loop failed!(%s, %d)"
 				, __FILE__, __LINE__);
@@ -43,9 +40,6 @@ static gpointer start_poll_loop(gpointer *data)
 	if(info == NULL){
 		return NULL;
 	}
-
-	info -> pollctx = g_main_context_new();
-	info -> pollloop = g_main_loop_new(info -> pollctx, FALSE);
 
 	if(info -> pollloop == NULL || info -> pollctx == NULL){
 		g_warning("Create poll event loop failed!!(%s, %d)"
@@ -80,6 +74,9 @@ QQInfo* qq_init(QQCallBack cb)
 	 * The main event loop
 	 */
 	g_debug("Start the main event loop.(%s, %d)", __FILE__, __LINE__);
+	info -> mainctx = g_main_context_new();
+	info -> mainloop = g_main_loop_new(info -> mainctx, FALSE);
+	
 	GError *err;
 	info -> mainloopthread = g_thread_create((GThreadFunc)start_main_loop
 						, (gpointer)info, FALSE
@@ -97,6 +94,9 @@ QQInfo* qq_init(QQCallBack cb)
 	 * The poll event loop.
 	 */
 	g_debug("Start the poll event loop.(%s, %d)", __FILE__, __LINE__);
+	info -> pollctx = g_main_context_new();
+	info -> pollloop = g_main_loop_new(info -> pollctx, FALSE);
+
 	info -> pollloopthread = g_thread_create((GThreadFunc)start_poll_loop
 						, (gpointer)info, FALSE
 						, &err);

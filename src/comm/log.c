@@ -18,10 +18,12 @@ static void log_handler(const gchar *log_domain,
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, "\n");
 		break;
 	case G_LOG_LEVEL_DEBUG:
+#ifdef GTKQQ_DEBUG
 		fcprintf(STDOUT_FILENO, BLUE_F, UNSET_B, HIGHLIGHT
 				, "DEBUG : ");
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, message);
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, "\n");
+#endif
 		break;
 	case G_LOG_LEVEL_WARNING:
 		fcprintf(STDERR_FILENO, PURPLE_F, UNSET_B, HIGHLIGHT

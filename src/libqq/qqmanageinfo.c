@@ -378,13 +378,14 @@ static gboolean do_get_my_info(gpointer data)
 	QQCallBack cb = par -> cb;
 	g_free(par);
 
-	gchar params[300];
+	gchar params[500];
 	g_debug("Get my information!(%s, %d)", __FILE__, __LINE__);
 
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
+
 	g_sprintf(params, GETMYINFO"?tuin=%s&verifysession=&code=&"
 			"vfwebqq=%s&t=%lld"
 			, info -> me -> uin -> str
