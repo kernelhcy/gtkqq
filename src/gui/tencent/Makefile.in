@@ -226,7 +226,7 @@ target_alias = @target_alias@
 top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
-qq_CPPFLAGS = -I$(srcdir)/. $(GTK_CFLAGS) -g -Wall -O2\
+qq_CPPFLAGS = -I$(srcdir)/. $(GTK_CFLAGS)\
 	     -DIMGDIR=\"$(pkgdatadir)/misc/\"
 
 qq_LDADD = $(GTK_LIBS)

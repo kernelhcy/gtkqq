@@ -72,7 +72,7 @@ int main(int argc, char **argv)
 		uin -> str;
 	qq_get_face_img(info, "65359140", faceimg_cb);
 	qq_get_face_img(info, "1421032531", faceimg_cb);
-	sleep(10);
+	sleep(100);
 	g_message("Will logout...");
 	qq_logout(info, logoutcb);
 	sleep(10000);

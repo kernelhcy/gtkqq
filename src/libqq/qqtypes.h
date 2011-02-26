@@ -118,6 +118,7 @@ struct _QQMsg{
 	QQInfo *info;
 	QQBuddy *bdy;
 	QQGroup *grp;
+
 	GString *content;
 	struct{
 		GString *name;

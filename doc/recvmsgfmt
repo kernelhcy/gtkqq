@@ -1,0 +1,76 @@
+//多条积累
+{"retcode":0,
+"result":
+[
+{
+"poll_type":"message",
+"value":{
+	"msg_id":19918,
+	"from_uin":3187951892,
+	"to_uin":1421032531,
+	"msg_id2":542030,
+	"msg_type":9,
+	"reply_ip":2887190043,
+	"time":1298637613,
+	"content":[
+		["font",
+			{"size":11,
+			"color":"000000",
+			"style":[0,0,0],
+			"name":"\u5FAE\u8F6F\u96C5\u9ED1"}
+		],
+		"hello"],
+	"raw_content":"hello\n"}
+
+},
+
+
+{"poll_type":"message","value":{"msg_id":19923,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":541913,"msg_type":9,"reply_ip":2887190043,"time":1298637641,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],"java linux c"],"raw_content":"java linux c"}},
+
+{"poll_type":"message","value":{"msg_id":19922,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":541912,"msg_type":9,"reply_ip":2887190043,"time":1298637636,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],"hello word"],"raw_content":"hello word"}},
+
+{"poll_type":"message","value":{"msg_id":19921,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":541911,"msg_type":9,"reply_ip":2887190043,"time":1298637632,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],"\u4F60\u597D"],"raw_content":"\u00C4\u00E3\u00BA\u00C3"}},
+
+{"poll_type":"message","value":{"msg_id":19920,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":541910,"msg_type":9,"reply_ip":2887190043,"time":1298637630,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],"\u5728\u5417\uFF1F"],"raw_content":"\u00D4\u00DA\u00C2\u00F0\u00A3\u00BF"}}
+]}
+
+//单独
+{"retcode":0,"result":[{"poll_type":"message","value":{"msg_id":19928,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":137201,"msg_type":9,"reply_ip":2887500009,"time":1298638022,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],"hello"],"raw_content":"hello"}}]}
+
+//群
+{"retcode":0,
+"result":[
+{
+	"poll_type":"group_message",
+	"value":	
+	{
+		"msg_id":19930,
+		"from_uin":668979347,
+		"to_uin":1421032531,
+		"msg_id2":258407,
+		"msg_type":43,
+		"reply_ip":2887500010,
+		"group_code":4241936247,
+		"send_uin":3187951892,
+		"seq":27240,
+		"time":1298638077,
+		"info_seq":44415890,
+		"content":[
+			[
+				"font",
+				{"size":11,
+					"color":"000000",
+					"style":[0,0,0],
+					"name":"\u5FAE\u8F6F\u96C5\u9ED1"}
+			],
+			"hello",
+			["face",13],
+			""]
+	}
+}
+
+]
+}
+
+//发送图片
+{"retcode":0,"result":[{"poll_type":"message","value":{"msg_id":19938,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":151848,"msg_type":9,"reply_ip":2887459631,"time":1298638601,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],["face",109],["face",108],["face",38],"hello",["face",110],["offpic",{"success":1,"file_path":"/43da94dc-0d70-4729-b38f-b04e9ebd3855"}]],"raw_content":"\u0014\u00AE\u0014\u00AD\u0014ghello\u0014\u00AF\u0016  7711 661AB      8633Owebqq_icon.pngf/43da94dc-0d70-4729-b38f-b04e9ebd3855A"}}]}
