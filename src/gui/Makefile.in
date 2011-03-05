@@ -50,11 +50,13 @@ CONFIG_CLEAN_FILES =
 CONFIG_CLEAN_VPATH_FILES =
 am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
-am_gtkqq_OBJECTS = gtkqq-main.$(OBJEXT) gtkqq-loginpanel.$(OBJEXT) \
-	gtkqq-mainpanel.$(OBJEXT) gtkqq-mainwindow.$(OBJEXT)
+am_gtkqq_OBJECTS = main.$(OBJEXT) loginpanel.$(OBJEXT) \
+	mainpanel.$(OBJEXT) mainwindow.$(OBJEXT) log.$(OBJEXT) \
+	cprint.$(OBJEXT) splashpanel.$(OBJEXT)
 gtkqq_OBJECTS = $(am_gtkqq_OBJECTS)
 am__DEPENDENCIES_1 =
-gtkqq_DEPENDENCIES = $(am__DEPENDENCIES_1)
+gtkqq_DEPENDENCIES = $(am__DEPENDENCIES_1) \
+	${srcdir}/../libqq/libwebqq.la
 AM_V_lt = $(am__v_lt_$(V))
 am__v_lt_ = $(am__v_lt_$(AM_DEFAULT_VERBOSITY))
 am__v_lt_0 = --silent
@@ -265,12 +267,20 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 SUBDIRS = tencent test
-gtkqq_CPPFLAGS = -I$(srcdir)/. $(GTK_CFLAGS) \
-	     -DIMGDIR=\"$(pkgdatadir)/misc/\"
+AM_CFLAGS = -I$(srcdir)/../libqq/\
+	  -I$(srcdir)/../comm/\
+	  -I$(srcdir)/.\
+	  $(GTK_CFLAGS)\
+	  -DIMGDIR=\"$(pkgdatadir)/misc/\"
 
-gtkqq_LDADD = $(GTK_LIBS)
-gtkqq_SOURCES = main.c loginpanel.c loginpanel.h mainpanel.h mainpanel.c\
-	      mainwindow.h mainwindow.c
+gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la
+gtkqq_SOURCES = main.c \
+	      loginpanel.c loginpanel.h \
+	      mainpanel.h mainpanel.c\
+	      mainwindow.h mainwindow.c \
+	      ${srcdir}/../comm/log.c\
+	      ${srcdir}/../comm/cprint.c\
+	      splashpanel.h splashpanel.c
 
 all: all-recursive
 
@@ -359,10 +369,13 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkqq-loginpanel.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkqq-main.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkqq-mainpanel.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gtkqq-mainwindow.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cprint.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loginpanel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/main.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mainpanel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mainwindow.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/splashpanel.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
@@ -388,69 +401,37 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(LTCOMPILE) -c -o $@ $<
 
-gtkqq-main.o: main.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-main.o -MD -MP -MF $(DEPDIR)/gtkqq-main.Tpo -c -o gtkqq-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-main.Tpo $(DEPDIR)/gtkqq-main.Po
+log.o: ${srcdir}/../comm/log.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT log.o -MD -MP -MF $(DEPDIR)/log.Tpo -c -o log.o `test -f '${srcdir}/../comm/log.c' || echo '$(srcdir)/'`${srcdir}/../comm/log.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/log.Tpo $(DEPDIR)/log.Po
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='main.c' object='gtkqq-main.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/log.c' object='log.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-main.o `test -f 'main.c' || echo '$(srcdir)/'`main.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o log.o `test -f '${srcdir}/../comm/log.c' || echo '$(srcdir)/'`${srcdir}/../comm/log.c
 
-gtkqq-main.obj: main.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-main.obj -MD -MP -MF $(DEPDIR)/gtkqq-main.Tpo -c -o gtkqq-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-main.Tpo $(DEPDIR)/gtkqq-main.Po
+log.obj: ${srcdir}/../comm/log.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT log.obj -MD -MP -MF $(DEPDIR)/log.Tpo -c -o log.obj `if test -f '${srcdir}/../comm/log.c'; then $(CYGPATH_W) '${srcdir}/../comm/log.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/log.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/log.Tpo $(DEPDIR)/log.Po
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='main.c' object='gtkqq-main.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/log.c' object='log.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-main.obj `if test -f 'main.c'; then $(CYGPATH_W) 'main.c'; else $(CYGPATH_W) '$(srcdir)/main.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o log.obj `if test -f '${srcdir}/../comm/log.c'; then $(CYGPATH_W) '${srcdir}/../comm/log.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/log.c'; fi`
 
-gtkqq-loginpanel.o: loginpanel.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-loginpanel.o -MD -MP -MF $(DEPDIR)/gtkqq-loginpanel.Tpo -c -o gtkqq-loginpanel.o `test -f 'loginpanel.c' || echo '$(srcdir)/'`loginpanel.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-loginpanel.Tpo $(DEPDIR)/gtkqq-loginpanel.Po
+cprint.o: ${srcdir}/../comm/cprint.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cprint.o -MD -MP -MF $(DEPDIR)/cprint.Tpo -c -o cprint.o `test -f '${srcdir}/../comm/cprint.c' || echo '$(srcdir)/'`${srcdir}/../comm/cprint.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/cprint.Tpo $(DEPDIR)/cprint.Po
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='loginpanel.c' object='gtkqq-loginpanel.o' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/cprint.c' object='cprint.o' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-loginpanel.o `test -f 'loginpanel.c' || echo '$(srcdir)/'`loginpanel.c
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cprint.o `test -f '${srcdir}/../comm/cprint.c' || echo '$(srcdir)/'`${srcdir}/../comm/cprint.c
 
-gtkqq-loginpanel.obj: loginpanel.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-loginpanel.obj -MD -MP -MF $(DEPDIR)/gtkqq-loginpanel.Tpo -c -o gtkqq-loginpanel.obj `if test -f 'loginpanel.c'; then $(CYGPATH_W) 'loginpanel.c'; else $(CYGPATH_W) '$(srcdir)/loginpanel.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-loginpanel.Tpo $(DEPDIR)/gtkqq-loginpanel.Po
+cprint.obj: ${srcdir}/../comm/cprint.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT cprint.obj -MD -MP -MF $(DEPDIR)/cprint.Tpo -c -o cprint.obj `if test -f '${srcdir}/../comm/cprint.c'; then $(CYGPATH_W) '${srcdir}/../comm/cprint.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/cprint.c'; fi`
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/cprint.Tpo $(DEPDIR)/cprint.Po
 @am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='loginpanel.c' object='gtkqq-loginpanel.obj' libtool=no @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='${srcdir}/../comm/cprint.c' object='cprint.obj' libtool=no @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-loginpanel.obj `if test -f 'loginpanel.c'; then $(CYGPATH_W) 'loginpanel.c'; else $(CYGPATH_W) '$(srcdir)/loginpanel.c'; fi`
-
-gtkqq-mainpanel.o: mainpanel.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-mainpanel.o -MD -MP -MF $(DEPDIR)/gtkqq-mainpanel.Tpo -c -o gtkqq-mainpanel.o `test -f 'mainpanel.c' || echo '$(srcdir)/'`mainpanel.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-mainpanel.Tpo $(DEPDIR)/gtkqq-mainpanel.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mainpanel.c' object='gtkqq-mainpanel.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-mainpanel.o `test -f 'mainpanel.c' || echo '$(srcdir)/'`mainpanel.c
-
-gtkqq-mainpanel.obj: mainpanel.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-mainpanel.obj -MD -MP -MF $(DEPDIR)/gtkqq-mainpanel.Tpo -c -o gtkqq-mainpanel.obj `if test -f 'mainpanel.c'; then $(CYGPATH_W) 'mainpanel.c'; else $(CYGPATH_W) '$(srcdir)/mainpanel.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-mainpanel.Tpo $(DEPDIR)/gtkqq-mainpanel.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mainpanel.c' object='gtkqq-mainpanel.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-mainpanel.obj `if test -f 'mainpanel.c'; then $(CYGPATH_W) 'mainpanel.c'; else $(CYGPATH_W) '$(srcdir)/mainpanel.c'; fi`
-
-gtkqq-mainwindow.o: mainwindow.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-mainwindow.o -MD -MP -MF $(DEPDIR)/gtkqq-mainwindow.Tpo -c -o gtkqq-mainwindow.o `test -f 'mainwindow.c' || echo '$(srcdir)/'`mainwindow.c
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-mainwindow.Tpo $(DEPDIR)/gtkqq-mainwindow.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mainwindow.c' object='gtkqq-mainwindow.o' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-mainwindow.o `test -f 'mainwindow.c' || echo '$(srcdir)/'`mainwindow.c
-
-gtkqq-mainwindow.obj: mainwindow.c
-@am__fastdepCC_TRUE@	$(AM_V_CC)$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -MT gtkqq-mainwindow.obj -MD -MP -MF $(DEPDIR)/gtkqq-mainwindow.Tpo -c -o gtkqq-mainwindow.obj `if test -f 'mainwindow.c'; then $(CYGPATH_W) 'mainwindow.c'; else $(CYGPATH_W) '$(srcdir)/mainwindow.c'; fi`
-@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/gtkqq-mainwindow.Tpo $(DEPDIR)/gtkqq-mainwindow.Po
-@am__fastdepCC_FALSE@	$(AM_V_CC) @AM_BACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	source='mainwindow.c' object='gtkqq-mainwindow.obj' libtool=no @AMDEPBACKSLASH@
-@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
-@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(gtkqq_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o gtkqq-mainwindow.obj `if test -f 'mainwindow.c'; then $(CYGPATH_W) 'mainwindow.c'; else $(CYGPATH_W) '$(srcdir)/mainwindow.c'; fi`
+@am__fastdepCC_FALSE@	$(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(AM_CFLAGS) $(CFLAGS) -c -o cprint.obj `if test -f '${srcdir}/../comm/cprint.c'; then $(CYGPATH_W) '${srcdir}/../comm/cprint.c'; else $(CYGPATH_W) '$(srcdir)/${srcdir}/../comm/cprint.c'; fi`
 
 mostlyclean-libtool:
 	-rm -f *.lo

@@ -13,6 +13,7 @@
 typedef struct {
 	QQInfo *info;
 	QQCallBack cb;
+	gpointer usrdata;
 	QQMsg *msg;
 
 	/*
@@ -35,6 +36,7 @@ static gboolean do_sendmsg(gpointer data)
 	QQGroup *grp = msg -> grp;
 	GString *uin = NULL;
 	gint t = par -> type;
+	gpointer usrdata = par -> usrdata;
 	g_slice_free(ParStruct, par);
 
 	uin = t == 1 ? msg -> bdy -> uin : msg -> grp -> gid;
@@ -102,7 +104,8 @@ static gboolean do_sendmsg(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+					, usrdata);
 		}
 		request_del(req);
 		return FALSE;
@@ -122,7 +125,7 @@ static gboolean do_sendmsg(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -135,7 +138,7 @@ static gboolean do_sendmsg(gpointer data)
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "JSON syntax error.!");
+			cb(CB_ERROR, "JSON syntax error.!", usrdata);
 		}
 	}
 
@@ -160,7 +163,8 @@ error:
 /*
  * Attach the source to the event loop context
  */
-static void qq_send_msg(QQInfo *info, QQMsg *msg, QQCallBack cb, gint t)
+static void qq_send_msg(QQInfo *info, QQMsg *msg, QQCallBack cb
+			, gpointer usrdata, gint t)
 {
 	GSource *src = g_idle_source_new();
 	ParStruct *par = g_slice_new(ParStruct);
@@ -168,6 +172,7 @@ static void qq_send_msg(QQInfo *info, QQMsg *msg, QQCallBack cb, gint t)
 	par -> cb = cb;
 	par -> msg = msg;
 	par -> type = t;
+	par -> usrdata = usrdata;
 	g_source_set_callback(src, &do_sendmsg, (gpointer)par, NULL);
 	if(g_source_attach(src, info -> mainctx) <= 0){
 		g_error("Attach logout source error.(%s, %d)"
@@ -177,17 +182,19 @@ static void qq_send_msg(QQInfo *info, QQMsg *msg, QQCallBack cb, gint t)
 	g_source_unref(src);
 }
 
-void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb)
+void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb
+					, gpointer usrdata)
 {
 	if(info == NULL || msg == NULL){
 		g_warning("info or msg == NULL. (%s, %d)", __FILE__
 				, __LINE__);
 		return;
 	}
-	qq_send_msg(info, msg, cb, 1);	//buddy
+	qq_send_msg(info, msg, cb, usrdata, 1);	//buddy
 	return;
 }
-void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb)
+void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb
+					, gpointer usrdata)
 {
 	if(info == NULL || msg == NULL){
 		g_warning("info or msg == NULL. (%s, %d)", __FILE__
@@ -195,6 +202,6 @@ void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb)
 		return;
 	}
 	
-	qq_send_msg(info, msg, cb, 2);	//group
+	qq_send_msg(info, msg, cb, usrdata, 2);	//group
 	return;
 }

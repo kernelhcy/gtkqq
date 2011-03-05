@@ -28,6 +28,7 @@
 struct GetLNickPar{
 	QQInfo *info;
 	QQCallBack cb;
+	gpointer usrdata;
 	QQBuddy *bdy;
 };
 static gboolean do_get_single_long_nick(gpointer data)
@@ -40,6 +41,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	QQBuddy *bdy = par -> bdy;
 	g_slice_free(struct GetLNickPar, par);
 
@@ -67,7 +69,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!", usrdata);
 		}
 		request_del(req);
 		g_free(par);
@@ -88,7 +90,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -135,6 +137,7 @@ static gboolean do_get_online_buddies(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
 	gchar params[300];
@@ -160,7 +163,8 @@ static gboolean do_get_online_buddies(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+					, usrdata);
 		}
 		request_del(req);
 		g_free(par);
@@ -180,7 +184,7 @@ static gboolean do_get_online_buddies(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -258,6 +262,7 @@ static gboolean do_get_recent_contact(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
 	gchar params[300];
@@ -289,7 +294,8 @@ static gboolean do_get_recent_contact(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+						, usrdata);
 		}
 		request_del(req);
 		g_free(par);
@@ -309,7 +315,7 @@ static gboolean do_get_recent_contact(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -376,6 +382,7 @@ static gboolean do_get_my_info(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
 	gchar params[500];
@@ -403,7 +410,8 @@ static gboolean do_get_my_info(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+					, usrdata);
 		}
 		request_del(req);
 		g_free(par);
@@ -423,7 +431,7 @@ static gboolean do_get_my_info(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -636,6 +644,7 @@ static gboolean do_get_my_info(gpointer data)
 	struct GetLNickPar *glnpar = g_slice_new(struct GetLNickPar);
 	glnpar -> info = info;
 	glnpar -> cb = cb;
+	glnpar -> usrdata = usrdata;
 	glnpar -> bdy = info -> me;
 	do_get_single_long_nick(glnpar);
 
@@ -657,6 +666,7 @@ static gboolean do_get_my_friends(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
 	gchar params[300];
@@ -688,7 +698,8 @@ static gboolean do_get_my_friends(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+						, usrdata);
 		}
 		request_del(req);
 		g_free(par);
@@ -709,7 +720,7 @@ static gboolean do_get_my_friends(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -895,6 +906,7 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
 	gchar params[300];
@@ -926,7 +938,8 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+					, usrdata);
 		}
 		request_del(req);
 		return FALSE;
@@ -946,7 +959,7 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -1082,12 +1095,14 @@ error:
  * @param cb
  * @param func the callback function of the GSource.
  */
-static void dispatch(QQInfo *info, QQCallBack cb, GSourceFunc func)
+static void dispatch(QQInfo *info, QQCallBack cb, gpointer usrdata
+				, GSourceFunc func)
 {
 	GSource *src = g_idle_source_new();
 	DoFuncParam *par = g_malloc(sizeof(*par));
 	par -> info = info;
 	par -> cb = cb;
+	par -> usrdata = usrdata;
 	g_source_set_callback(src, func, (gpointer)par, NULL);
 	if(g_source_attach(src, info -> mainctx) <= 0){
 		g_error("Attach logout source error.(%s, %d)"
@@ -1097,77 +1112,84 @@ static void dispatch(QQInfo *info, QQCallBack cb, GSourceFunc func)
 	return;
 }
 
-void qq_get_my_info(QQInfo *info, QQCallBack cb)
+void qq_get_my_info(QQInfo *info, QQCallBack cb, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_my_info");
+			cb(CB_ERROR, "info == NULL in qq_get_my_info"
+					, usrdata);
 		}
 		return;
 	}
 
-	dispatch(info, cb, &do_get_my_info);
+	dispatch(info, cb, usrdata, &do_get_my_info);
 	return;
 }
 
-void qq_get_my_friends(QQInfo *info, QQCallBack cb)
+void qq_get_my_friends(QQInfo *info, QQCallBack cb, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_my_friends");
+			cb(CB_ERROR, "info == NULL in qq_get_my_friends"
+					, usrdata);
 		}
 		return;
 	}
 
-	dispatch(info, cb, &do_get_my_friends);
+	dispatch(info, cb, usrdata, &do_get_my_friends);
 	return;
 }
 
-void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb)
+void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_my_friends");
+			cb(CB_ERROR, "info == NULL in qq_get_my_friends"
+					, usrdata);
 		}
 		return;
 	}
 
-	dispatch(info, cb, &do_get_group_name_list_mask);
+	dispatch(info, cb, usrdata, &do_get_group_name_list_mask);
 	return;
 }
 
-void qq_get_online_buddies(QQInfo *info, QQCallBack cb)
+void qq_get_online_buddies(QQInfo *info, QQCallBack cb, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_online_buddies");
+			cb(CB_ERROR, "info == NULL in qq_get_online_buddies"
+					, usrdata);
 		}
 		return;
 	}
 
-	dispatch(info, cb, &do_get_online_buddies);
+	dispatch(info, cb, usrdata, &do_get_online_buddies);
 	return;
 }
 
-void qq_get_recent_contact(QQInfo *info, QQCallBack cb)
+void qq_get_recent_contact(QQInfo *info, QQCallBack cb, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_recent_contact");
+			cb(CB_ERROR, "info == NULL in qq_get_recent_contact"
+					, usrdata);
 		}
 		return;
 	}
 
-	dispatch(info, cb, &do_get_recent_contact);
+	dispatch(info, cb, usrdata, &do_get_recent_contact);
 	return;
 }
 
-void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb)
+void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb
+					, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
 			cb(CB_ERROR
-				, "info == NULL in qq_get_single_long_nick");
+				, "info == NULL in qq_get_single_long_nick"
+				, usrdata);
 		}
 		return;
 	}

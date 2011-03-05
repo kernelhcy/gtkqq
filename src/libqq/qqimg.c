@@ -9,6 +9,7 @@
 typedef struct{
 	QQInfo *info;
 	QQCallBack cb;
+	gpointer usrdata;
 	const gchar *uin;
 }FaceImgPar;
 
@@ -47,6 +48,7 @@ static gboolean do_get_face_img(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	const gchar *uin = par -> uin;
 	g_slice_free(FaceImgPar, par);
 
@@ -70,7 +72,8 @@ static gboolean do_get_face_img(gpointer data)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+						, usrdata);
 		}
 		request_del(req);
 		return FALSE;
@@ -89,7 +92,7 @@ static gboolean do_get_face_img(gpointer data)
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!", usrdata);
 		}
 		goto error;
 	}
@@ -101,7 +104,7 @@ static gboolean do_get_face_img(gpointer data)
 	img -> type = get_image_type(response_get_header_chars(rps
 				, "Content-Type"));
 	if(cb != NULL){
-		cb(CB_SUCCESS, img);
+		cb(CB_SUCCESS, img, usrdata);
 	}
 error:
 	request_del(req);
@@ -109,11 +112,13 @@ error:
 	return FALSE;
 }
 
-void qq_get_face_img(QQInfo *info, const gchar *uin, QQCallBack cb)
+void qq_get_face_img(QQInfo *info, const gchar *uin, QQCallBack cb
+				, gpointer usrdata)
 {
 	if(info == NULL){
 		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_face_img");
+			cb(CB_ERROR, "info == NULL in qq_get_face_img"
+						, usrdata);
 		}
 		return;
 	}
@@ -123,6 +128,7 @@ void qq_get_face_img(QQInfo *info, const gchar *uin, QQCallBack cb)
 	par -> info = info;
 	par -> cb = cb;
 	par -> uin = uin;
+	par -> usrdata = usrdata;
 	g_source_set_callback(src, &do_get_face_img, (gpointer)par, NULL);
 
 	/*

@@ -10,7 +10,7 @@
  * 	**This function MUST be called before any other function!**
  * return QQInfo instance if success or NULL if failed
  */
-QQInfo* qq_init(QQCallBack cb);
+QQInfo* qq_init(QQCallBack cb, gpointer usrdata);
 
 
 /*
@@ -22,12 +22,12 @@ QQInfo* qq_init(QQCallBack cb);
  * 	will not change the status.
  */
 void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		, const gchar *status , QQCallBack cb);
+		, const gchar *status , QQCallBack cb, gpointer usrdata);
 
 /*
  * Logout
  */
-void qq_logout(QQInfo *info, QQCallBack cb);
+void qq_logout(QQInfo *info, QQCallBack cb, gpointer usrdata);
 
 void qq_get_group_info();
 void qq_get_catogery_info();
@@ -37,44 +37,48 @@ void qq_get_catogery_info();
  * This function will return immediately after called. After the 
  * message has been send, cb will be called.
  */
-void qq_sendmsg(QQMsg *msg, QQCallBack cb);
+void qq_sendmsg(QQMsg *msg, QQCallBack cb, gpointer usrdata);
 GString* get_pwvc_md5(const gchar *pwd, const gchar *vc);
 
 /*
  * Get information of myself
  */
-void qq_get_my_info(QQInfo *info, QQCallBack cb);
+void qq_get_my_info(QQInfo *info, QQCallBack cb, gpointer usrdata);
 /*
  * Get all my friends' information.
  * Just simple information.
  */
-void qq_get_my_friends(QQInfo *info, QQCallBack cb);
+void qq_get_my_friends(QQInfo *info, QQCallBack cb, gpointer usrdata);
 /*
  * Get the group name list mask.
  */
-void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb);
+void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb
+						, gpointer usrdata);
 /*
  * Get the online buddies
  */
-void qq_get_online_buddies(QQInfo *info, QQCallBack cb);
+void qq_get_online_buddies(QQInfo *info, QQCallBack cb, gpointer usrdata);
 /*
  * Get the recent contact.
  */
-void qq_get_recent_contact(QQInfo *info, QQCallBack cb);
+void qq_get_recent_contact(QQInfo *info, QQCallBack cb, gpointer usrdata);
 
 /*
  * Get the long nick of bdy.
  */
-void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb);
+void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb
+						, gpointer usrdata);
 
 /*
  * Start the poll thread to poll the message form the server.
  */
-void qq_start_poll(QQInfo *info, QQCallBack cb);
+void qq_start_poll(QQInfo *info, QQCallBack cb, gpointer usrdata);
 
 /*
  * Send message to friends and group
  */
-void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb);
-void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb);
+void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb
+						, gpointer usrdata);
+void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb
+						, gpointer usrdata);
 #endif

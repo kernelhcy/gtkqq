@@ -14,6 +14,7 @@
 typedef struct{
 	QQInfo *info;
 	QQCallBack cb;
+	gpointer usrdata;
 }PollPar;
 
 static gboolean do_poll(gpointer data)
@@ -26,6 +27,7 @@ static gboolean do_poll(gpointer data)
 	}
 	QQInfo *info = par -> info;
 	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
 	g_slice_free(PollPar, par);
 
 	gchar params[300];
@@ -53,7 +55,8 @@ again:
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!");
+			cb(CB_NETWORKERR, "Can not connect to server!"
+						, usrdata);
 		}
 		request_del(req);
 		g_free(par);
@@ -73,7 +76,8 @@ again:
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Response error!");
+			cb(CB_ERROR, "Response error!"
+						, usrdata);
 		}
 		goto error;
 	}
@@ -97,7 +101,7 @@ again:
 		GString *vs = g_string_new(NULL);
 		ucs4toutf8(vs, val -> text);
 		if(cb != NULL){
-			cb(CB_SUCCESS, vs);
+			cb(CB_SUCCESS, vs, usrdata);
 		}
 		
 	}
@@ -120,12 +124,13 @@ error:
 }
 
 
-void qq_start_poll(QQInfo *info, QQCallBack cb)
+void qq_start_poll(QQInfo *info, QQCallBack cb, gpointer usrdata)
 {
 	GSource *src = g_idle_source_new();
 	PollPar *par = g_slice_new(PollPar);
 	par -> info = info;
 	par -> cb = cb;
+	par -> usrdata = usrdata;
 	g_source_set_callback(src, &do_poll, (gpointer)par, NULL);
 	if(g_source_attach(src, info -> pollctx) <= 0){
 		g_error("Attach logout source error.(%s, %d)"

@@ -1,7 +1,17 @@
 SUBDIRS=tencent test
+
+AM_CFLAGS=-I$(srcdir)/../libqq/\
+	  -I$(srcdir)/../comm/\
+	  -I$(srcdir)/.\
+	  $(GTK_CFLAGS)\
+	  -DIMGDIR=\"$(pkgdatadir)/misc/\"
+
 bin_PROGRAMS=gtkqq
-gtkqq_CPPFLAGS= -I$(srcdir)/. $(GTK_CFLAGS) \
-	     -DIMGDIR=\"$(pkgdatadir)/misc/\"
-gtkqq_LDADD = $(GTK_LIBS)
-gtkqq_SOURCES=main.c loginpanel.c loginpanel.h mainpanel.h mainpanel.c\
-	      mainwindow.h mainwindow.c
+gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la
+gtkqq_SOURCES=main.c \
+	      loginpanel.c loginpanel.h \
+	      mainpanel.h mainpanel.c\
+	      mainwindow.h mainwindow.c \
+	      ${srcdir}/../comm/log.c\
+	      ${srcdir}/../comm/cprint.c\
+	      splashpanel.h splashpanel.c

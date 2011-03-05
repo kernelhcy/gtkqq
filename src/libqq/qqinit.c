@@ -55,7 +55,7 @@ static gpointer start_poll_loop(gpointer *data)
 	 */
 	return NULL;
 }
-QQInfo* qq_init(QQCallBack cb)
+QQInfo* qq_init(QQCallBack cb, gpointer usrdata)
 {
 	/*
 	 * When call gtk_init(), the g_thread_init() also be called.
@@ -64,10 +64,8 @@ QQInfo* qq_init(QQCallBack cb)
 	 */
 	if(!g_thread_supported()){
 		g_thread_init(NULL);
-	}else{
-		g_error("Need thread supported!");
-		return NULL;
 	}
+
 	QQInfo *info = qq_info_new();
 
 	/*
@@ -85,7 +83,7 @@ QQInfo* qq_init(QQCallBack cb)
 		g_error("Error code %d, msg: %s (%s, %d)", err -> code
 					, err -> message, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Create mainloop thread error.");
+			cb(CB_ERROR, "Create mainloop thread error.", usrdata);
 		}
 		return NULL;
 	}
@@ -104,7 +102,7 @@ QQInfo* qq_init(QQCallBack cb)
 		g_error("Error code %d, msg: %s (%s, %d)", err -> code
 					, err -> message, __FILE__, __LINE__);
 		if(cb != NULL){
-			cb(CB_ERROR, "Create poll loop thread error.");
+			cb(CB_ERROR, "Create poll loop thread error.", usrdata);
 		}
 		return NULL;
 	}

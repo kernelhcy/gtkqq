@@ -1,4 +1,6 @@
 #include <mainwindow.h>
+#include <loginpanel.h>
+#include <splashpanel.h>
 
 static void qq_mainwindow_init(QQMainWindow *win);
 static void qq_mainwindowclass_init(QQMainWindowClass *wc);
@@ -49,6 +51,31 @@ static void qq_mainwindow_init(QQMainWindow *win)
 	gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
 	g_signal_connect(G_OBJECT(w), "destroy",
 			                 G_CALLBACK(destroy_handler), NULL);
+	
+	win -> login_panel = qq_loginpanel_new(w);
+	win -> splash_panel = qq_splashpanel_new();
+	win -> main_panel = NULL;
+
+	win -> notebook = gtk_notebook_new();
+	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(win -> notebook), FALSE);
+	gtk_notebook_set_show_border(GTK_NOTEBOOK(win -> notebook), FALSE);
+
+	gtk_widget_show_all(win -> login_panel);
+	gtk_widget_show_all(win -> splash_panel);
+	gtk_widget_show_all(win -> main_panel);
+	
+	gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
+				, win -> login_panel, NULL);
+	gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
+				, win -> splash_panel, NULL);
+	gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
+				, win -> main_panel, NULL);
+
+	gtk_container_add(GTK_CONTAINER(win), win -> notebook);
+
+	GtkWidget *img = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
+	gtk_window_set_icon(GTK_WINDOW(win)
+			, gtk_image_get_pixbuf(GTK_IMAGE(img)));
 
 }
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)
@@ -58,4 +85,32 @@ static void qq_mainwindowclass_init(QQMainWindowClass *wc)
 static void qq_mainwindow_destroy(GObject *obj)
 {
 
+}
+
+void qq_mainwindow_show_loginpanel(GtkWidget *win)
+{
+	if(!QQ_IS_MAINWINDOW(win)){
+		g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
+		return;
+	}
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(
+				QQ_MAINWINDOW(win) -> notebook), 0);
+}
+void qq_mainwindow_show_splashpanel(GtkWidget *win)
+{
+	if(!QQ_IS_MAINWINDOW(win)){
+		g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
+		return;
+	}
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(
+				QQ_MAINWINDOW(win) -> notebook), 1);
+}
+void qq_mainwindow_show_mainpanel(GtkWidget *win)
+{
+	if(!QQ_IS_MAINWINDOW(win)){
+		g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
+		return;
+	}
+	gtk_notebook_set_current_page(GTK_NOTEBOOK(
+				QQ_MAINWINDOW(win) -> notebook), 2);
 }

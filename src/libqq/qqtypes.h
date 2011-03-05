@@ -26,7 +26,8 @@ typedef enum{
 /*
  * Callback function of the functions below.
  */
-typedef void (*QQCallBack)(CallBackResult re, gpointer data);
+typedef void (*QQCallBack)(CallBackResult re, gpointer redata
+					, gpointer usrdata);
 
 /*
  * The data structures of gtkqq
@@ -254,6 +255,7 @@ void qq_recentcon_free(QQRecentCon *rc);
 typedef struct _DoFuncParam{
 	QQInfo *info;
 	QQCallBack cb;
+	gpointer usrdata;
 }DoFuncParam;
 
 /*
