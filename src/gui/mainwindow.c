@@ -54,7 +54,7 @@ static void qq_mainwindow_init(QQMainWindow *win)
 	
 	win -> login_panel = qq_loginpanel_new(w);
 	win -> splash_panel = qq_splashpanel_new();
-	win -> main_panel = NULL;
+	win -> main_panel = qq_mainpanel_new(w);
 
 	win -> notebook = gtk_notebook_new();
 	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(win -> notebook), FALSE);

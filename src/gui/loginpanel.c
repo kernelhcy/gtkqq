@@ -11,7 +11,7 @@ static void qq_loginpanel_destroy(GtkObject *obj);
  * But, put them here can be very convenience.
  */
 static const gchar *status[] = {"online", "hidden", "away", "offline", NULL};
-static const gchar *status_label[] = {" 在 线", " 隐 身", " 离 开", " 离 线"
+static const gchar *status_label[] = {" 在线", " 隐身", " 离开", " 离线"
 					, NULL};
 
 /*
@@ -71,17 +71,78 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c)
 extern QQInfo *info;
 
 /*
+ * This is the parameter struct of the XXX_idle function.
+ */
+typedef struct{
+	CallBackResult cbr;
+	gpointer redata;
+	gpointer usrdata;
+}IdlePar;
+
+/*
  * After login, this function is attached to the gtk main event loop to
  * manage the widgets' status.
  */
 static gboolean login_idle(gpointer data)
 {
-	QQMainWindow *win = QQ_MAINWINDOW(data);
-	GtkWidget *w = GTK_WIDGET(data);
-	qq_mainwindow_show_loginpanel(w);
+	IdlePar *par = (IdlePar*)data;
+	QQMainWindow *win = QQ_MAINWINDOW(par -> usrdata);
+	g_slice_free(IdlePar, par);
 	return FALSE;
 }
 
+/*
+ * When get information succeed from the server, this function will be
+ * called.
+ */
+static gboolean get_info_idle(gpointer data)
+{
+	IdlePar *par = (IdlePar*)data;
+	CallBackResult cbr = par -> cbr;
+	gpointer redata = par -> redata;
+	gpointer usrdata = par -> usrdata;
+	g_slice_free(IdlePar, par);
+
+	if(cbr == CB_ERROR){
+		g_warning("Error occured!!");
+		return FALSE;
+	}else if(cbr == CB_SUCCESS){
+		if(g_strstr_len("GET_GROUP_NAME_LIST_MASK"
+					, -1, (const gchar*)redata)
+				!= NULL){
+			/*
+			 * Because we get the group name list mask last,
+			 * we can think that if we get the group name list
+			 * mask success, we get all information success.
+			 * If any step failed, the program will go back and
+			 * ask the user to try again.
+			 * We can do this, because we believe that in the main
+			 * event loop, the sources with the same priority level
+			 * will be called FIFO.
+			 */
+			GtkWidget *w = GTK_WIDGET(par -> usrdata);
+			qq_mainwindow_show_mainpanel(w);
+		}
+	}
+	return FALSE;
+	
+}
+
+/*
+ * Attach the source function idle_func to gtk event loop.
+ */
+static void attach_gtk_idle(GSourceFunc idle_func, CallBackResult cbr
+			, gpointer redata, gpointer usrdata)
+{
+	IdlePar *par = g_slice_new0(IdlePar);
+	par -> cbr = cbr;
+	par -> redata = redata;
+	par -> usrdata = usrdata;
+	GSource *src = g_idle_source_new();
+	g_source_set_callback(src, (GSourceFunc)idle_func, par, NULL);
+	g_source_attach(src, gtkctx);
+	g_source_unref(src);
+}
 
 /*
  * Callback of qq_login function.
@@ -91,15 +152,16 @@ static gboolean login_idle(gpointer data)
  */
 static void login_cb(CallBackResult cbr, gpointer redata, gpointer usrdata)
 {
-	if(cbr == CB_SUCCESS){
-		g_printf("login success!");
-		GSource *src = g_idle_source_new();
-		g_source_set_callback(src, (GSourceFunc)login_idle
-				, usrdata, NULL);
-		g_source_attach(src, gtkctx);
-		g_source_unref(src);
-	}
+	attach_gtk_idle(login_idle, cbr, redata, usrdata);
 }
+
+/*
+ * Get information call back.
+ */
+static void get_info_cb(CallBackResult cbr, gpointer redata, gpointer usrdata)
+{
+	attach_gtk_idle(get_info_idle, cbr, redata, usrdata);
+}	
 
 /*
  * Callback of login_btn button
@@ -107,15 +169,18 @@ static void login_cb(CallBackResult cbr, gpointer redata, gpointer usrdata)
 static void login_btn_cb(GtkButton *btn, gpointer data)
 {
 	GtkWidget *panel = GTK_WIDGET(data);
+	GtkWidget *win = QQ_LOGINPANEL(panel) -> container;
+	qq_mainwindow_show_splashpanel(win);
+
 	const gchar *uin, *passwd, *status;
-	
 	uin = qq_loginpanel_get_uin(panel);
 	passwd = qq_loginpanel_get_passwd(panel);
-	status = qq_loginpanel_get_status(panel);
-	
-	GtkWidget *win = QQ_LOGINPANEL(panel) -> container;
+	status = qq_loginpanel_get_status(panel);	
 	qq_login(info, uin, passwd, status, login_cb, win);
-	qq_mainwindow_show_splashpanel(win);
+
+	qq_get_my_info(info, get_info_cb, win);
+	qq_get_my_friends(info, get_info_cb, win);
+	qq_get_group_name_list_mask(info, get_info_cb, win);
 }
 
 /*
@@ -254,5 +319,7 @@ const gchar* qq_loginpanel_get_status(GtkWidget *loginpanel)
 		return NULL;
 	}
 	QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
-	return "hidden";
+	gint idx = gtk_combo_box_get_active(GTK_COMBO_BOX(panel 
+							-> status_comb));
+	return status[idx];
 }

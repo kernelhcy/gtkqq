@@ -696,7 +696,7 @@ static gboolean do_login(gpointer data)
 	g_debug("Initial done.");
 	g_slice_free(struct InitParam, data);
 	if(cb != NULL){
-		cb(CB_SUCCESS, "success", usrdata);
+		cb(CB_SUCCESS, "LOGIN", usrdata);
 	}
 	return FALSE;
 }
@@ -816,7 +816,7 @@ static gboolean do_logout(gpointer data)
 		if(g_strstr_len(result -> child -> text, -1, "ok") != NULL){
 			g_debug("Logout ok!(%s, %d)", __FILE__, __LINE__);
 			if(cb != NULL){
-				cb(CB_SUCCESS, "Logout ok!", usrdata);
+				cb(CB_SUCCESS, "LOGOUT", usrdata);
 			}
 		}
 	}else{

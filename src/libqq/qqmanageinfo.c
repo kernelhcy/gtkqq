@@ -120,6 +120,10 @@ static gboolean do_get_single_long_nick(gpointer data)
 		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
 	}
 
+	if(cb != NULL){
+		cb(CB_SUCCESS, "GET_SINGLE_LONG_NICK", usrdata);
+	}
+
 error:
 	json_free_value(&json);
 	request_del(req);
@@ -245,6 +249,10 @@ static gboolean do_get_online_buddies(gpointer data)
 			}
 		}
 	}
+
+	if(cb != NULL){
+		cb(CB_SUCCESS, "GET_ONLINE_BUDDIES", usrdata);
+	}
 error:
 	json_free_value(&json);
 	request_del(req);
@@ -363,6 +371,10 @@ static gboolean do_get_recent_contact(gpointer data)
 			rc -> type = ti;
 			g_ptr_array_add(info -> recentcons, rc);
 		}
+	}
+
+	if(cb != NULL){
+		cb(CB_SUCCESS, "GET_RECENT_CONTACE", usrdata);
 	}
 error:
 	json_free_value(&json);
@@ -648,6 +660,9 @@ static gboolean do_get_my_info(gpointer data)
 	glnpar -> bdy = info -> me;
 	do_get_single_long_nick(glnpar);
 
+	if(cb != NULL){
+		cb(CB_SUCCESS, "GET_MY_INFO", usrdata);
+	}
 error:
 	json_free_value(&json);
 	request_del(req);
@@ -889,6 +904,10 @@ static gboolean do_get_my_friends(gpointer data)
 			g_ptr_array_add(bdy -> cate -> members, bdy);
 		}
 	}
+
+	if(cb != NULL){
+		cb(CB_SUCCESS, "GET_MY_FRIENDS", usrdata);
+	}
 error:
 	json_free_value(&json);
 	request_del(req);
@@ -1081,6 +1100,10 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 		}
 	}else{
 		g_warning("No gmarklist find. (%s, %d)", __FILE__, __LINE__);
+	}
+
+	if(cb != NULL){
+		cb(CB_SUCCESS, "GET_GROUP_NAME_LIST_MASK", usrdata);
 	}
 error:
 	json_free_value(&json);

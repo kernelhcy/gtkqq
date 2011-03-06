@@ -20,17 +20,19 @@ QQInfo* qq_init(QQCallBack cb, gpointer usrdata);
  * @param passwd the QQ password
  * @param status the status of the user. If NULL, this func
  * 	will not change the status.
+ *
+ * If success, the callback's redata is "LOGIN"
+ * or, it is the failed information string.
  */
 void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		, const gchar *status , QQCallBack cb, gpointer usrdata);
 
 /*
  * Logout
+ * If success, the callback's redata is "LOGOUT"
+ * or, it is the failed information string.
  */
 void qq_logout(QQInfo *info, QQCallBack cb, gpointer usrdata);
-
-void qq_get_group_info();
-void qq_get_catogery_info();
 
 /*
  * Send message
@@ -42,29 +44,40 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc);
 
 /*
  * Get information of myself
+ * If success, the callback's redata is "GET_MY_INFO"
+ * or, it is the failed information string.
  */
 void qq_get_my_info(QQInfo *info, QQCallBack cb, gpointer usrdata);
 /*
  * Get all my friends' information.
  * Just simple information.
+ * If success, the callback's redata is "GET_MY_FRIENDS"
+ * or, it is the failed information string.
  */
 void qq_get_my_friends(QQInfo *info, QQCallBack cb, gpointer usrdata);
 /*
  * Get the group name list mask.
+ * If success, the callback's redata is "GET_GROUP_NAME_LIST_MASK"
+ * or, it is the failed information string.
  */
 void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb
 						, gpointer usrdata);
 /*
  * Get the online buddies
+ * If success, the callback's redata is "GET_ONLINE_BUDDIES"
+ * or, it is the failed information string.
  */
 void qq_get_online_buddies(QQInfo *info, QQCallBack cb, gpointer usrdata);
 /*
  * Get the recent contact.
+ * If success, the callback's redata is "GET_RECENT_CONTACT"
  */
 void qq_get_recent_contact(QQInfo *info, QQCallBack cb, gpointer usrdata);
 
 /*
  * Get the long nick of bdy.
+ * If success, the callback's redata is "GET_SINGLE_LONG_NICK".
+ * or, it is the failed information string.
  */
 void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb
 						, gpointer usrdata);

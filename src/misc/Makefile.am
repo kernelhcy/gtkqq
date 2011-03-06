@@ -17,5 +17,6 @@ img_DATA=All_window_sizeGripFile.bmp\
 	MainPanel_Support_DownBackground.bmp\
 	MainPanel_Support_highlightBackground.bmp\
 	MainPanel_Support_NormalBackground.bmp\
-	webqq_icon.png
+	webqq_icon.png\
+	avatar.gif
 EXTRA_DIST = $(imgdir)
