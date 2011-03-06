@@ -11,6 +11,19 @@
 
 typedef struct _QQLoginPanel 		QQLoginPanel;
 typedef struct _QQLoginPanelClass 	QQLoginPanelClass;
+typedef enum _QQLoginPanelLoginState	QQLoginPanelLoginState;
+
+//the login status
+enum _QQLoginPanelLoginState{
+	LS_CHECK_VC,		//check verify code
+	LS_LOGIN,		//login, get psessionid
+	LS_GET_MY_INFO,		//get information of myself
+	LS_GET_FRIENDS,		//get my friends list.
+	LS_GET_GROUP_LIST,	//get group list.
+	LS_DONE,		//finish the login.
+	LS_ERROR,		//error
+	LS_UNKNOWN		//unknown status
+};
 
 struct _QQLoginPanel{
 	GtkVBox parent;
@@ -21,7 +34,13 @@ struct _QQLoginPanel{
 	GtkWidget *rempwcb;	//rember password check button
 
 	GtkWidget *login_btn, *status_comb;
+
+	const gchar *uin, *passwd, *status;
+
 	GtkWidget *container;
+
+	//used to mark the login state.
+	QQLoginPanelLoginState login_state;
 };
 
 struct _QQLoginPanelClass{
@@ -42,7 +61,7 @@ GtkType qq_loginpanel_get_type();
 /*
  * Get the inputs
  */
-const gchar* qq_loginpanel_get_uin(GtkWidget *loginpanel);
-const gchar* qq_loginpanel_get_passwd(GtkWidget *loginpanel);
-const gchar* qq_loginpanel_get_status(GtkWidget *loginpanel);
+const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel);
+const gchar* qq_loginpanel_get_passwd(QQLoginPanel  *loginpanel);
+const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel);
 #endif

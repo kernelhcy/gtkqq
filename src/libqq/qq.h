@@ -12,6 +12,14 @@
  */
 QQInfo* qq_init(QQCallBack cb, gpointer usrdata);
 
+/*
+ * Check if we need the verify code.
+ * We need call this function before qq_login.
+ * If we need the verify code, after this function, the verify code image
+ * is stored in info -> vc_image_data.
+ */
+void qq_check_verifycode(QQInfo *info, const gchar *uin, QQCallBack cb
+						, gpointer usrdata);
 
 /*
  * Login

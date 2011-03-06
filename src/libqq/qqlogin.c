@@ -144,6 +144,10 @@ error:
  */
 static gint get_vc_image(QQInfo *info)
 {
+	if(info -> vc_type == NULL || info -> vc_type -> len <=0){
+		g_warning("Need vc_type!!(%s, %d)", __FILE__, __LINE__);
+		return -1;
+	}
 	gint ret = 0;
 	gchar params[500];  
 
@@ -447,6 +451,10 @@ static GString *generate_clientid()
 static int get_psessionid(QQInfo *info)
 {
 	int ret = 0;
+	if(info -> ptwebqq == NULL || info -> ptwebqq -> len <= 0){
+		g_warning("Need ptwebqq!!(%s, %d)", __FILE__, __LINE__);
+		return -1;
+	}
 	
 	Request *req = request_new();
 	Response *rps = NULL;
@@ -606,26 +614,6 @@ static gboolean do_login(gpointer data)
 	gpointer usrdata = ((struct InitParam *)data) -> usrdata;
 	const gchar *passwd = ((struct InitParam *)data) -> passwd;
 
-	if(check_verify_code(info) == -1){
-		if(cb != NULL){
-			cb(CB_ERROR, "Check verify code error.", usrdata);
-		}
-		return FALSE;
-	}
-
-	if(info -> need_vcimage){
-		g_debug("Get verify code image...(%s, %d)", __FILE__, __LINE__);
-		get_vc_image(info);
-		g_debug("Verify code image length: %d (%s, %d)"
-				, info -> vc_image_data -> len
-				, __FILE__, __LINE__);
-		g_debug("Write verify code image data to file ... (%s, %d)"
-				, __FILE__, __LINE__);
-		save_img_to_file(info -> vc_image_data -> str
-				, info -> vc_image_data -> len
-				, info -> vc_image_type -> str, "/home/hcy"
-				, "verifycode");
-	}
 	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
 	if(get_version(info) == -1){
 		if(cb != NULL){
@@ -635,13 +623,6 @@ static gboolean do_login(gpointer data)
 	}
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
-	if(info -> need_vcimage){
-		gchar vc[10];
-		g_printf("Please input the verify code:\n");
-		scanf("%s", vc);
-		info -> verify_code = g_string_new(vc);
-
-	}
 	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str);
 
 	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
@@ -752,6 +733,10 @@ static gboolean do_logout(gpointer data)
 	QQCallBack cb = par -> cb;
 	gpointer usrdata = par -> usrdata;
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
+	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
+		g_warning("Need psessionid !!(%s, %d)", __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	gchar params[300];
 	Request *req = request_new();
@@ -846,6 +831,72 @@ void qq_logout(QQInfo *info, QQCallBack cb, gpointer usrdata)
 	par -> cb = cb;
 	par -> usrdata = usrdata;
 	g_source_set_callback(src, (GSourceFunc)do_logout, (gpointer)par, NULL);
+	if(g_source_attach(src, info -> mainctx) <= 0){
+		g_error("Attach logout source error.(%s, %d)"
+				, __FILE__, __LINE__);
+	}
+	g_source_unref(src);
+	return;
+}
+
+/*
+ * Check if we need the verify code.
+ */
+static gboolean do_check_verifycode(gpointer data)
+{
+	DoFuncParam *par = (DoFuncParam*)data;
+	if(par == NULL){
+		return FALSE;
+	}
+
+	QQInfo *info = par -> info;
+	QQCallBack cb = par -> cb;
+	gpointer usrdata = par -> usrdata;
+
+	if(check_verify_code(info) == -1){
+		if(cb != NULL){
+			cb(CB_ERROR, "Check verify code error.", usrdata);
+		}
+		return FALSE;
+	}
+
+	if(info -> need_vcimage){
+		//we need it.
+		g_debug("Get verify code image...(%s, %d)", __FILE__, __LINE__);
+		get_vc_image(info);
+	}
+
+	if(cb != NULL){
+		cb(CB_SUCCESS, "CHECK_VERIFY_CODE", usrdata);
+	}
+	return FALSE;
+}
+
+void qq_check_verifycode(QQInfo *info, const gchar *uin, QQCallBack cb
+			, gpointer usrdata)
+{
+	if(info == NULL){
+		if(cb != NULL){
+			cb(CB_ERROR, "info == NULL in qq_check_verifycodet"
+						, usrdata);
+		}
+		return;
+	}
+
+	if(uin == NULL){
+		g_warning("Need uin in check_verifycode!(%s, %d)", __FILE__
+				, __LINE__);
+		return;
+	}
+	info -> me -> uin = g_string_new(uin);
+
+	GSource *src = g_idle_source_new();
+	DoFuncParam *par = g_malloc(sizeof(*par));
+	par -> info = info;
+	par -> cb = cb;
+	par -> usrdata = usrdata;
+	g_source_set_callback(src, (GSourceFunc)do_check_verifycode
+					, (gpointer)par, NULL);
 	if(g_source_attach(src, info -> mainctx) <= 0){
 		g_error("Attach logout source error.(%s, %d)"
 				, __FILE__, __LINE__);

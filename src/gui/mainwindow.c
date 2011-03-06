@@ -1,6 +1,7 @@
 #include <mainwindow.h>
 #include <loginpanel.h>
 #include <splashpanel.h>
+#include <mainpanel.h>
 
 static void qq_mainwindow_init(QQMainWindow *win);
 static void qq_mainwindowclass_init(QQMainWindowClass *wc);

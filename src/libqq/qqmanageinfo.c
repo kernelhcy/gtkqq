@@ -45,6 +45,11 @@ static gboolean do_get_single_long_nick(gpointer data)
 	QQBuddy *bdy = par -> bdy;
 	g_slice_free(struct GetLNickPar, par);
 
+	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	gchar params[300];
 	g_debug("Get long nick.(%s, %d)", __FILE__, __LINE__);
 
@@ -143,6 +148,11 @@ static gboolean do_get_online_buddies(gpointer data)
 	QQCallBack cb = par -> cb;
 	gpointer usrdata = par -> usrdata;
 	g_free(par);
+	
+	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
+		g_warning("Need psessionid!!(%s, %d)", __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	gchar params[300];
 	g_debug("Get online buddies!(%s, %d)", __FILE__, __LINE__);
@@ -273,6 +283,11 @@ static gboolean do_get_recent_contact(gpointer data)
 	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
+	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+		g_warning("Need vfwebqq!!(%s, %s)", __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	gchar params[300];
 	g_debug("Get recent contacts!(%s, %d)", __FILE__, __LINE__);
 
@@ -364,7 +379,7 @@ static gboolean do_get_recent_contact(gpointer data)
 			rc -> uin = g_string_new(uin);
 			ti = strtol(type, &endptr, 10);
 			if(endptr == type){
-				g_warning("strtol error.(%s, %s)", __FILE__
+				g_warning("strtol error.(%s, %d)", __FILE__
 						, __LINE__);
 				continue;
 			}	
@@ -396,6 +411,11 @@ static gboolean do_get_my_info(gpointer data)
 	QQCallBack cb = par -> cb;
 	gpointer usrdata = par -> usrdata;
 	g_free(par);
+
+	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	gchar params[500];
 	g_debug("Get my information!(%s, %d)", __FILE__, __LINE__);
@@ -684,6 +704,11 @@ static gboolean do_get_my_friends(gpointer data)
 	gpointer usrdata = par -> usrdata;
 	g_free(par);
 
+	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+		return FALSE;
+	}
+
 	gchar params[300];
 	g_debug("Get my friends!(%s, %d)", __FILE__, __LINE__);
 
@@ -927,6 +952,11 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	QQCallBack cb = par -> cb;
 	gpointer usrdata = par -> usrdata;
 	g_free(par);
+
+	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+		return FALSE;
+	}
 
 	gchar params[300];
 	g_debug("Get my group name list mask!(%s, %d)", __FILE__, __LINE__);
