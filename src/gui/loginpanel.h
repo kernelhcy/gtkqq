@@ -18,12 +18,16 @@ struct _QQLoginPanel{
 	GtkWidget *uin_label, *uin_entry;
 	GtkWidget *passwd_label, *passwd_entry;
 
-	GtkWidget *login_btn;
+	GtkWidget *rempwcb;	//rember password check button
+
+	GtkWidget *login_btn, *status_comb;
 	GtkWidget *container;
 };
 
 struct _QQLoginPanelClass{
 	GtkVBoxClass parent;
+
+	const gchar *status;
 };
 
 /*

@@ -215,6 +215,8 @@ AC_CONFIG_FILES([Makefile
 		 src/gui/test/Makefile
 		 src/tool/Makefile
 		 src/misc/Makefile
+		 src/misc/status/Makefile
+		 src/misc/qqfaces/Makefile
 		 src/test/Makefile])
 AC_OUTPUT
 

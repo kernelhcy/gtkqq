@@ -43,7 +43,7 @@ static void qq_splashpanelclass_init(QQSplashPanelClass *c)
 /*
  * Let the progress bar shake.
  */
-static gboolean progress_bar_idle_func(gpointer data)
+static gboolean progress_bar_timeout_func(gpointer data)
 {
 	gtk_progress_bar_pulse(GTK_PROGRESS_BAR(data));
 	return TRUE;
@@ -55,7 +55,7 @@ static void qq_splashpanel_init(QQSplashPanel *obj)
 
 	GtkWidget *probar = gtk_progress_bar_new();
 	gtk_progress_bar_set_text(GTK_PROGRESS_BAR(probar), "登录中...");
-	g_idle_add(progress_bar_idle_func, probar);
+	g_timeout_add(100, progress_bar_timeout_func, probar);
 	
 	gtk_box_pack_start(GTK_BOX(obj), logo, TRUE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(obj), probar, TRUE, FALSE, 0);

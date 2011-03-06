@@ -711,7 +711,7 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		}
 		return;
 	}
-	if(uin == NULL || passwd == NULL){
+	if(uin == NULL || passwd == NULL || strlen(uin) == 0){
 		g_warning("uin or passwd == NULL.(%s, %d)"
 				, __FILE__, __LINE__);
 		if(cb != NULL){

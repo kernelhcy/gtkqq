@@ -47,7 +47,7 @@ GtkWidget* qq_mainwindow_new()
 static void qq_mainwindow_init(QQMainWindow *win)
 {
 	GtkWidget *w = GTK_WIDGET(win);
-	gtk_widget_set_size_request(w, 260, 520);
+	gtk_widget_set_size_request(w, 250, 500);
 	gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
 	g_signal_connect(G_OBJECT(w), "destroy",
 			                 G_CALLBACK(destroy_handler), NULL);
@@ -76,6 +76,7 @@ static void qq_mainwindow_init(QQMainWindow *win)
 	GtkWidget *img = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
 	gtk_window_set_icon(GTK_WINDOW(win)
 			, gtk_image_get_pixbuf(GTK_IMAGE(img)));
+	gtk_window_set_title(GTK_WINDOW(win), "GtkQQ");
 
 }
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)

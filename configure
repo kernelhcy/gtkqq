@@ -13509,7 +13509,7 @@ fi
 done
 
 
-ac_config_files="$ac_config_files Makefile src/Makefile src/comm/Makefile src/libqq/Makefile src/cli/Makefile src/gui/Makefile src/gui/tencent/Makefile src/gui/test/Makefile src/tool/Makefile src/misc/Makefile src/test/Makefile"
+ac_config_files="$ac_config_files Makefile src/Makefile src/comm/Makefile src/libqq/Makefile src/cli/Makefile src/gui/Makefile src/gui/tencent/Makefile src/gui/test/Makefile src/tool/Makefile src/misc/Makefile src/misc/status/Makefile src/misc/qqfaces/Makefile src/test/Makefile"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -14512,6 +14512,8 @@ do
     "src/gui/test/Makefile") CONFIG_FILES="$CONFIG_FILES src/gui/test/Makefile" ;;
     "src/tool/Makefile") CONFIG_FILES="$CONFIG_FILES src/tool/Makefile" ;;
     "src/misc/Makefile") CONFIG_FILES="$CONFIG_FILES src/misc/Makefile" ;;
+    "src/misc/status/Makefile") CONFIG_FILES="$CONFIG_FILES src/misc/status/Makefile" ;;
+    "src/misc/qqfaces/Makefile") CONFIG_FILES="$CONFIG_FILES src/misc/qqfaces/Makefile" ;;
     "src/test/Makefile") CONFIG_FILES="$CONFIG_FILES src/test/Makefile" ;;
 
   *) as_fn_error $? "invalid argument: \`$ac_config_target'" "$LINENO" 5 ;;
