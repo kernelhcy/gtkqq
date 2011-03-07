@@ -1,24 +1,27 @@
 #include <loginpanel.h>
 #include <mainwindow.h>
 #include <qq.h>
+#include <consts.h>
 
 /*
  * The global value
  */
 extern QQInfo *info;
 
+/*
+ * This is the parameter struct of the XXX_idle function.
+ */
+typedef struct{
+	CallBackResult cbr;
+	gpointer redata;
+	gpointer usrdata;
+}IdlePar;
+
 static void qq_loginpanelclass_init(QQLoginPanelClass *c);
 static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
 static void login_cb(CallBackResult cbr, gpointer redata, gpointer usrdata);
 
-/*
- * May be I should put thest two variables to the QQLoingPanleClass.
- * But, put them here can be very convenience.
- */
-static const gchar *status[] = {"online", "hidden", "away", "offline", NULL};
-static const gchar *status_label[] = {" 在线", " 隐身", " 离开", " 离线"
-					, NULL};
 //
 // A state mechine
 // Used to login.
@@ -26,19 +29,33 @@ static const gchar *status_label[] = {" 在线", " 隐身", " 离开", " 离线"
 // check verify code -> login -> get my info -> get friends
 // 		-> get group list name mask -> done.
 //
-static void qq_loginpanel_login_sm(QQLoginPanel *p, QQCallBack cb
-				, gpointer usrdata)
+static void qq_loginpanel_login_sm(gpointer data)
 {
+
+	IdlePar *par = (IdlePar*)data;
+	CallBackResult cbr = par -> cbr;
+	gpointer redata = par -> redata;
+	gpointer usrdata = par -> usrdata;
+	g_slice_free(IdlePar, par);
+
 	GtkWidget *w;
-	w = QQ_LOGINPANEL(usrdata) -> container;
+	QQLoginPanel *p = QQ_LOGINPANEL(usrdata);
+	w = p -> container;
 	GtkWidget *dialog, *vc_entry, *img;
-	GtkBox *vbox;
+	GtkWidget *vbox, *hbox;
 	gchar fn[200];
 	switch(p -> login_state)
 	{
 	case LS_CHECK_VC:
-		qq_check_verifycode(info, p -> uin, cb, usrdata);
 		p -> login_state = LS_LOGIN;
+		qq_check_verifycode(info, p -> uin, login_cb, usrdata);
+		if(cbr == CB_ERROR){
+			//try again.
+			g_warning("Check verify code faile. Try again."
+					"(%s, %d)", __FILE__, __LINE__);
+			p -> login_state = LS_CHECK_VC;
+			break;
+		}
 		break;
 	case LS_LOGIN:
 		if(info -> need_vcimage){
@@ -46,42 +63,84 @@ static void qq_loginpanel_login_sm(QQLoginPanel *p, QQCallBack cb
 					|| info -> vc_image_type == NULL){
 				g_warning("No vc image data or type!(%s, %d)"
 						, __FILE__, __LINE__);
-				p -> login_state = LS_ERROR;
+				gtk_label_set_text(GTK_LABEL(p -> err_label)
+						, "登录失败，请重新登录。");
+				qq_mainwindow_show_loginpanel(w);
 				break;
 			}
 			sprintf(fn, "/tmp/verifycode.%s"
 					, info -> vc_image_type -> str);
 			save_img_to_file(info -> vc_image_data -> str
 					, info -> vc_image_data -> len
-					, "/", fn);
+					, info -> vc_image_type -> str
+					, "/tmp", "verifycode");
 			dialog = gtk_dialog_new_with_buttons("Information"
 					, GTK_WINDOW(w), GTK_DIALOG_MODAL
 					, GTK_STOCK_OK, GTK_RESPONSE_OK
 					, NULL);
-			vbox = GTK_BOX(GTK_DIALOG(dialog) -> vbox);
-			vc_entry = gtk_entry_new();
+			vbox = GTK_DIALOG(dialog) -> vbox;
 			img = gtk_image_new_from_file(fn);
-			gtk_box_pack_start(vbox, img, FALSE, FALSE, 0);	
-			gtk_box_pack_start(vbox, vc_entry, FALSE, FALSE, 0);	
-			gtk_widget_show_all (dialog);
-		       	gtk_dialog_run (GTK_DIALOG (dialog));
-	       		gtk_widget_destroy (dialog);
+			gtk_box_pack_start(GTK_BOX(vbox)
+					, gtk_label_new("请输入验证码：")
+					, FALSE, FALSE, 20);	
+			gtk_box_pack_start(GTK_BOX(vbox), img
+					, FALSE, FALSE, 0);	
+
+			vc_entry = gtk_entry_new();
+			gtk_widget_set_size_request(vc_entry, 200, -1);
+			hbox = gtk_hbox_new(FALSE, 0);
+			gtk_box_pack_start(GTK_BOX(hbox), vc_entry
+					, TRUE, FALSE, 0);
+			gtk_box_pack_start(GTK_BOX(vbox), hbox
+					, FALSE, FALSE, 10);	
+
+			gtk_widget_set_size_request(dialog, 300, 220);
+			gtk_widget_show_all(dialog);
+		       	gtk_dialog_run(GTK_DIALOG(dialog));
+			//got the verify code
+			info -> verify_code = g_string_new(
+					gtk_entry_get_text(
+						GTK_ENTRY(vc_entry)));
+	       		gtk_widget_destroy(dialog);
 		}
-		qq_login(info , p -> uin, p -> passwd, p -> status
-				, cb, usrdata);
 		p -> login_state = LS_GET_MY_INFO;
+		qq_login(info , p -> uin, p -> passwd, p -> status
+				, login_cb, usrdata);
 		break;
 	case LS_GET_MY_INFO:
-		qq_get_my_info(info, cb, usrdata);
-		p -> login_state = LS_GET_FRIENDS;
+		switch(cbr)
+		{
+		case CB_SUCCESS:
+			//go on and get my information.
+			p -> login_state = LS_GET_FRIENDS;
+			qq_get_my_info(info, login_cb, usrdata);
+			break;
+		case CB_WRONGPASSWD:
+			//wrong passwd.
+			gtk_label_set_text(GTK_LABEL(p -> err_label)
+					, "密码错误！");
+			qq_mainwindow_show_loginpanel(w);
+			break;
+		case CB_WRONGVC:
+			//wrong verify code.
+			//Get a new verify code and try again.
+			p -> login_state = LS_CHECK_VC;
+			break;
+		case CB_ERROR:
+		default:
+			gtk_label_set_text(GTK_LABEL(p -> err_label)
+					, "登录失败，请重新登录。");
+			qq_mainwindow_show_loginpanel(w);
+			break;
+		}
 		break;
 	case LS_GET_FRIENDS:
-		qq_get_my_friends(info, cb, usrdata);
 		p -> login_state = LS_GET_GROUP_LIST;
+		qq_get_my_friends(info, login_cb, usrdata);
 		break;
 	case LS_GET_GROUP_LIST:
-		qq_get_group_name_list_mask(info, cb, usrdata);
 		p -> login_state = LS_DONE;
+		qq_get_group_name_list_mask(info, login_cb, usrdata);
 		break;
 	case LS_DONE:
 		qq_mainwindow_show_mainpanel(w);
@@ -89,6 +148,9 @@ static void qq_loginpanel_login_sm(QQLoginPanel *p, QQCallBack cb
 	case LS_ERROR:
 	case LS_UNKNOWN:
 	default:
+		gtk_label_set_text(GTK_LABEL(p -> err_label)
+				, "登录失败，请重新登录。");
+		qq_mainwindow_show_loginpanel(w);
 		break;
 	}
 }
@@ -145,33 +207,11 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c)
 }
 
 /*
- * This is the parameter struct of the XXX_idle function.
- */
-typedef struct{
-	CallBackResult cbr;
-	gpointer redata;
-	gpointer usrdata;
-}IdlePar;
-
-/*
  * This function is run in the gtk main event loop.
  */
 static gboolean gtk_idle(gpointer data)
 {
-	IdlePar *par = (IdlePar*)data;
-	CallBackResult cbr = par -> cbr;
-	gpointer redata = par -> redata;
-	gpointer usrdata = par -> usrdata;
-	g_slice_free(IdlePar, par);
-
-	if(cbr == CB_ERROR){
-		g_warning("Error occured!!");
-		return FALSE;
-	}else if(cbr == CB_SUCCESS){
-		//goto next state
-		qq_loginpanel_login_sm(QQ_LOGINPANEL(usrdata)
-					, login_cb, usrdata);
-	}
+	qq_loginpanel_login_sm(data);
 	return FALSE;
 	
 }
@@ -209,7 +249,14 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 
 	//start the login state mechine
 	panel -> login_state = LS_CHECK_VC;
-	qq_loginpanel_login_sm(panel, login_cb, data);
+	IdlePar *par = g_slice_new0(IdlePar);
+	par -> cbr = CB_SUCCESS;
+	par -> redata = NULL;
+	par -> usrdata = data;
+	qq_loginpanel_login_sm(par);
+
+	//clear the error message.
+	gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
 }
 
 /*
@@ -244,7 +291,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 	obj -> passwd_entry = gtk_entry_new();
 	//not visibily 
 	gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
-	gtk_widget_set_size_request(obj -> uin_entry, 220, -1);
+	gtk_widget_set_size_request(obj -> uin_entry, 200, -1);
 	gtk_widget_set_size_request(obj -> passwd_entry, 220, -1);
 	
 	GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
@@ -302,7 +349,21 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 	gtk_box_pack_start(GTK_BOX(hbox2), obj -> status_comb, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox2), obj -> login_btn, FALSE, FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox3), hbox2, TRUE, FALSE, 0);
-	gtk_box_pack_start(GTK_BOX(vbox), hbox3, FALSE, FALSE, 20);
+
+	//error informatin label
+	obj -> err_label = gtk_label_new("");
+	GdkColor color;
+	GdkColormap *cmap = gdk_colormap_get_system();
+	gdk_colormap_alloc_color(cmap, &color, TRUE, TRUE);
+	gdk_color_parse("#fff000000", &color);	//red
+	//change text color to red
+	//MUST modify fb, not text
+	gtk_widget_modify_fg(obj -> err_label, GTK_STATE_NORMAL, &color);
+	hbox2 = gtk_hbox_new(FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(hbox2), obj -> err_label, TRUE, FALSE, 0);
+	gtk_box_pack_start(GTK_BOX(vbox), hbox2, TRUE, FALSE, 0);
+
+	gtk_box_pack_start(GTK_BOX(vbox), hbox3, FALSE, FALSE, 0);
 
 	gtk_box_set_homogeneous(GTK_BOX(obj), FALSE);
 	GtkWidget *logo = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
@@ -342,3 +403,4 @@ const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 							-> status_comb));
 	return status[idx];
 }
+

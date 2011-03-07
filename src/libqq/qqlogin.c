@@ -701,7 +701,15 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		return;
 	}
 
+	if(info -> me -> uin != NULL){
+		g_string_free(info -> me -> uin, TRUE);
+	}
 	info -> me -> uin = g_string_new(uin);
+
+
+	if(info -> me -> status!= NULL){
+		g_string_free(info -> me -> status, TRUE);
+	}
 	if(status != NULL){
 		info -> me -> status = g_string_new(status);
 	}else{
@@ -887,6 +895,9 @@ void qq_check_verifycode(QQInfo *info, const gchar *uin, QQCallBack cb
 		g_warning("Need uin in check_verifycode!(%s, %d)", __FILE__
 				, __LINE__);
 		return;
+	}
+	if(info -> me -> uin != NULL){
+		g_string_free(info -> me -> uin, TRUE);
 	}
 	info -> me -> uin = g_string_new(uin);
 

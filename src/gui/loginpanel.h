@@ -28,11 +28,11 @@ enum _QQLoginPanelLoginState{
 struct _QQLoginPanel{
 	GtkVBox parent;
 
+	/*< private >*/
 	GtkWidget *uin_label, *uin_entry;
 	GtkWidget *passwd_label, *passwd_entry;
-
-	GtkWidget *rempwcb;	//rember password check button
-
+	GtkWidget *rempwcb;			//rember password check button
+	GtkWidget *err_label;			//show error infomation.
 	GtkWidget *login_btn, *status_comb;
 
 	const gchar *uin, *passwd, *status;
@@ -45,8 +45,6 @@ struct _QQLoginPanel{
 
 struct _QQLoginPanelClass{
 	GtkVBoxClass parent;
-
-	const gchar *status;
 };
 
 /*
