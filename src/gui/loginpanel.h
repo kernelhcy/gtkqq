@@ -20,6 +20,9 @@ enum _QQLoginPanelLoginState{
 	LS_GET_MY_INFO,		//get information of myself
 	LS_GET_FRIENDS,		//get my friends list.
 	LS_GET_GROUP_LIST,	//get group list.
+	LS_ONLINE, 		//get online buddies
+	LS_RECENT, 		//get recent connected buddies
+	LS_SLNICK, 		//get single long nick
 	LS_DONE,		//finish the login.
 	LS_ERROR,		//error
 	LS_UNKNOWN		//unknown status

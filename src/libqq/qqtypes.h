@@ -142,6 +142,7 @@ struct _QQBuddy{
 	gint vip_info;
 	GString *nick;				//
 	GString *markname;
+	QQFaceImg *faceimg; 			//the face image data
 
 	GString *country;
 	GString *province;
@@ -191,6 +192,7 @@ struct _QQGMember{
 	GString *flag;
 	GString *status;
 	GString *card;
+	QQFaceImg *faceimg; 			//the face image data
 };
 QQGMember* qq_gmember_new();
 void qq_gmember_free(QQGMember *m);

@@ -31,6 +31,12 @@ GtkWidget* qq_mainpanel_new(GtkWidget *container)
 	QQMainPanel *panel = g_object_new(qq_mainpanel_get_type(), NULL);
 	panel -> container = container;
 
+	panel -> faceimg = gtk_image_new();
+	panel -> nick = gtk_label_new("kernel");
+
+	panel -> longnick = gtk_label_new("不抛弃，不放弃。");
+	panel -> longnick_entry = gtk_entry_new();	
+
 	return GTK_WIDGET(panel);
 }
 

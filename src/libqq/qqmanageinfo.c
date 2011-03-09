@@ -51,7 +51,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 	}
 
 	gchar params[300];
-	g_debug("Get long nick.(%s, %d)", __FILE__, __LINE__);
+	g_debug("Get single long nick.(%s, %d)", __FILE__, __LINE__);
 
 	Request *req = request_new();
 	Response *rps = NULL;
@@ -1252,6 +1252,7 @@ void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb
 	par -> info = info;
 	par -> cb = cb;
 	par -> bdy = bdy;
+	par -> usrdata = usrdata;
 	g_source_set_callback(src, &do_get_single_long_nick, (gpointer)par
 			, NULL);
 	if(g_source_attach(src, info -> mainctx) <= 0){

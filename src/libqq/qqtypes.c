@@ -129,6 +129,8 @@ void qq_buddy_free(QQBuddy *bd)
 	g_string_free(bd -> homepage, TRUE);
 	g_string_free(bd -> lnick, TRUE);
 
+	qq_faceimg_free(bd -> faceimg);
+
 	g_slice_free(QQBuddy, bd);
 }
 
@@ -143,11 +145,20 @@ void qq_gmember_free(QQGMember *m)
 	if(m == NULL){
 		return;
 	}
+
+	g_string_free(m -> uin, TRUE);
+	g_string_free(m -> nick, TRUE);
+	g_string_free(m -> flag, TRUE);
+	g_string_free(m -> status, TRUE);
+	g_string_free(m -> card, TRUE);
+
+	qq_faceimg_free(m -> faceimg);
 	g_slice_free(QQGMember, m);
 }
 QQGroup* qq_group_new()
 {
 	QQGroup *grp = g_slice_new0(QQGroup);
+	grp -> members = g_ptr_array_new();
 	return grp;
 }
 void qq_group_free(QQGroup *grp)
@@ -155,6 +166,23 @@ void qq_group_free(QQGroup *grp)
 	if(grp == NULL){
 		return;
 	}
+
+	g_string_free(grp -> name, TRUE);
+	g_string_free(grp -> gid, TRUE);
+	g_string_free(grp -> code, TRUE);
+	g_string_free(grp -> flag, TRUE);
+	g_string_free(grp -> owner, TRUE);
+	g_string_free(grp -> mark, TRUE);
+	g_string_free(grp -> mask, TRUE);
+	g_string_free(grp -> memo, TRUE);
+	g_string_free(grp -> fingermemo, TRUE);
+
+	gint i;
+	for(i = 0; i < grp -> members -> len; ++i){
+		qq_gmember_free((QQGMember*)(grp -> members -> pdata[i]));
+	}
+	g_ptr_array_free(grp -> members, TRUE);
+
 	g_slice_free(QQGroup, grp);
 }
 

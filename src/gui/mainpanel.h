@@ -15,6 +15,19 @@ typedef struct _QQMainPanelClass	QQMainPanelClass;
 struct _QQMainPanel{
 	GtkVBox parent;
 
+	GtkWidget *faceimg;
+	GdkPixbuf *facepixbuf;
+	GtkWidget *nick, *longnick, *longnick_entry;
+
+	GtkWidget *contact_btn, *grp_btn, *recent_btn;
+	
+	GtkWidget *notebook;
+	GtkWidget *contact_tree;
+	GtkWidget *grp_list;
+	GtkWidget *recent_list;
+
+	GtkWidget *menubar;
+
 	GtkWidget *container;
 };
 

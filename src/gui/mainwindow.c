@@ -79,6 +79,11 @@ static void qq_mainwindow_init(QQMainWindow *win)
 			, gtk_image_get_pixbuf(GTK_IMAGE(img)));
 	gtk_window_set_title(GTK_WINDOW(win), "GtkQQ");
 
+	/*
+	 * Test
+	 */
+	//gtk_notebook_set_current_page(GTK_NOTEBOOK(win -> notebook), 2);
+
 }
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)
 {

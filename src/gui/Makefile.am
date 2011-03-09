@@ -4,7 +4,8 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
 	  -I$(srcdir)/../comm/\
 	  -I$(srcdir)/.\
 	  $(GTK_CFLAGS)\
-	  -DIMGDIR=\"$(pkgdatadir)/misc/\"
+	  -DIMGDIR=\"$(pkgdatadir)/misc/\"\
+          -DCONFIGDIR=\"$(HOME)/.gtkqq/\"
 
 bin_PROGRAMS=gtkqq
 gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la
@@ -14,4 +15,5 @@ gtkqq_SOURCES=main.c \
 	      mainwindow.h mainwindow.c \
 	      ${srcdir}/../comm/log.c\
 	      ${srcdir}/../comm/cprint.c\
-	      splashpanel.h splashpanel.c
+	      splashpanel.h splashpanel.c\
+	      config.h config.c

@@ -2,11 +2,14 @@
 #include <mainwindow.h>
 #include <qq.h>
 #include <consts.h>
+#include <config.h>
+#include <stdlib.h>
 
 /*
  * The global value
  */
 extern QQInfo *info;
+extern QQConfig *cfg;
 
 /*
  * This is the parameter struct of the XXX_idle function.
@@ -113,6 +116,17 @@ static void qq_loginpanel_login_sm(gpointer data)
 		case CB_SUCCESS:
 			//go on and get my information.
 			p -> login_state = LS_GET_FRIENDS;
+			//
+			// Create the user configure.
+			//
+			cfg -> me = info -> me;
+			cfg -> usr_cfg = qq_userconfig_new(cfg);
+			if(cfg -> usr_cfg == NULL){
+				//just quit
+				g_warning("create user configure error."
+						"(%s,%d)", __FILE__, __LINE__);
+				exit(0);
+			}
 			qq_get_my_info(info, login_cb, usrdata);
 			break;
 		case CB_WRONGPASSWD:
@@ -139,10 +153,24 @@ static void qq_loginpanel_login_sm(gpointer data)
 		qq_get_my_friends(info, login_cb, usrdata);
 		break;
 	case LS_GET_GROUP_LIST:
-		p -> login_state = LS_DONE;
+		p -> login_state = LS_ONLINE;
 		qq_get_group_name_list_mask(info, login_cb, usrdata);
 		break;
+	case LS_ONLINE:
+		p -> login_state = LS_RECENT;
+		qq_get_online_buddies(info, login_cb, usrdata);
+		break;
+	case LS_RECENT:
+		p -> login_state = LS_SLNICK;
+		qq_get_recent_contact(info, login_cb, usrdata);
+		break;
+	case LS_SLNICK:
+		p -> login_state = LS_DONE;
+		qq_get_single_long_nick(info, info -> me, login_cb, usrdata);
+		break;
 	case LS_DONE:
+		g_debug("Login done! Go to main panel.(%s, %d)"
+				, __FILE__, __LINE__);
 		qq_mainwindow_show_mainpanel(w);
 		break;
 	case LS_ERROR:

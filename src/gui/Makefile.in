@@ -52,7 +52,7 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_gtkqq_OBJECTS = main.$(OBJEXT) loginpanel.$(OBJEXT) \
 	mainpanel.$(OBJEXT) mainwindow.$(OBJEXT) log.$(OBJEXT) \
-	cprint.$(OBJEXT) splashpanel.$(OBJEXT)
+	cprint.$(OBJEXT) splashpanel.$(OBJEXT) config.$(OBJEXT)
 gtkqq_OBJECTS = $(am_gtkqq_OBJECTS)
 am__DEPENDENCIES_1 =
 gtkqq_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -271,7 +271,8 @@ AM_CFLAGS = -I$(srcdir)/../libqq/\
 	  -I$(srcdir)/../comm/\
 	  -I$(srcdir)/.\
 	  $(GTK_CFLAGS)\
-	  -DIMGDIR=\"$(pkgdatadir)/misc/\"
+	  -DIMGDIR=\"$(pkgdatadir)/misc/\"\
+          -DCONFIGDIR=\"$(HOME)/.gtkqq/\"
 
 gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la
 gtkqq_SOURCES = main.c \
@@ -280,7 +281,8 @@ gtkqq_SOURCES = main.c \
 	      mainwindow.h mainwindow.c \
 	      ${srcdir}/../comm/log.c\
 	      ${srcdir}/../comm/cprint.c\
-	      splashpanel.h splashpanel.c
+	      splashpanel.h splashpanel.c\
+	      config.h config.c
 
 all: all-recursive
 
@@ -369,6 +371,7 @@ mostlyclean-compile:
 distclean-compile:
 	-rm -f *.tab.c
 
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/config.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cprint.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/log.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/loginpanel.Po@am__quote@
