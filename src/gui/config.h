@@ -17,7 +17,7 @@ QQConfig* qq_config_init();
 void qq_config_free(QQConfig* cfg);
 
 struct _QQUserConfig{
-	gint tmp;	
+	GString *icondir;
 };
 QQUserConfig *qq_userconfig_new(QQConfig *cfg);
 void qq_userconfig_free(QQUserConfig *cfg);

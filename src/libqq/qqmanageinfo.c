@@ -678,7 +678,6 @@ static gboolean do_get_my_info(gpointer data)
 	glnpar -> cb = cb;
 	glnpar -> usrdata = usrdata;
 	glnpar -> bdy = info -> me;
-	do_get_single_long_nick(glnpar);
 
 	if(cb != NULL){
 		cb(CB_SUCCESS, "GET_MY_INFO", usrdata);

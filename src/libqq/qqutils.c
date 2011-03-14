@@ -3,6 +3,7 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include <errno.h>
+#include <qq.h>
 
 /*
  * Get the milliseconds of now
@@ -16,7 +17,6 @@ glong get_now_millisecond()
 	re += now.tv_sec;
 	return re;
 }
-
 
 /*
  * Save the image data to file.
@@ -78,3 +78,4 @@ error:
 	g_io_channel_unref(ioc);
 	return 0;
 }
+

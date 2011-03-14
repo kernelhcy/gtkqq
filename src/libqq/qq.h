@@ -102,4 +102,14 @@ void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb
 						, gpointer usrdata);
 void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb
 						, gpointer usrdata);
+
+//
+//Get the face image of uin
+//
+void qq_get_face_img(QQInfo *info, const gchar *uin, QQCallBack cb
+				, gpointer usrdata);
+//
+//Save face image to file path/uin.type
+//
+gint qq_save_face_img(QQBuddy *bdy, const gchar *path);
 #endif

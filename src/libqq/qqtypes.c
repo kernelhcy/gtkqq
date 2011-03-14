@@ -128,6 +128,7 @@ void qq_buddy_free(QQBuddy *bd)
 	g_string_free(bd -> personal, TRUE);
 	g_string_free(bd -> homepage, TRUE);
 	g_string_free(bd -> lnick, TRUE);
+	g_string_free(bd -> faceimgfile, TRUE);
 
 	qq_faceimg_free(bd -> faceimg);
 

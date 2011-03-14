@@ -52,7 +52,8 @@ am__installdirs = "$(DESTDIR)$(bindir)"
 PROGRAMS = $(bin_PROGRAMS)
 am_gtkqq_OBJECTS = main.$(OBJEXT) loginpanel.$(OBJEXT) \
 	mainpanel.$(OBJEXT) mainwindow.$(OBJEXT) log.$(OBJEXT) \
-	cprint.$(OBJEXT) splashpanel.$(OBJEXT) config.$(OBJEXT)
+	cprint.$(OBJEXT) splashpanel.$(OBJEXT) config.$(OBJEXT) \
+	statusbutton.$(OBJEXT)
 gtkqq_OBJECTS = $(am_gtkqq_OBJECTS)
 am__DEPENDENCIES_1 =
 gtkqq_DEPENDENCIES = $(am__DEPENDENCIES_1) \
@@ -282,7 +283,8 @@ gtkqq_SOURCES = main.c \
 	      ${srcdir}/../comm/log.c\
 	      ${srcdir}/../comm/cprint.c\
 	      splashpanel.h splashpanel.c\
-	      config.h config.c
+	      config.h config.c\
+	      statusbutton.h statusbutton.c
 
 all: all-recursive
 
@@ -379,6 +381,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mainpanel.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/mainwindow.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/splashpanel.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/statusbutton.Po@am__quote@
 
 .c.o:
 @am__fastdepCC_TRUE@	$(AM_V_CC)$(COMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<

@@ -15,8 +15,9 @@ typedef struct _QQMainPanelClass	QQMainPanelClass;
 struct _QQMainPanel{
 	GtkVBox parent;
 
-	GtkWidget *faceimg;
+	GtkWidget *faceimgframe; 		//a frame contains gtk image
 	GdkPixbuf *facepixbuf;
+	GtkWidget *status_btn;
 	GtkWidget *nick, *longnick, *longnick_entry;
 
 	GtkWidget *contact_btn, *grp_btn, *recent_btn;
@@ -37,4 +38,9 @@ struct _QQMainPanelClass{
 
 GType qq_mainpanel_get_type();
 GtkWidget* qq_mainpanel_new(GtkWidget *container);
+
+//
+//Update the information of the panel.
+//
+void qq_mainpanel_update(QQMainPanel *panel);
 #endif

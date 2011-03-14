@@ -23,6 +23,7 @@ enum _QQLoginPanelLoginState{
 	LS_ONLINE, 		//get online buddies
 	LS_RECENT, 		//get recent connected buddies
 	LS_SLNICK, 		//get single long nick
+	LS_GET_FACEIMG, 	//get face image
 	LS_DONE,		//finish the login.
 	LS_ERROR,		//error
 	LS_UNKNOWN		//unknown status

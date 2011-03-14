@@ -53,7 +53,7 @@ QQUserConfig* qq_userconfig_new(QQConfig *cfg)
 		 * This user first uses this program. So craete the user
 		 * configure dir.
 		 */
-		if(-1 == g_mkdir(cfgdirname, 755)){
+		if(-1 == g_mkdir(cfgdirname, 0755)){
 			g_warning("Create user config dir error!(%s, %d"
 					, __FILE__, __LINE__);
 			qq_userconfig_free(usrcfg);
@@ -68,6 +68,7 @@ void qq_userconfig_free(QQUserConfig *cfg)
 	if(cfg == NULL){
 		return;
 	}
+	g_string_free(cfg -> icondir, TRUE);
 
 	g_slice_free(QQUserConfig, cfg);
 }

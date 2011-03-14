@@ -4,7 +4,7 @@
 /*
  * stats strings.
  */
-static const gchar *status[] = {"online", "hidden", "away", "offline", NULL};
+static const gchar *status_label_en[] = {"online", "hidden", "away", "offline", NULL};
 static const gchar *status_label[] = {" 在线", " 隐身", " 离开", " 离线"
 					, NULL};
 

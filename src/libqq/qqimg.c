@@ -104,6 +104,7 @@ static gboolean do_get_face_img(gpointer data)
 	img -> type = get_image_type(response_get_header_chars(rps
 				, "Content-Type"));
 	if(cb != NULL){
+		g_debug("Success get face image.(%s, %d)", __FILE__, __LINE__);
 		cb(CB_SUCCESS, img, usrdata);
 	}
 error:
@@ -141,5 +142,28 @@ void qq_get_face_img(QQInfo *info, const gchar *uin, QQCallBack cb
 	}
 	g_source_unref(src);
 	return;
+}
+
+//
+//save the face image to file
+//the file name is uin.type
+//
+gint qq_save_face_img(QQBuddy *bdy, const gchar *path)
+{
+	if(bdy == NULL || path == NULL){
+		g_warning("bdy == NULL || path == NULL (%s, %d)"
+				, __FILE__, __LINE__);
+		return -1;
+	}
+	QQFaceImg *fimg = bdy -> faceimg;
+	bdy -> faceimgfile = g_string_new(path);
+	g_string_append(bdy -> faceimgfile, "/");
+	g_string_append(bdy -> faceimgfile, fimg -> uin -> str);
+	g_string_append(bdy -> faceimgfile, ".");
+	g_string_append(bdy -> faceimgfile, fimg -> type -> str);
+
+	return save_img_to_file(fimg -> data -> str, fimg -> data -> len
+				, fimg -> type -> str
+				, path, fimg -> uin -> str);		
 }
 

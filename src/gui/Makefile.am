@@ -16,4 +16,5 @@ gtkqq_SOURCES=main.c \
 	      ${srcdir}/../comm/log.c\
 	      ${srcdir}/../comm/cprint.c\
 	      splashpanel.h splashpanel.c\
-	      config.h config.c
+	      config.h config.c\
+	      statusbutton.h statusbutton.c

@@ -143,6 +143,7 @@ struct _QQBuddy{
 	GString *nick;				//
 	GString *markname;
 	QQFaceImg *faceimg; 			//the face image data
+	GString *faceimgfile; 			//the face image file name
 
 	GString *country;
 	GString *province;

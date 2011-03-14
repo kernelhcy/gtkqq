@@ -1,9 +1,11 @@
 #include <loginpanel.h>
+#include <mainpanel.h>
 #include <mainwindow.h>
 #include <qq.h>
 #include <consts.h>
 #include <config.h>
 #include <stdlib.h>
+#include <statusbutton.h>
 
 /*
  * The global value
@@ -25,6 +27,28 @@ static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
 static void login_cb(CallBackResult cbr, gpointer redata, gpointer usrdata);
 
+//
+//At the end of login.
+//
+static void done_login()
+{
+	gchar icondir[200];
+	g_sprintf(icondir, CONFIGDIR"%s/icons/", cfg -> me -> uin -> str);
+
+	if(cfg -> usr_cfg -> icondir == NULL){
+		cfg -> usr_cfg -> icondir = g_string_new(icondir);
+	}
+	if(!g_file_test(icondir, G_FILE_TEST_EXISTS)){
+		if(-1 == g_mkdir(icondir, 0777)){
+			g_warning("create icons dir %s error!(%s, %s)"
+					, icondir, __FILE__, __LINE__);
+			exit(1);
+		}
+	}
+
+	//save the face image to file
+	qq_save_face_img(info -> me, icondir);
+}
 //
 // A state mechine
 // Used to login.
@@ -71,12 +95,12 @@ static void qq_loginpanel_login_sm(gpointer data)
 				qq_mainwindow_show_loginpanel(w);
 				break;
 			}
-			sprintf(fn, "/tmp/verifycode.%s"
+			sprintf(fn, CONFIGDIR"verifycode.%s"
 					, info -> vc_image_type -> str);
 			save_img_to_file(info -> vc_image_data -> str
 					, info -> vc_image_data -> len
 					, info -> vc_image_type -> str
-					, "/tmp", "verifycode");
+					, CONFIGDIR, "verifycode");
 			dialog = gtk_dialog_new_with_buttons("Information"
 					, GTK_WINDOW(w), GTK_DIALOG_MODAL
 					, GTK_STOCK_OK, GTK_RESPONSE_OK
@@ -165,10 +189,21 @@ static void qq_loginpanel_login_sm(gpointer data)
 		qq_get_recent_contact(info, login_cb, usrdata);
 		break;
 	case LS_SLNICK:
-		p -> login_state = LS_DONE;
+		p -> login_state = LS_GET_FACEIMG;
 		qq_get_single_long_nick(info, info -> me, login_cb, usrdata);
 		break;
+	case LS_GET_FACEIMG:
+		p -> login_state = LS_DONE;
+		qq_get_face_img(info, info -> me -> uin -> str
+					, login_cb, usrdata);
+		break;
 	case LS_DONE:
+		//save the face image
+		info -> me -> faceimg = (QQFaceImg*)redata;
+		done_login();
+		//update the mainpanel
+		qq_mainpanel_update(QQ_MAINPANEL(QQ_MAINWINDOW(w) 
+						-> main_panel));
 		g_debug("Login done! Go to main panel.(%s, %d)"
 				, __FILE__, __LINE__);
 		qq_mainwindow_show_mainpanel(w);
@@ -287,36 +322,16 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 	gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
 }
 
-/*
- * Create the treemode for the status combo box.
- */
-static GtkTreeModel* createModel()
-{
-       	const gchar *files[] = {IMGDIR"status/online.png"
-				, IMGDIR"status/hidden.png"
-				, IMGDIR"status/away.png"
-				, IMGDIR"status/offline.png"};
-	GdkPixbuf *pixbuf;
-	GtkTreeIter iter;
-	GtkListStore *store;
-	gint i;
-        
-	store = gtk_list_store_new(2, GDK_TYPE_PIXBUF, G_TYPE_STRING);
-	for(i = 0; i < 4; i++){
-		pixbuf = gdk_pixbuf_new_from_file(files[i], NULL);
-		gtk_list_store_append(store, &iter);
-		gtk_list_store_set(store, &iter, 0, pixbuf, 1, status_label[i], -1);
-	}
-	return GTK_TREE_MODEL(store);
-}
-
 static void qq_loginpanel_init(QQLoginPanel *obj)
 {
 	obj -> uin_label = gtk_label_new("账  号：");
-	obj -> uin_entry = gtk_combo_box_entry_new();
+	obj -> uin_entry = gtk_combo_box_entry_new_text();
+	gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
+			, "1421032531");
 
 	obj -> passwd_label = gtk_label_new("密  码：");
 	obj -> passwd_entry = gtk_entry_new();
+	gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), "1234567890");
 	//not visibily 
 	gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
 	gtk_widget_set_size_request(obj -> uin_entry, 200, -1);
@@ -356,18 +371,8 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 			, G_CALLBACK(login_btn_cb), (gpointer)obj);
 
 	//status combo box
-	obj -> status_comb = gtk_combo_box_new_with_model(createModel());
+	obj -> status_comb = qq_statusbutton_new();
 	gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> status_comb), 0);
-	GtkCellRenderer *renderer = gtk_cell_renderer_pixbuf_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(obj -> status_comb)
-					, renderer, FALSE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(obj -> status_comb), renderer
-					,"pixbuf", 0, NULL);
-	renderer = gtk_cell_renderer_text_new();
-	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(obj -> status_comb)
-						, renderer, FALSE);
-	gtk_cell_layout_set_attributes(GTK_CELL_LAYOUT(obj -> status_comb), renderer 
-					,"text", 1, NULL); 
 
 	GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
 	gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);
@@ -426,9 +431,7 @@ const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
 }
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 {
-	QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
-	gint idx = gtk_combo_box_get_active(GTK_COMBO_BOX(panel 
-							-> status_comb));
-	return status[idx];
+	return qq_statusbutton_get_status_string(QQ_STATUSBUTTON(
+						loginpanel -> status_comb));
 }
 

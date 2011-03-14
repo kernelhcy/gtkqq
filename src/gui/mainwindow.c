@@ -82,7 +82,8 @@ static void qq_mainwindow_init(QQMainWindow *win)
 	/*
 	 * Test
 	 */
-	//gtk_notebook_set_current_page(GTK_NOTEBOOK(win -> notebook), 2);
+//	gtk_notebook_set_current_page(GTK_NOTEBOOK(win -> notebook), 2);
+//	qq_mainpanel_update(QQ_MAINPANEL(win -> main_panel));
 
 }
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)
