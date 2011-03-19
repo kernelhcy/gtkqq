@@ -43,6 +43,7 @@ struct _QQStatusButtonClass{
 
 	/*< private >*/
 	GdkPixbuf *pb[4];
+	GdkPixbuf *arrow;
 	GdkCursor *hand_cursor;
 };
 

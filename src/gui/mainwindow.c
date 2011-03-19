@@ -2,17 +2,28 @@
 #include <loginpanel.h>
 #include <splashpanel.h>
 #include <mainpanel.h>
+#include <qq.h>
+#include <config.h>
+
+/*
+ * The main event loop context of Gtk.
+ */
+static GMainContext *gtkctx;
+extern QQInfo *info;
+extern QQConfig *cfg;
 
 static void qq_mainwindow_init(QQMainWindow *win);
 static void qq_mainwindowclass_init(QQMainWindowClass *wc);
 static void qq_mainwindow_destroy(GObject *obj);
 static void destroy_handle(GtkWidget *widget, gpointer  data);
+
+static void logout_cb(CallBackResult re, gpointer redata, gpointer usrdata);
 /*
  * The handler of "destroy" singal
  */
 static void destroy_handler(GtkWidget *widget, gpointer  data)
 {
-	    gtk_main_quit ();
+	qq_logout(info, logout_cb, NULL);
 }
 
 GType qq_mainwindow_get_type()
@@ -41,7 +52,8 @@ GType qq_mainwindow_get_type()
 
 GtkWidget* qq_mainwindow_new()
 {
-	return GTK_WIDGET(g_object_new(qq_mainwindow_get_type(), NULL));
+	return GTK_WIDGET(g_object_new(qq_mainwindow_get_type()
+						, "type", GTK_WINDOW_TOPLEVEL, NULL));
 }
 
 
@@ -88,7 +100,12 @@ static void qq_mainwindow_init(QQMainWindow *win)
 }
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)
 {
-
+	/*
+	 * get the default main evet loop context.
+	 * 
+	 * I think this will work...
+	 */
+	gtkctx = g_main_context_default();
 }
 static void qq_mainwindow_destroy(GObject *obj)
 {
@@ -121,4 +138,16 @@ void qq_mainwindow_show_mainpanel(GtkWidget *win)
 	}
 	gtk_notebook_set_current_page(GTK_NOTEBOOK(
 				QQ_MAINWINDOW(win) -> notebook), 2);
+}
+
+static gboolean gtk_idle(gpointer data)
+{
+	gtk_main_quit();
+}
+static void logout_cb(CallBackResult re, gpointer redata, gpointer usrdata)
+{
+	GSource *src = g_idle_source_new();
+	g_source_set_callback(src, (GSourceFunc)gtk_idle, NULL, NULL);
+	g_source_attach(src, gtkctx);
+	g_source_unref(src);
 }

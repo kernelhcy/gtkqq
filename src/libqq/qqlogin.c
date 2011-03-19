@@ -155,8 +155,8 @@ static gint get_vc_image(QQInfo *info)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, IMAGEPATH"?uin=%s&aid="APPID"&r=%.16f&vc_type=%s"
-			, info -> me -> uin -> str, g_random_double()
+	g_sprintf(params, IMAGEPATH"?&aid="APPID"&r=%.16f&uin=%s&vc_type=%s"
+			, g_random_double(), info -> me -> uin -> str
 			, info -> vc_type -> str);
 	request_set_uri(req, params);
 	request_set_default_headers(req);
@@ -321,7 +321,7 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=1&"
+	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&"
 			"remember_uin=0&aid="APPID"&u1=%s&h=1&"
 			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
 			"&dumy=&fp=loginerroralert&mibao_css="
@@ -330,6 +330,11 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	request_set_uri(req, params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
+	request_add_header(req, "Referer", "http://ui.ptlogin2.qq.com/cgi-bin/"
+						"login?target=self&style=4&appid=1003903&enable_ql"
+						"ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
+						"om%2Floginproxy.html%3Flogin_level%3D3"
+						"&f_url=loginerroralert");
 	if(info -> ptvfsession != NULL){
 		g_sprintf(params, "ptvfsession=%s; "
 				, info -> ptvfsession -> str);
@@ -743,6 +748,9 @@ static gboolean do_logout(gpointer data)
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
 	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
 		g_warning("Need psessionid !!(%s, %d)", __FILE__, __LINE__);
+		if(cb != NULL){
+			cb(CB_ERROR, NULL, usrdata);
+		}
 		return FALSE;
 	}
 

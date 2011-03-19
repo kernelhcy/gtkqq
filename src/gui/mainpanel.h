@@ -16,9 +16,16 @@ struct _QQMainPanel{
 	GtkVBox parent;
 
 	GtkWidget *faceimgframe; 		//a frame contains gtk image
+	GtkWidget *faceeventbox;
 	GdkPixbuf *facepixbuf;
+
 	GtkWidget *status_btn;
-	GtkWidget *nick, *longnick, *longnick_entry;
+	GtkWidget *nick;
+	
+	GtkWidget *longnick, *longnick_entry;
+	GtkWidget *longnick_box, *longnick_eventbox;
+
+	GtkWidget *search_entry;
 
 	GtkWidget *contact_btn, *grp_btn, *recent_btn;
 	
@@ -34,6 +41,11 @@ struct _QQMainPanel{
 
 struct _QQMainPanelClass{
 	GtkVBoxClass parent;
+
+	/*< private >*/
+	GtkWidget *contact_img[2];
+	GtkWidget *grp_img[2];
+	GtkWidget *recent_img[2];
 };
 
 GType qq_mainpanel_get_type();

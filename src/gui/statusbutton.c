@@ -10,10 +10,8 @@ static gboolean expose_event_cb(GtkWidget *widget
 			, GdkEventExpose *event, gpointer data);
 static void change_img_cb(GtkComboBox *w, gpointer data);
 
-static gboolean enter_event_cb(GtkWidget *w, GdkEventCrossing *event
-		, gpointer data);
-static gboolean leave_event_cb(GtkWidget *w, GdkEventCrossing *event
-		, gpointer data);
+static gboolean enter_event_cb(GtkWidget *w, GdkEvent *event, gpointer data);
+static gboolean leave_event_cb(GtkWidget *w, GdkEvent *event, gpointer data);
 
 GType qq_statusbutton_get_type()
 {
@@ -63,7 +61,7 @@ GtkWidget* qq_statusbutton_new()
 
 static void qq_statusbutton_init(QQStatusButton *btn)
 {
-	gtk_widget_set_size_request(GTK_WIDGET(btn), 20, 20);
+	gtk_widget_set_size_request(GTK_WIDGET(btn), 30, 25);
 	gtk_combo_box_set_model(GTK_COMBO_BOX(btn), create_model());
 	GtkCellRenderer *renderer = gtk_cell_renderer_pixbuf_new();
 	gtk_cell_layout_pack_start(GTK_CELL_LAYOUT(btn)
@@ -77,9 +75,11 @@ static void qq_statusbutton_init(QQStatusButton *btn)
 					,"text", 1, NULL); 
 
 	GdkEventMask event_mask = 0;
+	event_mask = gtk_widget_get_events(GTK_WIDGET(btn));
+	event_mask |= GDK_POINTER_MOTION_MASK;
 	event_mask |= GDK_ENTER_NOTIFY_MASK;
 	event_mask |= GDK_LEAVE_NOTIFY_MASK;
-	gtk_widget_add_events(GTK_WIDGET(btn), event_mask);
+	gtk_widget_set_events(GTK_WIDGET(btn), event_mask);
 
 	g_signal_connect(GTK_WIDGET(btn), "expose-event"
 			, G_CALLBACK(expose_event_cb), NULL);
@@ -98,16 +98,19 @@ static void qq_statusbuttonclass_init(QQStatusButtonClass *c)
 {
 	c -> pb[STATUS_ONLINE] = gdk_pixbuf_new_from_file_at_scale(
 					IMGDIR"/status/online.png"
-					, 10, 10, TRUE, NULL);
+					, 12, 12, TRUE, NULL);
 	c -> pb[STATUS_HIDDEN] = gdk_pixbuf_new_from_file_at_scale(
 					IMGDIR"/status/hidden.png"
-					, 10, 10, TRUE, NULL);
+					, 12, 12, TRUE, NULL);
 	c -> pb[STATUS_OFFLINE] = gdk_pixbuf_new_from_file_at_scale(
 					IMGDIR"/status/offline.png"
-					, 10, 10, TRUE, NULL);
+					, 12, 12, TRUE, NULL);
 	c -> pb[STATUS_AWAY] = gdk_pixbuf_new_from_file_at_scale(
 					IMGDIR"/status/away.png"
-					, 10, 10, TRUE, NULL);
+					, 12, 12, TRUE, NULL);
+	c -> arrow = gdk_pixbuf_new_from_file_at_scale(
+					IMGDIR"/status/downarrow.png"
+					, 10, 7, TRUE, NULL);
 	c -> hand_cursor = gdk_cursor_new(GDK_HAND1);	
 	this_class = c;
 }
@@ -120,14 +123,16 @@ static gboolean expose_event_cb(GtkWidget *widget
 {
 	cairo_t *ct = gdk_cairo_create(widget -> window);
 	GdkPixbuf *pb = this_class -> pb[QQ_STATUSBUTTON(widget) -> status];
-	gint pbw, pbh;
+	gint pbw, pbh, arroww, arrowh, gap = 5;
 	pbw = gdk_pixbuf_get_width(pb);
 	pbh = gdk_pixbuf_get_height(pb);
+	arroww = gdk_pixbuf_get_width(this_class -> arrow);
+	arrowh = gdk_pixbuf_get_height(this_class -> arrow);
 	GtkAllocation alloc;
 	gtk_widget_get_allocation(widget, &alloc);
 
 	gint alignx, aligny;
-	alignx = (alloc.width - pbw) / 2;
+	alignx = (alloc.width - pbw - arroww - gap) / 2;
 	aligny = (alloc.height - pbh) / 2;
 	
 	//maybe they are -
@@ -136,6 +141,14 @@ static gboolean expose_event_cb(GtkWidget *widget
 
 	gdk_cairo_set_source_pixbuf(ct, pb
 			, alloc.x + alignx 
+			, alloc.y + aligny);
+	cairo_paint(ct);
+
+	//parint the down arrow
+	aligny = (alloc.height - arrowh) / 2;
+	aligny = (aligny > 0 ? aligny : 0);
+	gdk_cairo_set_source_pixbuf(ct, this_class -> arrow
+			, alloc.x + alignx + pbw + gap
 			, alloc.y + aligny);
 	cairo_paint(ct);
 	cairo_destroy(ct);
@@ -185,20 +198,20 @@ static void change_img_cb(GtkComboBox *w, gpointer data)
 	expose_event_cb(GTK_WIDGET(w), NULL, NULL);
 }
 
-static gboolean enter_event_cb(GtkWidget *w, GdkEventCrossing *event
-		, gpointer data)
+static gboolean enter_event_cb(GtkWidget *w, GdkEvent *event, gpointer data)
 {
 	GdkWindow *win = gtk_widget_get_window(w);
+	g_debug("enter status button.");
 	if(win != NULL){
 		//Set to hand1 cursor.
 		gdk_window_set_cursor(win, this_class -> hand_cursor);
 	}
 	return FALSE;
 }
-static gboolean leave_event_cb(GtkWidget *w, GdkEventCrossing *event
-		, gpointer data)
+static gboolean leave_event_cb(GtkWidget *w, GdkEvent *event, gpointer data)
 {
 	GdkWindow *win = gtk_widget_get_window(w);
+	g_debug("leave status button.");
 	if(win != NULL){
 		//Set to default cursor.
 		gdk_window_set_cursor(win, NULL);
