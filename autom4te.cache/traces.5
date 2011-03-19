@@ -315,7 +315,7 @@ AC_CACHE_CHECK([whether deplibs are loaded by dlopen],
   freebsd* | dragonfly*)
     lt_cv_sys_dlopen_deplibs=yes
     ;;
-  gnu* | linux* | k*bsd*-gnu | kopensolaris*-gnu)
+  gnu* | linux* | k*bsd*-gnu)
     # GNU and its variants, using gnu ld.so (Glibc)
     lt_cv_sys_dlopen_deplibs=yes
     ;;
@@ -335,7 +335,7 @@ AC_CACHE_CHECK([whether deplibs are loaded by dlopen],
     # at 6.2 and later dlopen does load deplibs.
     lt_cv_sys_dlopen_deplibs=yes
     ;;
-  netbsd* | netbsdelf*-gnu)
+  netbsd*)
     lt_cv_sys_dlopen_deplibs=yes
     ;;
   openbsd*)
@@ -593,12 +593,9 @@ m4trace:/usr/share/aclocal/ltdl.m4:802: -1- AU_DEFUN([AC_LTDL_DLSYM_USCORE], [m4
 m4trace:/usr/share/aclocal/ltdl.m4:802: -1- AC_DEFUN([AC_LTDL_DLSYM_USCORE], [AC_DIAGNOSE([obsolete], [The macro `AC_LTDL_DLSYM_USCORE' is obsolete.
 You should run autoupdate.])dnl
 m4_if($#, 0, [LT_FUNC_DLSYM_USCORE], [LT_FUNC_DLSYM_USCORE($@)])])
-m4trace:/usr/share/aclocal/pkg.m4:27: -1- AC_DEFUN([PKG_PROG_PKG_CONFIG], [m4_pattern_forbid([^_?PKG_[A-Z_]+$])
+m4trace:/usr/share/aclocal/pkg.m4:26: -1- AC_DEFUN([PKG_PROG_PKG_CONFIG], [m4_pattern_forbid([^_?PKG_[A-Z_]+$])
 m4_pattern_allow([^PKG_CONFIG(_PATH)?$])
-AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])
-AC_ARG_VAR([PKG_CONFIG_PATH], [directories to add to pkg-config's search path])
-AC_ARG_VAR([PKG_CONFIG_LIBDIR], [path overriding pkg-config's built-in search path])
-
+AC_ARG_VAR([PKG_CONFIG], [path to pkg-config utility])dnl
 if test "x$ac_cv_env_PKG_CONFIG_set" != "xset"; then
 	AC_PATH_TOOL([PKG_CONFIG], [pkg-config])
 fi
@@ -611,23 +608,24 @@ if test -n "$PKG_CONFIG"; then
 		AC_MSG_RESULT([no])
 		PKG_CONFIG=""
 	fi
+		
 fi[]dnl
 ])
-m4trace:/usr/share/aclocal/pkg.m4:59: -1- AC_DEFUN([PKG_CHECK_EXISTS], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+m4trace:/usr/share/aclocal/pkg.m4:56: -1- AC_DEFUN([PKG_CHECK_EXISTS], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
 if test -n "$PKG_CONFIG" && \
     AC_RUN_LOG([$PKG_CONFIG --exists --print-errors "$1"]); then
-  m4_default([$2], [:])
+  m4_ifval([$2], [$2], [:])
 m4_ifvaln([$3], [else
   $3])dnl
 fi])
-m4trace:/usr/share/aclocal/pkg.m4:84: -1- AC_DEFUN([_PKG_SHORT_ERRORS_SUPPORTED], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])
+m4trace:/usr/share/aclocal/pkg.m4:82: -1- AC_DEFUN([_PKG_SHORT_ERRORS_SUPPORTED], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])
 if $PKG_CONFIG --atleast-pkgconfig-version 0.20; then
         _pkg_short_errors_supported=yes
 else
         _pkg_short_errors_supported=no
 fi[]dnl
 ])
-m4trace:/usr/share/aclocal/pkg.m4:104: -1- AC_DEFUN([PKG_CHECK_MODULES], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
+m4trace:/usr/share/aclocal/pkg.m4:102: -1- AC_DEFUN([PKG_CHECK_MODULES], [AC_REQUIRE([PKG_PROG_PKG_CONFIG])dnl
 AC_ARG_VAR([$1][_CFLAGS], [C compiler flags for $1, overriding pkg-config])dnl
 AC_ARG_VAR([$1][_LIBS], [linker flags for $1, overriding pkg-config])dnl
 
@@ -642,7 +640,6 @@ and $1[]_LIBS to avoid the need to call pkg-config.
 See the pkg-config man page for more details.])
 
 if test $pkg_failed = yes; then
-   	AC_MSG_RESULT([no])
         _PKG_SHORT_ERRORS_SUPPORTED
         if test $_pkg_short_errors_supported = yes; then
 	        $1[]_PKG_ERRORS=`$PKG_CONFIG --short-errors --print-errors "$2" 2>&1`
@@ -652,7 +649,7 @@ if test $pkg_failed = yes; then
 	# Put the nasty error message in config.log where it belongs
 	echo "$$1[]_PKG_ERRORS" >&AS_MESSAGE_LOG_FD
 
-	m4_default([$4], [AC_MSG_ERROR(
+	ifelse([$4], , [AC_MSG_ERROR(dnl
 [Package requirements ($2) were not met:
 
 $$1_PKG_ERRORS
@@ -660,24 +657,25 @@ $$1_PKG_ERRORS
 Consider adjusting the PKG_CONFIG_PATH environment variable if you
 installed software in a non-standard prefix.
 
-_PKG_TEXT])[]dnl
-        ])
+_PKG_TEXT
+])],
+		[AC_MSG_RESULT([no])
+                $4])
 elif test $pkg_failed = untried; then
-     	AC_MSG_RESULT([no])
-	m4_default([$4], [AC_MSG_FAILURE(
+	ifelse([$4], , [AC_MSG_FAILURE(dnl
 [The pkg-config script could not be found or is too old.  Make sure it
 is in your PATH or set the PKG_CONFIG environment variable to the full
 path to pkg-config.
 
 _PKG_TEXT
 
-To get pkg-config, see <http://pkg-config.freedesktop.org/>.])[]dnl
-        ])
+To get pkg-config, see <http://pkg-config.freedesktop.org/>.])],
+		[$4])
 else
 	$1[]_CFLAGS=$pkg_cv_[]$1[]_CFLAGS
 	$1[]_LIBS=$pkg_cv_[]$1[]_LIBS
         AC_MSG_RESULT([yes])
-	$3
+	ifelse([$3], , :, [$3])
 fi[]dnl
 ])
 m4trace:/usr/share/aclocal-1.11/amversion.m4:14: -1- AC_DEFUN([AM_AUTOMAKE_VERSION], [am__api_version='1.11'
@@ -2243,7 +2241,7 @@ m4trace:configure.ac:8: -1- AM_INIT_AUTOMAKE([foreign -Wall -Werror silent-rules
 m4trace:configure.ac:8: -1- m4_pattern_allow([^AM_[A-Z]+FLAGS$])
 m4trace:configure.ac:8: -1- AM_SET_CURRENT_AUTOMAKE_VERSION
 m4trace:configure.ac:8: -1- AM_AUTOMAKE_VERSION([1.11.1])
-m4trace:configure.ac:8: -1- _AM_AUTOCONF_VERSION([2.67])
+m4trace:configure.ac:8: -1- _AM_AUTOCONF_VERSION([2.65])
 m4trace:configure.ac:8: -1- m4_pattern_allow([^INSTALL_PROGRAM$])
 m4trace:configure.ac:8: -1- m4_pattern_allow([^INSTALL_SCRIPT$])
 m4trace:configure.ac:8: -1- m4_pattern_allow([^INSTALL_DATA$])
@@ -2509,32 +2507,16 @@ m4trace:configure.ac:32: -1- m4_pattern_allow([^HAVE_LIBNOTIFY$])
 m4trace:configure.ac:34: -1- m4_pattern_allow([^HAVE_LIBSSL$])
 m4trace:configure.ac:36: -1- m4_pattern_allow([^HAVE_LIBCRYPTO$])
 m4trace:configure.ac:38: -1- m4_pattern_allow([^HAVE_LIBPTHREAD$])
-m4trace:configure.ac:40: -1- m4_pattern_allow([^HAVE_LIBZLIB$])
-m4trace:configure.ac:62: -1- PKG_CHECK_MODULES([ZLIB], [zlib >= 1.2.3.4], [
-			AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
-			AC_SUBST(ZLIB_CFLAGS)
-			AC_SUBST(ZLIB_LIBS)
-			 ], [])
-m4trace:configure.ac:62: -1- PKG_PROG_PKG_CONFIG
-m4trace:configure.ac:62: -1- m4_pattern_forbid([^_?PKG_[A-Z_]+$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^PKG_CONFIG(_PATH)?$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^PKG_CONFIG$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^PKG_CONFIG_PATH$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^PKG_CONFIG_LIBDIR$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^PKG_CONFIG$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^ZLIB_CFLAGS$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^ZLIB_LIBS$])
-m4trace:configure.ac:62: -1- PKG_CHECK_EXISTS([zlib >= 1.2.3.4], [pkg_cv_[]ZLIB_CFLAGS=`$PKG_CONFIG --[]cflags "zlib >= 1.2.3.4" 2>/dev/null`], [pkg_failed=yes])
-m4trace:configure.ac:62: -1- PKG_CHECK_EXISTS([zlib >= 1.2.3.4], [pkg_cv_[]ZLIB_LIBS=`$PKG_CONFIG --[]libs "zlib >= 1.2.3.4" 2>/dev/null`], [pkg_failed=yes])
-m4trace:configure.ac:62: -1- _PKG_SHORT_ERRORS_SUPPORTED
-m4trace:configure.ac:62: -1- m4_pattern_allow([^USE_ZLIB$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^ZLIB_CFLAGS$])
-m4trace:configure.ac:62: -1- m4_pattern_allow([^ZLIB_LIBS$])
 m4trace:configure.ac:69: -1- PKG_CHECK_MODULES([GTK], [gtk+-2.0 >= 2.16], [
 			AC_DEFINE(USE_GTK, 1, [Use GTK])
 			AC_SUBST(GTK_CFLAGS)
 			AC_SUBST(GTK_LIBS)
 			 ], [])
+m4trace:configure.ac:69: -1- PKG_PROG_PKG_CONFIG
+m4trace:configure.ac:69: -1- m4_pattern_forbid([^_?PKG_[A-Z_]+$])
+m4trace:configure.ac:69: -1- m4_pattern_allow([^PKG_CONFIG(_PATH)?$])
+m4trace:configure.ac:69: -1- m4_pattern_allow([^PKG_CONFIG$])
+m4trace:configure.ac:69: -1- m4_pattern_allow([^PKG_CONFIG$])
 m4trace:configure.ac:69: -1- m4_pattern_allow([^GTK_CFLAGS$])
 m4trace:configure.ac:69: -1- m4_pattern_allow([^GTK_LIBS$])
 m4trace:configure.ac:69: -1- PKG_CHECK_EXISTS([gtk+-2.0 >= 2.16], [pkg_cv_[]GTK_CFLAGS=`$PKG_CONFIG --[]cflags "gtk+-2.0 >= 2.16" 2>/dev/null`], [pkg_failed=yes])

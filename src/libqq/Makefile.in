@@ -71,8 +71,7 @@ am__base_list = \
 am__installdirs = "$(DESTDIR)$(libdir)"
 LTLIBRARIES = $(lib_LTLIBRARIES)
 am__DEPENDENCIES_1 =
-libwebqq_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
+libwebqq_la_DEPENDENCIES = $(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
 am_libwebqq_la_OBJECTS = libwebqq_la-http.lo libwebqq_la-json.lo \
 	libwebqq_la-url.lo libwebqq_la-qqlogin.lo \
 	libwebqq_la-qqtypes.lo libwebqq_la-qqmanageinfo.lo \
@@ -189,16 +188,12 @@ PACKAGE_URL = @PACKAGE_URL@
 PACKAGE_VERSION = @PACKAGE_VERSION@
 PATH_SEPARATOR = @PATH_SEPARATOR@
 PKG_CONFIG = @PKG_CONFIG@
-PKG_CONFIG_LIBDIR = @PKG_CONFIG_LIBDIR@
-PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 RANLIB = @RANLIB@
 SED = @SED@
 SET_MAKE = @SET_MAKE@
 SHELL = @SHELL@
 STRIP = @STRIP@
 VERSION = @VERSION@
-ZLIB_CFLAGS = @ZLIB_CFLAGS@
-ZLIB_LIBS = @ZLIB_LIBS@
 abs_builddir = @abs_builddir@
 abs_srcdir = @abs_srcdir@
 abs_top_builddir = @abs_top_builddir@
@@ -252,8 +247,9 @@ top_build_prefix = @top_build_prefix@
 top_builddir = @top_builddir@
 top_srcdir = @top_srcdir@
 lib_LTLIBRARIES = libwebqq.la
-libwebqq_la_CPPFLAGS = $(GTHREAD_CFLAGS) $(GLIB_CFLAGS) $(ZLIB_CFLAGS)
-libwebqq_la_LIBADD = $(GTHREAD_LIBS) $(GLIB_LIBS) $(ZLIB_LIBS)
+ZLIB_CFLAGS = -lz
+libwebqq_la_CPPFLAGS = $(GTHREAD_CFLAGS) $(GLIB_CFLAGS)
+libwebqq_la_LIBADD = $(GTHREAD_LIBS) $(GLIB_LIBS) $(ZLIB)
 libwebqq_la_SOURCES = http.h http.c json.h json.c url.h url.c\
 			qq.h qqlogin.c qqtypes.h qqtypes.c qqmanageinfo.c\
 			unicode.c unicode.h qqinit.c qqpoll.c qqsendmsg.c\

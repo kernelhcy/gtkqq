@@ -37,7 +37,7 @@ AC_CHECK_LIB([crypto], [RSA_new])
 
 AC_CHECK_LIB([pthread], [pthread_create])
 
-AC_CHECK_LIB([zlib], [compress])
+# AC_CHECK_LIB([zlib], [compress])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdint.h\
@@ -59,12 +59,12 @@ AC_ARG_ENABLE(gst,
 			      sounds) @<:@default=yes@:>@]),,
               enable_gst="yes")
 # checks for zlib
-PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2.3.4], [
-			AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
-			AC_SUBST(ZLIB_CFLAGS)
-			AC_SUBST(ZLIB_LIBS)
-			] ,
-			)
+#PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
+#			AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
+#			AC_SUBST(ZLIB_CFLAGS)
+#			AC_SUBST(ZLIB_LIBS)
+#			] ,
+#			)
 # checks for gtk+2.0
 PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.16], [
 			AC_DEFINE(USE_GTK, 1, [Use GTK])
