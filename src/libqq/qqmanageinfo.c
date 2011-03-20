@@ -840,6 +840,8 @@ static gboolean do_get_my_friends(gpointer data)
 			buddy -> face = g_string_new(face);
 			buddy -> flag = g_string_new(flag);
 			g_ptr_array_add(info -> buddies, buddy);
+			g_hash_table_insert(info -> buddies_ht
+								, buddy -> uin -> str, buddy);
 		}
 	}
 	/*
@@ -1059,6 +1061,7 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 					, gid, code, flag, grp -> name -> str
 					, __FILE__, __LINE__);
 			g_ptr_array_add(info -> groups, grp);
+			g_hash_table_insert(info -> groups_ht, grp -> gid, grp);
 		}
 	}else{
 		g_warning("No gnamelist find. (%s, %d)", __FILE__, __LINE__);

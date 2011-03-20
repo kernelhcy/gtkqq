@@ -15,6 +15,7 @@ typedef struct _QQMainPanelClass	QQMainPanelClass;
 struct _QQMainPanel{
 	GtkVBox parent;
 
+	/*< private >*/
 	GtkWidget *faceimgframe; 		//a frame contains gtk image
 	GtkWidget *faceeventbox;
 	GdkPixbuf *facepixbuf;
@@ -33,6 +34,7 @@ struct _QQMainPanel{
 	GtkWidget *contact_tree;
 	GtkWidget *grp_list;
 	GtkWidget *recent_list;
+	GPtrArray *tree_maps;		//the maps between buddys and rows
 
 	GtkWidget *menubar;
 
@@ -46,6 +48,8 @@ struct _QQMainPanelClass{
 	GtkWidget *contact_img[2];
 	GtkWidget *grp_img[2];
 	GtkWidget *recent_img[2];
+
+	GdkCursor *hand;
 };
 
 GType qq_mainpanel_get_type();

@@ -74,7 +74,9 @@ struct _QQInfo{
 	QQBuddy *me;			//myself
 
 	GPtrArray *buddies;		//all friends;
+	GHashTable *buddies_ht; 	//buddies hash table by uin
 	GPtrArray *groups;		//all groups;
+	GHashTable *groups_ht;	//goups hash table by gid
 	GPtrArray *recentcons;		//the recenet contacts
 	GPtrArray *categories;		//all categories
 
@@ -114,6 +116,14 @@ struct _QQInfo{
 QQInfo* qq_info_new();
 void qq_info_free(QQInfo *);
 void qq_append_cookie(QQInfo *, const gchar *);
+//
+// Look up the buddy by the uin
+//
+QQBuddy* qq_info_lookup_buddy(QQInfo *, const gchar *uin);
+//
+// Look up the group by the gid
+//
+QQGroup* qq_info_lookup_group(QQInfo *, const gchar *gid);
 
 struct _QQMsg{
 	QQInfo *info;

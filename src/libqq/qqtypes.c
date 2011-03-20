@@ -14,6 +14,9 @@ QQInfo* qq_info_new()
 	info -> recentcons = g_ptr_array_new();
 	info -> categories = g_ptr_array_new();
 
+	info -> buddies_ht = g_hash_table_new(g_str_hash, g_str_equal);
+	info -> groups_ht = g_hash_table_new(g_str_hash, g_str_equal);
+
 	info -> lock = g_mutex_new();
 
 	/*
@@ -75,8 +78,21 @@ void qq_info_free(QQInfo *info)
 	}
 	g_ptr_array_free(info -> categories, TRUE);
 
+
+	g_hash_table_unref(info -> buddies_ht);
+	g_hash_table_unref(info -> groups_ht);
+
 	g_mutex_free(info -> lock);
 	g_slice_free(QQInfo, info);
+}
+
+QQBuddy* qq_info_lookup_buddy(QQInfo *info, const gchar *uin)
+{
+	return (QQBuddy*)g_hash_table_lookup(info -> buddies_ht, uin);
+}
+QQGroup* qq_info_lookup_group(QQInfo *info, const gchar *gid)
+{
+	return (QQGroup*)g_hash_table_lookup(info -> buddies_ht, gid);
 }
 
 QQMsg* qq_msg_new()
