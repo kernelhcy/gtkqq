@@ -155,7 +155,7 @@ static gint get_vc_image(QQInfo *info)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, IMAGEPATH"?&aid="APPID"&r=%.16f&uin=%s&vc_type=%s"
+	g_sprintf(params, IMAGEPATH"?aid="APPID"&r=%.16f&uin=%s&vc_type=%s"
 			, g_random_double(), info -> me -> uin -> str
 			, info -> vc_type -> str);
 	request_set_uri(req, params);
@@ -321,7 +321,7 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&"
+	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=1&"
 			"remember_uin=0&aid="APPID"&u1=%s&h=1&"
 			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
 			"&dumy=&fp=loginerroralert&mibao_css="

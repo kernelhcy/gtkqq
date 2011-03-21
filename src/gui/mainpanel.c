@@ -28,10 +28,9 @@ typedef struct{
 }QQTreeMap;
 
 enum{
-	TV_TYPE = 0, 	//The client type
-	TV_IMAGE,	 	//The face image of buddy or group
-	TV_MARK, 		//The mark of group or buddy
+	TV_IMAGE = 0,	 	//The face image of buddy or group
 	TV_NAME, 		//Group name or buddy nick
+	TV_TYPE, 	//The client type
 	COLUMNS 		//The number of columns
 };
 //
@@ -172,12 +171,27 @@ static void qq_mainpanel_init(QQMainPanel *panel)
 	tree_view_setup(panel -> grp_list);
 	tree_view_setup(panel -> recent_list);
 
+	GtkWidget *scrolled_win; 
+	scrolled_win= gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolled_win),
+				GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> contact_tree);
 	gtk_notebook_append_page(GTK_NOTEBOOK(panel -> notebook)
-								, panel -> contact_tree, NULL);
+							, scrolled_win, NULL);
+
+	scrolled_win= gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolled_win),
+				GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> grp_list);
 	gtk_notebook_append_page(GTK_NOTEBOOK(panel -> notebook)
-								, panel -> grp_list, NULL);
+							, scrolled_win, NULL);
+
+	scrolled_win= gtk_scrolled_window_new(NULL, NULL);
+	gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolled_win),
+				GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
+	gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> recent_list);
 	gtk_notebook_append_page(GTK_NOTEBOOK(panel -> notebook)
-								, panel -> recent_list, NULL);
+							, scrolled_win, NULL);
 
 }
 static void qq_mainpanelclass_init(QQMainPanelClass *c)
@@ -414,40 +428,45 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
 	GtkTreeModel *model;
 	GtkTreeStore *store = gtk_tree_store_new(COLUMNS
 											, GDK_TYPE_PIXBUF
-											, GDK_TYPE_PIXBUF
 											, G_TYPE_STRING
-											, G_TYPE_STRING);
+											, GDK_TYPE_PIXBUF);
 	QQCategory *cate;
 	QQTreeMap *map;
 	QQBuddy *bdy;
 	GtkTreeRowReference *ref;
 	GtkTreePath *path;
-	gchar buf[100];
-	const gchar *name, *mark;
-	gint i, j;
+	gchar buf[500];
+	gint i, j, k;
 	gint num;
 	for(i = 0; i < info -> categories -> len; ++i){
 		//add the categories
-		cate = (QQCategory*)info -> categories -> pdata[i];
-		mark = cate -> name -> str;
+
+		//find the ith catogory.
+		k = 0;
+		do{
+			cate = (QQCategory*)info -> categories -> pdata[k];
+			if(cate -> index == i){
+				break;
+			}
+			++k;
+		}while(k < info -> categories -> len);
+
 		num = cate -> members -> len;
-		g_sprintf(buf, "[%d/%d]", 0, num);
+		g_sprintf(buf, "%s  [%d/%d]", cate -> name -> str, 0, num);
 		gtk_tree_store_append(store, &iter, NULL);
-		gtk_tree_store_set(store, &iter, TV_MARK, mark, TV_NAME, buf, -1);
+		gtk_tree_store_set(store, &iter, TV_NAME, buf, -1);
 
 		//add the buddies in this category.
 		for(j = 0; j < cate -> members -> len; ++j){
 			gtk_tree_store_append(store, &child, &iter);
-			bdy = (QQBuddy*) cate -> members -> pdata[i];
+			bdy = (QQBuddy*) cate -> members -> pdata[j];
 			if(bdy -> markname == NULL || bdy -> markname -> len <=0){
-				mark = bdy -> nick -> str;
-				name = "";
+				g_sprintf(buf, "%s", bdy -> nick -> str);
 			}else{
-				mark = bdy -> markname -> str;
-				g_sprintf(buf, "(%s)", bdy -> nick -> str);
-				name = buf;
+				g_sprintf(buf, "%s  (%s)", bdy -> markname -> str
+										, bdy -> nick -> str);
 			}
-			gtk_tree_store_set(store, &child, TV_MARK, mark, TV_NAME, name, -1);
+			gtk_tree_store_set(store, &child, TV_NAME, buf, -1);
 
 			//get the tree row reference
 			path = gtk_tree_model_get_path(GTK_TREE_MODEL(store), &child);
@@ -461,7 +480,7 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
 			g_ptr_array_add(panel -> tree_maps, map);
 
 			//update the face image.
-			update_face_image(GTK_TREE_MODEL(store), map);
+			//update_face_image(GTK_TREE_MODEL(store), map);
 		}
 	}
 
@@ -479,14 +498,6 @@ static void tree_view_setup(GtkWidget *view)
 	GtkCellRenderer *renderer;
 	GtkTreeViewColumn *column;
 
-	// The client type image column
-	column = gtk_tree_view_column_new();
-	gtk_tree_view_column_set_title(column, "Client");
-	renderer = gtk_cell_renderer_pixbuf_new();
-	gtk_tree_view_column_pack_start(column, renderer, FALSE);
-	gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", TV_TYPE, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-
 	// The face image column
 	column = gtk_tree_view_column_new();
 	gtk_tree_view_column_set_title(column, "Face");
@@ -495,20 +506,20 @@ static void tree_view_setup(GtkWidget *view)
 	gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", TV_IMAGE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
-	// The mark column
-	column = gtk_tree_view_column_new();
-	gtk_tree_view_column_set_title(column, "Mark");
-	renderer = gtk_cell_renderer_text_new();
-	gtk_tree_view_column_pack_start(column, renderer, TRUE);
-	gtk_tree_view_column_set_attributes(column, renderer, "text", TV_MARK, NULL);
-	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-
 	// The name column
 	column = gtk_tree_view_column_new();
 	gtk_tree_view_column_set_title(column, "Name");
 	renderer = gtk_cell_renderer_text_new();
 	gtk_tree_view_column_pack_start(column, renderer, TRUE);
 	gtk_tree_view_column_set_attributes(column, renderer, "text", TV_NAME, NULL);
+	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
+
+	// The client type image column
+	column = gtk_tree_view_column_new();
+	gtk_tree_view_column_set_title(column, "Client");
+	renderer = gtk_cell_renderer_pixbuf_new();
+	gtk_tree_view_column_pack_start(column, renderer, FALSE);
+	gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", TV_TYPE, NULL);
 	gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
 
 	gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);

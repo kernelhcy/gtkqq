@@ -245,13 +245,15 @@ static gboolean do_get_online_buddies(gpointer data)
 				bdy = (QQBuddy *)info -> buddies -> pdata[i];
 				if(g_strstr_len(bdy -> uin -> str, -1, uin)
 						!= NULL){
-					g_string_free(bdy -> status, TRUE);
+					if(bdy -> status != NULL){
+						g_string_free(bdy -> status, TRUE);
+						bdy -> status = NULL;
+					}
 					bdy -> status = g_string_new(status);
 					ct = strtol(client_type, &endptr, 10);
 					if(endptr == client_type){
 						g_warning("strtol error(%s,%d)"
-								, __FILE__
-								, __LINE__);
+								, __FILE__, __LINE__);
 						continue;
 					}
 					bdy -> client_type = ct;
@@ -783,6 +785,7 @@ static gboolean do_get_my_friends(gpointer data)
 		GString *sn;
 		gint ii;
 		gchar *endptr;
+		QQCategory *cate;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			index = cur -> child -> child;
 			name = cur -> child -> next -> child;
@@ -794,13 +797,19 @@ static gboolean do_get_my_friends(gpointer data)
 						, index -> text
 						, __FILE__, __LINE__);
 			}
-			QQCategory *cate = qq_category_new();
+			cate = qq_category_new();
 			cate -> name = sn;
 			cate -> index = ii;
 			g_ptr_array_add(info -> categories, (gpointer)cate);
 			g_debug("category: %d %s (%s, %d)", ii, sn -> str
 					, __FILE__, __LINE__);
 		}
+		
+		//add the default category
+		cate = qq_category_new();
+		cate -> name = g_string_new("我的好友");
+		cate -> index = 0;
+		g_ptr_array_add(info -> categories, (gpointer)cate);
 	}
 
 	/*
@@ -836,7 +845,7 @@ static gboolean do_get_my_friends(gpointer data)
 					, __FILE__, __LINE__);
 			QQBuddy *buddy = qq_buddy_new();
 			buddy -> uin = g_string_new(uin);
-			buddy -> nick = g_string_new(nick);
+			buddy -> nick = ns;
 			buddy -> face = g_string_new(face);
 			buddy -> flag = g_string_new(flag);
 			g_ptr_array_add(info -> buddies, buddy);
@@ -863,25 +872,16 @@ static gboolean do_get_my_friends(gpointer data)
 			}
 			gint i;
 			QQBuddy *tmpb;
-			for(i = 0; i < info -> buddies -> len; ++i){
-				tmpb = (QQBuddy *)(info -> buddies -> pdata[i]);
-				if(g_strstr_len(tmpb -> uin -> str, -1, uin) 
-						!= NULL){
-					/*
-					 * Find the buddy
-					 */
-					tmpb -> markname = g_string_new(NULL);
-					ucs4toutf8(tmpb -> markname, markname);
-					g_debug("uin:%s markname:%s (%s, %d)"
-						, uin, tmpb -> markname -> str
-						, __FILE__, __LINE__);
-
-				}else{
-					g_warning("No buddy(%s) for markname:%s"
-							" (%s, %d)", uin
-							, tmpb -> markname -> str
-							, __FILE__, __LINE__);
-				}
+			tmpb = qq_info_lookup_buddy(info, uin);
+			if(tmpb != NULL){
+				/*
+				 * Find the buddy
+				 */
+				tmpb -> markname = g_string_new(NULL);
+				ucs4toutf8(tmpb -> markname, markname);
+				g_debug("uin:%s markname:%s (%s, %d)"
+					, uin, tmpb -> markname -> str
+					, __FILE__, __LINE__);
 			}
 		}
 	}
@@ -902,32 +902,33 @@ static gboolean do_get_my_friends(gpointer data)
 			if(tmp != NULL){
 				cate = tmp -> child -> text;
 			}
-			g_debug("uin:%s cate:%s(%s, %d)"
-					, uin, cate, __FILE__, __LINE__);
-			gint i;
+
 			QQCategory *qc = NULL;
-			QQBuddy *bdy = NULL;
-			for(i = 0; i < info -> buddies -> len; ++i){
-				bdy = (QQBuddy *)info -> buddies -> pdata[i];
-				if(g_strstr_len(bdy -> uin -> str, -1, uin)
-						!= NULL){
-					g_debug("Find buddy %s (%s, %d)"
-							, uin, __FILE__
-							, __LINE__);
-					break;
-				}
-			}
-			gint idx;
+			gint idx, i;
 			char *endptr;
-			idx = strtol(cate, &endptr, 10);
-			if(endptr == cate){
-				g_warning("strtol error. %s:%d (%s, %d)"
-						, cate, idx, __FILE__
-						, __LINE__);
-				break;
+			QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+			if(bdy != NULL){
+				idx = strtol(cate, &endptr, 10);
+				if(endptr == cate){
+					g_warning("strtol error. %s:%d (%s, %d)"
+							, cate, idx, __FILE__
+							, __LINE__);
+				}
+				for(i = 0; i < info -> categories -> len; ++i){
+					qc = info -> categories -> pdata[i];
+					if(qc != NULL && qc -> index == idx){
+						//find the category
+						g_debug("Buddy %s in category %d(%s, %d)", uin
+									, idx, __FILE__, __LINE__);
+						g_ptr_array_add(qc -> members, bdy);
+						bdy -> cate = qc;
+						break;
+					}
+				}
+			}else{
+				g_warning("Can not find buddy %s!(%s, %d)", uin
+							, __FILE__, __LINE__);
 			}
-			bdy -> cate = info -> categories -> pdata[idx];
-			g_ptr_array_add(bdy -> cate -> members, bdy);
 		}
 	}
 
