@@ -45,6 +45,7 @@ gint save_img_to_file(const gchar *data, gint len, const gchar *ext,
 		g_warning("Create io channle error!! %d %s "
 				"(%s, %d)", err -> code , err -> message
 				, __FILE__, __LINE__);
+		g_error_free(err);
 		return -1;
 	}
 	err = NULL;

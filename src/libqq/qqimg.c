@@ -31,7 +31,11 @@ static GString* get_image_type(const gchar *ct)
 	if(g_strstr_len(ct, -1, "png") != NULL){
 		return g_string_new("png");
 	}
-
+	if(g_strstr_len(ct, -1, "gif") != NULL){
+		return g_string_new("gif");
+	}
+	
+	g_warning("Unknown image type: %s (%s, %d)", ct, __FILE__, __LINE__);
 	return NULL;
 }
 
@@ -102,7 +106,13 @@ static gboolean do_get_face_img(gpointer data)
 	img -> data = g_string_new_len(rps -> msg -> str
 					, rps -> msg -> len);
 	img -> type = get_image_type(response_get_header_chars(rps
-				, "Content-Type"));
+					, "Content-Type"));
+
+	//store the image file name into the hashtable
+	gchar *name = g_malloc(sizeof(gchar) * 50);
+	g_sprintf(name, "%s.%s", img -> uin -> str, img -> type -> str);
+	g_hash_table_insert(info -> buddies_image_ht, img -> uin -> str, name);
+
 	if(cb != NULL){
 		g_debug("Success get face image.(%s, %d)", __FILE__, __LINE__);
 		cb(CB_SUCCESS, img, usrdata);
@@ -167,3 +177,14 @@ gint qq_save_face_img(QQBuddy *bdy, const gchar *path)
 				, path, fimg -> uin -> str);		
 }
 
+const gchar* qq_lookup_image_name(QQInfo *info, const gchar *uin)
+{
+	if(info == NULL || uin == NULL){
+		g_warning("info == NULL || uin == NULL (%s, %d)"
+				, __FILE__, __LINE__);
+		return NULL;
+	}
+
+	return (const gchar *)g_hash_table_lookup(info -> buddies_image_ht
+								, uin);
+}

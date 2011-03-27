@@ -14,6 +14,9 @@ QQInfo* qq_info_new()
 	info -> recentcons = g_ptr_array_new();
 	info -> categories = g_ptr_array_new();
 
+	info -> buddies_image_ht = g_hash_table_new_full(g_str_hash, g_str_equal
+							, NULL, g_free);
+
 	info -> buddies_ht = g_hash_table_new(g_str_hash, g_str_equal);
 	info -> groups_ht = g_hash_table_new(g_str_hash, g_str_equal);
 
@@ -81,6 +84,7 @@ void qq_info_free(QQInfo *info)
 
 	g_hash_table_unref(info -> buddies_ht);
 	g_hash_table_unref(info -> groups_ht);
+	g_hash_table_unref(info -> buddies_image_ht);
 
 	g_mutex_free(info -> lock);
 	g_slice_free(QQInfo, info);

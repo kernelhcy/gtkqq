@@ -85,6 +85,7 @@ QQInfo* qq_init(QQCallBack cb, gpointer usrdata)
 		if(cb != NULL){
 			cb(CB_ERROR, "Create mainloop thread error.", usrdata);
 		}
+		g_error_free(err);
 		return NULL;
 	}
 
@@ -108,4 +109,25 @@ QQInfo* qq_init(QQCallBack cb, gpointer usrdata)
 	}
 
 	return info;
+}
+
+void qq_finalize(QQInfo *info)
+{
+	if(info == NULL){
+		return;
+	}
+	
+	if(info -> pollloop == NULL || info -> mainloop == NULL){
+		return;
+	}
+	
+	g_debug("Quit event loops.(%s, %d)", __FILE__, __LINE__);
+	if(g_main_loop_is_running(info -> pollloop)){
+		g_main_loop_quit(info -> pollloop);
+		g_main_loop_unref(info -> pollloop);
+	}
+	if(g_main_loop_is_running(info -> mainloop)){
+		g_main_loop_quit(info -> mainloop);
+		g_main_loop_unref(info -> mainloop);
+	}
 }

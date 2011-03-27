@@ -2,6 +2,10 @@
 #include <statusbutton.h>
 #include <qq.h>
 
+/*
+ * The main event loop context of Gtk.
+ */
+static GMainContext *gtkctx;
 extern QQInfo *info;
 static QQMainPanelClass *this_class = NULL;
 
@@ -18,6 +22,11 @@ static gboolean lnick_leave_cb(GtkWidget *w, GdkEvent *event, gpointer data);
 static void btn_group_release_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
 static void btn_group_enter_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
 static void btn_group_leave_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
+
+//
+// Update the long nick
+//
+static void update_long_nick(const gchar *new_ln);
 
 //
 // The map between the QQBuddy uin and the tree row.
@@ -72,7 +81,7 @@ GtkWidget* qq_mainpanel_new(GtkWidget *container)
 
 static void qq_mainpanel_init(QQMainPanel *panel)
 {
-	panel -> tree_maps = g_ptr_array_new();
+	panel -> tree_maps = g_hash_table_new(g_str_hash, g_str_equal);
 
 	GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
 	GtkWidget *box = NULL;
@@ -228,6 +237,7 @@ static void qq_mainpanelclass_init(QQMainPanelClass *c)
 	gtk_widget_show(c -> recent_img[1]);
 
 	c -> hand = gdk_cursor_new(GDK_HAND1);
+	gtkctx = g_main_context_default();
 }
 static void qq_mainpanel_destory(QQMainPanel *panel)
 {
@@ -299,9 +309,10 @@ static gboolean lnick_focus_out_cb(GtkWidget *w, GdkEvent *event
 										, gpointer data)
 {
 	QQMainPanel *panel = QQ_MAINPANEL(data);
-	gtk_widget_show(GTK_WIDGET(panel -> longnick_eventbox));
-	gtk_widget_hide(GTK_WIDGET(panel -> longnick_entry));
-
+	gtk_widget_show(panel -> longnick_eventbox);
+	gtk_widget_hide(panel -> longnick_entry);
+	gtk_label_set_text(GTK_LABEL(panel -> longnick)
+				, gtk_entry_get_text(GTK_ENTRY(panel -> longnick_entry)));
 	return FALSE;
 }
 
@@ -388,26 +399,13 @@ static gboolean lnick_leave_cb(GtkWidget *w, GdkEvent *event, gpointer data)
 }
 
 //
-// Update the face images
+// Update the image widget of map -> row_ref to file
 //
-static void update_face_image(GtkTreeModel *model, QQTreeMap *map)
+static void update_image_widget(GtkTreeModel *model, QQTreeMap *map
+								, const gchar *file)
 {
-	gchar path[100];
-
-	QQBuddy *bdy = qq_info_lookup_buddy(info, map -> uin -> str);
-	if(bdy == NULL){
-		g_warning("Can not find buddy %s!!(%s, %d)", map -> uin -> str
-							, __FILE__, __LINE__);
-		return;
-	}
-	
-	g_sprintf(path, CONFIGDIR"/%s/%s.%s", info -> me -> uin -> str
-								, bdy -> uin -> str
-								, "jpeg");
-	g_debug("load face image of %s.(%s, %d)", bdy -> uin -> str
-							, __FILE__, __LINE__);
-
-	GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(path, 8, 8, NULL);
+	GError *err = NULL;
+	GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(file, 20, 20, &err);
 	if(pb != NULL){
 		GtkTreePath *path;
 		GtkTreeIter iter;
@@ -415,7 +413,121 @@ static void update_face_image(GtkTreeModel *model, QQTreeMap *map)
 		gtk_tree_model_get_iter(model, &iter, path);
 		gtk_tree_store_set(GTK_TREE_STORE(model), &iter, TV_IMAGE, pb, -1);
 	}else{
-		//get image form server.
+		g_warning("Update face image widget error!!%s (%s, %d)"
+						, err -> message, __FILE__, __LINE__);
+	}
+}
+
+typedef struct{
+	QQBuddy *bdy;
+	QQMainPanel *panel;
+}GetFaceIdlePar;
+
+//
+// Update the image widget
+// Run in the gtk main event loop
+//
+static gboolean get_face_img_gtk_idle(gpointer data)
+{
+	GetFaceIdlePar *par = (GetFaceIdlePar*)data;
+	QQBuddy *bdy = par -> bdy;
+	QQMainPanel *panel = par -> panel;
+	g_slice_free(GetFaceIdlePar, par);
+	
+	QQTreeMap *map = (QQTreeMap*)g_hash_table_lookup(panel -> tree_maps
+													, bdy -> uin -> str);
+	GtkTreeModel *model = gtk_tree_view_get_model(GTK_TREE_VIEW(
+							panel -> contact_tree));
+	gchar path[100];
+	g_sprintf(path, CONFIGDIR"/%s/icons/%s.%s", info -> me -> uin -> str
+								, bdy -> faceimg -> uin -> str
+								, bdy -> faceimg -> type -> str);
+	update_image_widget(model, map, path);
+	return FALSE;
+}
+
+//
+// The callback of qq_get_face_img.
+// Just save the image to the server and call the get_face_img_gtk_idle
+// in the gtk main event loop;
+//
+static void get_face_image_cb(CallBackResult re, gpointer redata
+									, gpointer usrdata)
+{
+	if(re != CB_SUCCESS){
+		g_warning("Get face image error.(%s, %d)", __FILE__, __LINE__);
+		return;
+	}
+
+	QQFaceImg *img = (QQFaceImg *)redata;
+	QQBuddy *bdy = qq_info_lookup_buddy(info, img -> uin -> str);
+
+	if(bdy == NULL || img == NULL){
+		return;
+	}
+	bdy -> faceimg = img;
+
+	gchar path[100];
+	g_sprintf(path, CONFIGDIR"%s/icons/", info -> me -> uin -> str);
+	if(qq_save_face_img(bdy, path) == -1){
+		g_warning("Save face image error.(%s, %d)", __FILE__, __LINE__);
+		return;
+	}
+
+	//update the image widget
+	GetFaceIdlePar *par = g_slice_new(GetFaceIdlePar);
+	par -> bdy = bdy;
+	par -> panel = usrdata;
+	GSource *src = g_idle_source_new();
+	g_source_set_callback(src, (GSourceFunc)get_face_img_gtk_idle
+								, par, NULL);
+	g_source_attach(src, gtkctx);
+	g_source_unref(src);
+}
+
+//
+// Update the face images
+//
+static void update_face_image(QQMainPanel *panel)
+{
+	gchar path[100];
+	GtkTreeModel *model;
+	QQTreeMap *map;
+	model = gtk_tree_view_get_model(GTK_TREE_VIEW(panel -> contact_tree));
+
+	gint i;
+	gboolean need_get_img = FALSE;
+	QQBuddy *bdy;
+
+	for( i = 0; i < info -> buddies -> len; ++i ){
+		bdy = (QQBuddy*)info -> buddies -> pdata[i];
+		map = (QQTreeMap*)g_hash_table_lookup(panel -> tree_maps
+									, bdy -> uin -> str);
+		if(map == NULL){
+			g_warning("Lookup buddy return NULL.%s (%s, %d)", bdy -> uin -> str
+									, __FILE__, __LINE__);
+			continue;
+		}
+		// test if we have the image file;
+		if(bdy -> faceimg != NULL && bdy -> faceimg -> uin != NULL){
+			g_snprintf(path, 100, CONFIGDIR"/%s/%s.%s", info -> me -> uin -> str
+									, bdy -> faceimg -> uin -> str
+									, bdy -> faceimg -> type -> str);
+			if(!g_file_test(path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)){
+				need_get_img = FALSE;
+			}
+		}else{
+			need_get_img = TRUE;
+		}
+
+		if(need_get_img){
+			need_get_img = FALSE;
+			// we need get image from the server.
+			qq_get_face_img(info, bdy -> uin -> str, get_face_image_cb, panel);
+		}else{
+			//update the image widget
+			update_image_widget(model, map, path);
+		}
 	}
 }
 
@@ -425,7 +537,6 @@ static void update_face_image(GtkTreeModel *model, QQTreeMap *map)
 static GtkTreeModel* create_contact_model(QQMainPanel *panel)
 {
 	GtkTreeIter iter, child;
-	GtkTreeModel *model;
 	GtkTreeStore *store = gtk_tree_store_new(COLUMNS
 											, GDK_TYPE_PIXBUF
 											, G_TYPE_STRING
@@ -435,6 +546,7 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
 	QQBuddy *bdy;
 	GtkTreeRowReference *ref;
 	GtkTreePath *path;
+	GdkPixbuf *pb;
 	gchar buf[500];
 	gint i, j, k;
 	gint num;
@@ -466,7 +578,9 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
 				g_sprintf(buf, "%s  (%s)", bdy -> markname -> str
 										, bdy -> nick -> str);
 			}
-			gtk_tree_store_set(store, &child, TV_NAME, buf, -1);
+			pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"
+										, 20, 20, NULL);
+			gtk_tree_store_set(store, &child, TV_IMAGE, pb, TV_NAME, buf, -1);
 
 			//get the tree row reference
 			path = gtk_tree_model_get_path(GTK_TREE_MODEL(store), &child);
@@ -477,13 +591,15 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
 			map = g_slice_new0(QQTreeMap);
 			map -> uin = bdy -> uin;
 			map -> row_ref = ref;
-			g_ptr_array_add(panel -> tree_maps, map);
+			g_hash_table_insert(panel -> tree_maps, bdy -> uin -> str
+									, map);
 
-			//update the face image.
-			//update_face_image(GTK_TREE_MODEL(store), map);
 		}
 	}
 
+	//update the face image.
+	update_face_image(panel);
+	
 	return GTK_TREE_MODEL(store);
 }
 static GtkTreeModel* create_grp_or_recent_model(QQMainPanel *panel)

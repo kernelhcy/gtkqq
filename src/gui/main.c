@@ -19,6 +19,7 @@ int main(int argc, char **argv)
 
 	log_init();
 	cfg = qq_config_init();
+	qq_config_read(cfg);
 	if(cfg == NULL){
 		return -1;
 	}

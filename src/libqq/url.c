@@ -141,6 +141,7 @@ gint send_request(Connection *con, Request *r)
 			g_warning("Write data ERROR!! code:%d msg:%s (%s, %d)"
 					, err -> code, err -> message
 					, __FILE__, __LINE__);
+			g_error_free(err);
 			return -1;
 		case G_IO_STATUS_AGAIN:
 //			g_debug("Channel temporarily unavailable.(%s, %d)"
@@ -303,6 +304,7 @@ gint rcv_response(Connection *con, Response **rp)
 					, err -> code, err -> message
 					, __FILE__, __LINE__);
 			g_string_free(data, TRUE);
+			g_error_free(err);
 			return -1;
 		case G_IO_STATUS_AGAIN:
 			g_warning("Channel temporarily unavailable.");

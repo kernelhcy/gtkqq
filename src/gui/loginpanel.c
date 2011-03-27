@@ -144,7 +144,6 @@ static void qq_loginpanel_login_sm(gpointer data)
 			// Create the user configure.
 			//
 			cfg -> me = info -> me;
-			cfg -> usr_cfg = qq_userconfig_new(cfg);
 			if(cfg -> usr_cfg == NULL){
 				//just quit
 				g_warning("create user configure error."
@@ -309,6 +308,8 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 	panel -> uin = qq_loginpanel_get_uin(panel);
 	panel -> passwd = qq_loginpanel_get_passwd(panel);
 	panel -> status = qq_loginpanel_get_status(panel);
+	//create the user config
+	qq_userconfig_new(cfg, panel -> uin);
 
 	//start the login state mechine
 	panel -> login_state = LS_CHECK_VC;

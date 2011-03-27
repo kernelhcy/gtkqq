@@ -235,9 +235,9 @@ static gboolean do_get_online_buddies(gpointer data)
 			if(tmp != NULL){
 				client_type= tmp -> child -> text;
 			}
-			g_debug("uin: %s, status: %s, client_type: %s (%s, %d)"
-					, uin, status, client_type
-					, __FILE__, __LINE__);
+//			g_debug("uin: %s, status: %s, client_type: %s (%s, %d)"
+//					, uin, status, client_type
+//					, __FILE__, __LINE__);
 			QQBuddy *bdy;
 			gint ct;
 			char *endptr;
@@ -374,8 +374,8 @@ static gboolean do_get_recent_contact(gpointer data)
 			if(tmp != NULL){
 				type = tmp -> child -> text;
 			}
-			g_debug("recent con, uin: %s, type: %s (%s, %d)"
-					, uin, type, __FILE__, __LINE__);
+//			g_debug("recent con, uin: %s, type: %s (%s, %d)"
+//					, uin, type, __FILE__, __LINE__);
 			
 			QQRecentCon *rc = qq_recentcon_new();
 			rc -> uin = g_string_new(uin);
@@ -752,7 +752,7 @@ static gboolean do_get_my_friends(gpointer data)
 	close_con(con);
 	connection_free(con);
 
-	g_printf("(%s, %d)%s\n", __FILE__, __LINE__, rps -> msg -> str);
+//	g_printf("(%s, %d)%s\n", __FILE__, __LINE__, rps -> msg -> str);
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		/*
@@ -801,8 +801,8 @@ static gboolean do_get_my_friends(gpointer data)
 			cate -> name = sn;
 			cate -> index = ii;
 			g_ptr_array_add(info -> categories, (gpointer)cate);
-			g_debug("category: %d %s (%s, %d)", ii, sn -> str
-					, __FILE__, __LINE__);
+//			g_debug("category: %d %s (%s, %d)", ii, sn -> str
+//					, __FILE__, __LINE__);
 		}
 		
 		//add the default category
@@ -840,9 +840,9 @@ static gboolean do_get_my_friends(gpointer data)
 			}
 			ns = g_string_new(NULL);
 			ucs4toutf8(ns, nick);
-			g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
-					, uin, ns -> str, face, flag
-					, __FILE__, __LINE__);
+//			g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
+//					, uin, ns -> str, face, flag
+//					, __FILE__, __LINE__);
 			QQBuddy *buddy = qq_buddy_new();
 			buddy -> uin = g_string_new(uin);
 			buddy -> nick = ns;
@@ -879,9 +879,9 @@ static gboolean do_get_my_friends(gpointer data)
 				 */
 				tmpb -> markname = g_string_new(NULL);
 				ucs4toutf8(tmpb -> markname, markname);
-				g_debug("uin:%s markname:%s (%s, %d)"
-					, uin, tmpb -> markname -> str
-					, __FILE__, __LINE__);
+//				g_debug("uin:%s markname:%s (%s, %d)"
+//					, uin, tmpb -> markname -> str
+//					, __FILE__, __LINE__);
 			}
 		}
 	}
@@ -918,8 +918,8 @@ static gboolean do_get_my_friends(gpointer data)
 					qc = info -> categories -> pdata[i];
 					if(qc != NULL && qc -> index == idx){
 						//find the category
-						g_debug("Buddy %s in category %d(%s, %d)", uin
-									, idx, __FILE__, __LINE__);
+//						g_debug("Buddy %s in category %d(%s, %d)", uin
+//									, idx, __FILE__, __LINE__);
 						g_ptr_array_add(qc -> members, bdy);
 						bdy -> cate = qc;
 						break;
@@ -1058,9 +1058,9 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 			grp -> flag = g_string_new(flag);
 			grp -> name = g_string_new(NULL);
 			ucs4toutf8(grp -> name, name);
-			g_debug("gid: %s, code %s, flag %s, name %s (%s, %d)"
-					, gid, code, flag, grp -> name -> str
-					, __FILE__, __LINE__);
+//			g_debug("gid: %s, code %s, flag %s, name %s (%s, %d)"
+//					, gid, code, flag, grp -> name -> str
+//					, __FILE__, __LINE__);
 			g_ptr_array_add(info -> groups, grp);
 			g_hash_table_insert(info -> groups_ht, grp -> gid, grp);
 		}

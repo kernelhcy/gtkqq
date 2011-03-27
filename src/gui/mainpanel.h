@@ -34,7 +34,7 @@ struct _QQMainPanel{
 	GtkWidget *contact_tree;
 	GtkWidget *grp_list;
 	GtkWidget *recent_list;
-	GPtrArray *tree_maps;		//the maps between buddys and rows
+	GHashTable *tree_maps;		//the maps between buddys and rows
 
 	GtkWidget *menubar;
 

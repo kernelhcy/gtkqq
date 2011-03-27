@@ -4,6 +4,7 @@
 #include <mainpanel.h>
 #include <qq.h>
 #include <config.h>
+#include <stdlib.h>
 
 /*
  * The main event loop context of Gtk.
@@ -142,7 +143,12 @@ void qq_mainwindow_show_mainpanel(GtkWidget *win)
 
 static gboolean gtk_idle(gpointer data)
 {
+	//
+	// Quit other event loop.
+	//
+	qq_finalize(info);
 	gtk_main_quit();
+	exit(0);
 }
 static void logout_cb(CallBackResult re, gpointer redata, gpointer usrdata)
 {
