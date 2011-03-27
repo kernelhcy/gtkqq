@@ -35,9 +35,6 @@ static void done_login()
 	gchar icondir[200];
 	g_sprintf(icondir, CONFIGDIR"%s/icons/", cfg -> me -> uin -> str);
 
-	if(cfg -> usr_cfg -> icondir == NULL){
-		cfg -> usr_cfg -> icondir = g_string_new(icondir);
-	}
 	if(!g_file_test(icondir, G_FILE_TEST_EXISTS)){
 		if(-1 == g_mkdir(icondir, 0777)){
 			g_warning("create icons dir %s error!(%s, %s)"
@@ -48,6 +45,16 @@ static void done_login()
 
 	//save the face image to file
 	qq_save_face_img(info -> me, icondir);
+}
+//
+// Just a test.
+//
+//
+static void callback(CallBackResult re, gpointer redata
+				, gpointer usrdata)
+{
+	g_printf("Call back: %s\n", (gchar *)redata);
+	return;
 }
 //
 // A state mechine
@@ -144,12 +151,6 @@ static void qq_loginpanel_login_sm(gpointer data)
 			// Create the user configure.
 			//
 			cfg -> me = info -> me;
-			if(cfg -> usr_cfg == NULL){
-				//just quit
-				g_warning("create user configure error."
-						"(%s,%d)", __FILE__, __LINE__);
-				exit(0);
-			}
 			qq_get_my_info(info, login_cb, usrdata);
 			break;
 		case CB_WRONGPASSWD:
@@ -206,6 +207,8 @@ static void qq_loginpanel_login_sm(gpointer data)
 		g_debug("Login done! Go to main panel.(%s, %d)"
 				, __FILE__, __LINE__);
 		qq_mainwindow_show_mainpanel(w);
+		g_debug("Start poll........(%s, %d)", __FILE__, __LINE__);
+		qq_start_poll(info, callback, NULL);
 		break;
 	case LS_ERROR:
 	case LS_UNKNOWN:

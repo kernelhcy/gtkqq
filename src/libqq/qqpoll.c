@@ -99,7 +99,7 @@ again:
 	json_t *val = json_find_first_label_all(json, "raw_content");
 	if(val != NULL){
 		GString *vs = g_string_new(NULL);
-		ucs4toutf8(vs, val -> text);
+		//ucs4toutf8(vs, val -> text);
 		if(cb != NULL){
 			cb(CB_SUCCESS, vs, usrdata);
 		}
