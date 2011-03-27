@@ -309,7 +309,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 	panel -> passwd = qq_loginpanel_get_passwd(panel);
 	panel -> status = qq_loginpanel_get_status(panel);
 	//create the user config
-	qq_userconfig_new(cfg, panel -> uin);
+	//qq_userconfig_new(cfg, panel -> uin);
 
 	//start the login state mechine
 	panel -> login_state = LS_CHECK_VC;
