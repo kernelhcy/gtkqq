@@ -65,14 +65,14 @@ AC_ARG_ENABLE(debug,
 #			] ,
 #			)
 # checks for gtk+2.0
-PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.16], [
+PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.1], [
 			AC_DEFINE(USE_GTK, 1, [Use GTK])
 			AC_SUBST(GTK_CFLAGS)
 			AC_SUBST(GTK_LIBS)
 			] ,
 			)
 # checks for glib2.0
-PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.16], [
+PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.1], [
 			AC_DEFINE(USE_GLIB, 1, [Use GLIB])
 			AC_SUBST(GLIB_CFLAGS)
 			AC_SUBST(GLIB_LIBS)
@@ -170,11 +170,11 @@ PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
 #])
 
 PKG_CHECK_MODULES(GLIB2, [
-        glib-2.0 >= 2.14
+        glib-2.0 >= 2.1
 ])
 
 PKG_CHECK_MODULES(GOBJECT2, [
-        gobject-2.0 >= 2.14
+        gobject-2.0 >= 2.1
 ])
 
 # Checks for typedefs, structures, and compiler characteristics.
