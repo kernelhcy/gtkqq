@@ -5,7 +5,8 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
 	  -I$(srcdir)/.\
 	  $(GTK_CFLAGS)\
 	  -DIMGDIR=\"$(pkgdatadir)/misc/\"\
-          -DCONFIGDIR=\"$(HOME)/.gtkqq/\"
+      -DCONFIGDIR=\"$(HOME)/.gtkqq/\"\
+      -Wall -Werror
 
 bin_PROGRAMS=gtkqq
 gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la

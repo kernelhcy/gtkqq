@@ -1,13 +1,12 @@
 #                                               -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 
-AC_PREREQ([2.63])
+AC_PREREQ([2.6])
 AC_INIT([GtkQQ], [0.1], [huangcongyu2006@gmail.com])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
-AM_INIT_AUTOMAKE([foreign -Wall -Werror silent-rules])
+AM_INIT_AUTOMAKE([-Wall -Werror])
 AC_CONFIG_HEADERS([config.h])
-LT_INIT(disable-static)
 
 AM_INIT_AUTOMAKE
 
@@ -17,7 +16,7 @@ AM_PROG_CC_C_O
 AC_PROG_INSTALL
 
 # libtools
-AC_PROG_RANLIB
+LT_INIT
 AC_PROG_LIBTOOL
 
 #gettext
@@ -29,11 +28,11 @@ AC_PROG_LIBTOOL
 #AC_DEFINE([GETTEXT_PACKAGE], [PACKAGE_TARNAME], [Define to the gettext\
 #package name.])
 
-AC_CHECK_LIB([notify], [notify_init])
+#AC_CHECK_LIB([notify], [notify_init])
 
-AC_CHECK_LIB([ssl], [SSL_library_init])
+#AC_CHECK_LIB([ssl], [SSL_library_init])
 
-AC_CHECK_LIB([crypto], [RSA_new])
+#AC_CHECK_LIB([crypto], [RSA_new])
 
 AC_CHECK_LIB([pthread], [pthread_create])
 
@@ -47,17 +46,17 @@ AC_ARG_ENABLE(debug,
         [ --enable-debug turn on debug],
         CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb")
 
-AC_ARG_ENABLE(libnotify,
-              AS_HELP_STRING([--enable-libnotify],
-                             [Enable libnotify support (used to show message\
-			      notifications) @<:@default=yes@:>@]),,
-              enable_libnotify="yes")
+#AC_ARG_ENABLE(libnotify,
+#              AS_HELP_STRING([--enable-libnotify],
+#                             [Enable libnotify support (used to show message\
+#			      notifications) @<:@default=yes@:>@]),,
+#              enable_libnotify="yes")
 
-AC_ARG_ENABLE(gst,
-              AS_HELP_STRING([--enable-gst],
-                             [Enable gstreamer support (used to play alert\
-			      sounds) @<:@default=yes@:>@]),,
-              enable_gst="yes")
+#AC_ARG_ENABLE(gst,
+#              AS_HELP_STRING([--enable-gst],
+#                             [Enable gstreamer support (used to play alert\
+#			      sounds) @<:@default=yes@:>@]),,
+#              enable_gst="yes")
 # checks for zlib
 #PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
 #			AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
@@ -88,11 +87,11 @@ PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
 		] , )
 
 # checks for libxml2
-PKG_CHECK_MODULES(LIBXML, [libxml-2.0], [
-			AC_DEFINE(USE_LIBXML, 1, [Use LIBXML])
-			AC_SUBST(LIBXML_CFLAGS)
-			AC_SUBST(LIBXML_LIBS)
-		] , )
+#PKG_CHECK_MODULES(LIBXML, [libxml-2.0], [
+#			AC_DEFINE(USE_LIBXML, 1, [Use LIBXML])
+#			AC_SUBST(LIBXML_CFLAGS)
+#			AC_SUBST(LIBXML_LIBS)
+#		] , )
 
 # checks for libsqlite3
 #PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
@@ -109,62 +108,43 @@ PKG_CHECK_MODULES(LIBXML, [libxml-2.0], [
 #			exit -1
 #			 ])
 
-# checks for libxss
-if test "x$enable_screensaver" = "xyes" ;then
-PKG_CHECK_MODULES(LIBXSS, [xscrnsaver], [
-			AC_DEFINE(USE_LIBXSS, 1, [Use XScreenSaver\
-						  for idleness])
-			AC_SUBST(LIBXSS_CFLAGS)
-			AC_SUBST(LIBXSS_LIBS)
-		] , [
-			echo ""
-			echo "configure: error: "
-			echo "XScreenSaver development headers not found."
-			echo "Use --disable-screensaver if you do not need it."
-			echo "If you're using debian or ubuntu,install it by"
-			echo "\"sudo apt-get install libxss-dev\""
-			echo ""
-			exit -1
-			 ])
-fi
-
 # checks for libnotify
-if test "x$enable_libnotify" = "xyes"; then
-PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
-			AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
-						     notification])
-			AC_SUBST(LIBNOTIFY_CFLAGS)
-			AC_SUBST(LIBNOTIFY_LIBS)
-		] , [
-			echo ""
-			echo "configure: error: "
-			echo "libnotify development headers not found."
-			echo "Use --disable-libnotify if you do not need it."
-			echo "If you're using debian or ubuntu,install it by "
-			echo "\"sudo apt-get install libnotify-dev\""
-			echo ""
-			exit -1
-			])
-fi
+#if test "x$enable_libnotify" = "xyes"; then
+#PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
+#			AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
+#						     notification])
+#			AC_SUBST(LIBNOTIFY_CFLAGS)
+#			AC_SUBST(LIBNOTIFY_LIBS)
+#		] , [
+#			echo ""
+#			echo "configure: error: "
+#			echo "libnotify development headers not found."
+#			echo "Use --disable-libnotify if you do not need it."
+#			echo "If you're using debian or ubuntu,install it by "
+#			echo "\"sudo apt-get install libnotify-dev\""
+#			echo ""
+#			exit -1
+#			])
+#fi
 
 # checks for gstreamer-0.10
-if test "x$enable_gst" = "xyes"; then
-PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10], [
-			AC_DEFINE(USE_GSTREAMER, 1, [Use Gstreamer for\
-						     playing sound])
-			AC_SUBST(GSTREAMER_CFLAGS)
-			AC_SUBST(GSTREAMER_LIBS)
-		] , [
-			echo ""
-			echo "configure: error: "
-			echo "gstreamer development headers not found."
-			echo "Use --disable-gst if you do not need it."
-			echo "If you're using debian or ubuntu,install it by "
-			echo "\"sudo apt-get install libgstreamer0.10-dev\""
-			echo ""
-			exit -1
-			])
-fi
+#if test "x$enable_gst" = "xyes"; then
+#PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10], [
+#			AC_DEFINE(USE_GSTREAMER, 1, [Use Gstreamer for\
+#						     playing sound])
+#			AC_SUBST(GSTREAMER_CFLAGS)
+#			AC_SUBST(GSTREAMER_LIBS)
+#		] , [
+#			echo ""
+#			echo "configure: error: "
+#			echo "gstreamer development headers not found."
+#			echo "Use --disable-gst if you do not need it."
+#			echo "If you're using debian or ubuntu,install it by "
+#			echo "\"sudo apt-get install libgstreamer0.10-dev\""
+#			echo ""
+#			exit -1
+#			])
+#fi
 
 # checks for networkmanager
 #if test "x$enable_nm" = "xyes"; then
@@ -185,9 +165,9 @@ fi
 #			])
 #fi
 
-PKG_CHECK_MODULES(LIBSSL, [
-		openssl
-])
+#PKG_CHECK_MODULES(LIBSSL, [
+#		openssl
+#])
 
 PKG_CHECK_MODULES(GLIB2, [
         glib-2.0 >= 2.14
@@ -221,7 +201,7 @@ AC_CONFIG_FILES([Makefile
 AC_OUTPUT
 
 echo
-echo Use libnotify................. : $enable_libnotify
-echo Use gstreamer0.10............. : $enable_gst
+#echo Use libnotify................. : $enable_libnotify
+#echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo
