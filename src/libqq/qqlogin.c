@@ -592,16 +592,6 @@ error:
 	return ret;
 }
 
-/*
- * do_init function parameter struct
- */
-struct InitParam{
-	QQCallBack cb;
-	gpointer usrdata;
-	QQInfo *info;
-	const gchar *passwd;
-};
-
 
 extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
 				const gchar *path, const gchar *fname);
@@ -609,22 +599,12 @@ extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext,
  * Do the real login.
  * Run in the main event loop.
  */
-static gboolean do_login(gpointer data)
+static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
+		        , const gchar *status, GError **err)
 {
-	if(data == NULL){
-		return FALSE;
-	}
-	QQCallBack cb = ((struct InitParam *)data) -> cb;
-	QQInfo *info = ((struct InitParam *)data) -> info;
-	gpointer usrdata = ((struct InitParam *)data) -> usrdata;
-	const gchar *passwd = ((struct InitParam *)data) -> passwd;
-
 	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
 	if(get_version(info) == -1){
-		if(cb != NULL){
-			cb(CB_ERROR, "Get version error.", usrdata);
-		}
-		return FALSE;
+		return -1;
 	}
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
@@ -634,76 +614,54 @@ static gboolean do_login(gpointer data)
 	gint ret = get_ptcz_skey(info, md5 -> str);
 	if(ret != 0){
 		g_string_free(md5, TRUE);
-		CallBackResult cbr;
 		const gchar * msg;
 		switch(ret)
 		{
 		case 1:
-			cbr = CB_ERROR;
 			msg = "System busy! Please try again.";
 			break;
 		case 2:
-			cbr = CB_ERROR;
 			msg = "Out of date QQ number.";
 			break;
 		case 3:
 		case 6:
-			cbr = CB_WRONGPASSWD;
 			msg = "Wrong password.";
 			break;
 		case 4:
-			cbr = CB_WRONGVC;
 			msg = "Wrong verify code.";
 			break;
 		case 5:
-			cbr = CB_ERROR;
 			msg = "Verify failed.";
 			break;
 		default:
-			cbr = CB_ERROR;
 			msg = "Error occured! Please try again.";
 			break;
 		}
-		if(cb != NULL){
-			cb(cbr, (gpointer)msg, usrdata);
-		}
-		return FALSE;
+		return -1;
 	}
 	g_string_free(md5, TRUE);
 
 	g_debug("Get psessionid...(%s, %d)", __FILE__, __LINE__);
 	if(get_psessionid(info) == -1){
-		if(cb != NULL){
-			cb(CB_ERROR, "Get psession error.", usrdata);
-		}
-		return FALSE;
+		return -1;
 	}
 
 	g_debug("Initial done.");
 	g_slice_free(struct InitParam, data);
-	if(cb != NULL){
-		cb(CB_SUCCESS, "LOGIN", usrdata);
-	}
-	return FALSE;
+	return 0;
 }
 
-void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		, const gchar *status , QQCallBack cb, gpointer usrdata)
+gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
+		        , const gchar *status, GError **err)
 {
 	if(info == NULL){
 		g_warning("info == NULL. (%s, %d)", __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL", usrdata);
-		}
-		return;
+		return -1;
 	}
 	if(uin == NULL || passwd == NULL || strlen(uin) == 0){
 		g_warning("uin or passwd == NULL.(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "uin or password == NULL", usrdata);
-		}
-		return;
+		return -2;
 	}
 
 	if(info -> me -> uin != NULL){
@@ -721,37 +679,16 @@ void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		info -> me -> status = g_string_new(NULL);
 	}
 
-	GSource *src = g_idle_source_new();
-	struct InitParam *par = g_slice_new(struct InitParam);
-	par -> cb = cb;
-	par -> info = info;
-	par -> passwd = passwd;
-	par -> usrdata = usrdata;
-	g_source_set_callback(src, (GSourceFunc)do_login, (gpointer)par, NULL);
-	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach login source error.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-	g_source_unref(src);
+    return do_login(info, uin, passwd, status, err);
 }
 
-static gboolean do_logout(gpointer data)
+static gint do_logout(QQInfo *info, GError **err);
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		return FALSE;
-	}
-
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
+    gint ret_code = 0;
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
 	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
 		g_warning("Need psessionid !!(%s, %d)", __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, NULL, usrdata);
-		}
-		return FALSE;
+		return -1;
 	}
 
 	gchar params[300];
@@ -772,13 +709,8 @@ static gboolean do_logout(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-						, usrdata);
-		}
 		request_del(req);
-		g_free(par);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -793,9 +725,7 @@ static gboolean do_logout(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -807,6 +737,7 @@ static gboolean do_logout(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 
@@ -816,9 +747,7 @@ static gboolean do_logout(gpointer data)
 	if(retcode != NULL && result != NULL){
 		if(g_strstr_len(result -> child -> text, -1, "ok") != NULL){
 			g_debug("Logout ok!(%s, %d)", __FILE__, __LINE__);
-			if(cb != NULL){
-				cb(CB_SUCCESS, "LOGOUT", usrdata);
-			}
+            ret_code = 0;
 		}
 	}else{
 		g_debug("(%s, %d)%s", __FILE__, __LINE__, rps -> msg -> str);
@@ -828,52 +757,26 @@ static gboolean do_logout(gpointer data)
 error:
 	request_del(req);
 	response_del(rps);
-	g_free(par);
-	return FALSE;
+	return ret_code;
 }
 
 
-void qq_logout(QQInfo *info, QQCallBack cb, gpointer usrdata)
+gint qq_logout(QQInfo *info, GError **err);
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_logout", usrdata);
-		}
-		return;
+		return -1;
 	}
-	GSource *src = g_idle_source_new();
-	DoFuncParam *par = g_malloc(sizeof(*par));
-	par -> info = info;
-	par -> cb = cb;
-	par -> usrdata = usrdata;
-	g_source_set_callback(src, (GSourceFunc)do_logout, (gpointer)par, NULL);
-	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach logout source error.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-	g_source_unref(src);
-	return;
+	return do_logout(info, err);;
 }
 
 /*
  * Check if we need the verify code.
  */
-static gboolean do_check_verifycode(gpointer data)
+static gint do_check_verifycode(QQInfo *info, const gchar *uin, GError **err)
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		return FALSE;
-	}
-
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
 
 	if(check_verify_code(info) == -1){
-		if(cb != NULL){
-			cb(CB_ERROR, "Check verify code error.", usrdata);
-		}
-		return FALSE;
+		return -1;
 	}
 
 	if(info -> need_vcimage){
@@ -882,44 +785,24 @@ static gboolean do_check_verifycode(gpointer data)
 		get_vc_image(info);
 	}
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "CHECK_VERIFY_CODE", usrdata);
-	}
-	return FALSE;
+	return 0;
 }
 
-void qq_check_verifycode(QQInfo *info, const gchar *uin, QQCallBack cb
-			, gpointer usrdata)
+gint qq_check_verifycode(QQInfo *info, const gchar *uin, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_check_verifycodet"
-						, usrdata);
-		}
-		return;
+		return -1;
 	}
 
 	if(uin == NULL){
 		g_warning("Need uin in check_verifycode!(%s, %d)", __FILE__
 				, __LINE__);
-		return;
+		return -1;
 	}
 	if(info -> me -> uin != NULL){
 		g_string_free(info -> me -> uin, TRUE);
 	}
 	info -> me -> uin = g_string_new(uin);
 
-	GSource *src = g_idle_source_new();
-	DoFuncParam *par = g_malloc(sizeof(*par));
-	par -> info = info;
-	par -> cb = cb;
-	par -> usrdata = usrdata;
-	g_source_set_callback(src, (GSourceFunc)do_check_verifycode
-					, (gpointer)par, NULL);
-	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach logout source error.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-	g_source_unref(src);
-	return;
+	return do_check_verifycode(info, uin, err);
 }

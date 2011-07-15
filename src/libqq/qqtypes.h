@@ -5,31 +5,6 @@
 #define SL g_debug("(%s, %d)", __FILE__, __LINE__);
 
 /*
- * Define the result of the function
- */
-typedef enum{
-	CB_SUCCESS = 1,	//success
-	CB_ERROR,	//error occured
-	CB_WRONGPASSWD,	//wrong password
-	CB_WRONGVC,	//wrong verify code
-	CB_NETWORKERR,	//network error
-
-	/*
-	 * Poll type
-	 */
-	CB_STATUSCHG,	//status change
-	CB_BUDDYMSG,	//buddy message
-	cB_GROUPMSG,	//group message
-
-	CB_UNKNOWN	//unknown result
-}CallBackResult;
-/*
- * Callback function of the functions below.
- */
-typedef void (*QQCallBack)(CallBackResult re, gpointer redata
-					, gpointer usrdata);
-
-/*
  * The data structures of gtkqq
  */
 

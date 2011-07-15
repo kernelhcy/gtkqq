@@ -10,12 +10,12 @@
 // 	**This function MUST be called before any other function!**
 // return QQInfo instance if success or NULL if failed
 //
-QQInfo* qq_init(QQCallBack cb, gpointer usrdata);
+QQInfo* qq_init(GError **err);
 //
 // Finalze the event loops.
 // Called before the program exits.
 //
-void qq_finalize(QQInfo *info);
+void qq_finalize(QQInfo *info, GError **err);
 
 //
 // Check if we need the verify code.
@@ -23,8 +23,7 @@ void qq_finalize(QQInfo *info);
 // If we need the verify code, after this function, the verify code image
 // is stored in info -> vc_image_data.
 //
-void qq_check_verifycode(QQInfo *info, const gchar *uin, QQCallBack cb
-						, gpointer usrdata);
+gint qq_check_verifycode(QQInfo *info, const gchar *uin, GError **err);
 
 //
 // Login
@@ -37,90 +36,87 @@ void qq_check_verifycode(QQInfo *info, const gchar *uin, QQCallBack cb
 // If success, the callback's redata is "LOGIN"
 // or, it is the failed information string.
 //
-void qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		, const gchar *status , QQCallBack cb, gpointer usrdata);
+gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
+		                    , const gchar *status, GError **err);
 
 //
 // Logout
 // If success, the callback's redata is "LOGOUT"
 // or, it is the failed information string.
 //
-void qq_logout(QQInfo *info, QQCallBack cb, gpointer usrdata);
+gint qq_logout(QQInfo *info, GError **err);
 
 //
 // Send message
 // This function will return immediately after called. After the 
 // message has been send, cb will be called.
 //
-void qq_sendmsg(QQMsg *msg, QQCallBack cb, gpointer usrdata);
-GString* get_pwvc_md5(const gchar *pwd, const gchar *vc);
+gint qq_sendmsg(QQMsg *msg, GError **err);
+GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
 
 //
 // Get information of myself
 // If success, the callback's redata is "GET_MY_INFO"
 // or, it is the failed information string.
 //
-void qq_get_my_info(QQInfo *info, QQCallBack cb, gpointer usrdata);
+gint qq_get_my_info(QQInfo *info, GError **err);
 //
 // Get all my friends' information.
 // Just simple information.
 // If success, the callback's redata is "GET_MY_FRIENDS"
 // or, it is the failed information string.
 //
-void qq_get_my_friends(QQInfo *info, QQCallBack cb, gpointer usrdata);
+gint qq_get_my_friends(QQInfo *info, GError **err);
 //
 // Get the group name list mask.
 // If success, the callback's redata is "GET_GROUP_NAME_LIST_MASK"
 // or, it is the failed information string.
 //
-void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb
-						, gpointer usrdata);
+gint qq_get_group_name_list_mask(QQInfo *info, GError **err);
+
 //
 // Get the online buddies
 //If success, the callback's redata is "GET_ONLINE_BUDDIES"
 // or, it is the failed information string.
 //
-void qq_get_online_buddies(QQInfo *info, QQCallBack cb, gpointer usrdata);
+gint qq_get_online_buddies(QQInfo *info, GError **err);
 //
 // Get the recent contact.
 // If success, the callback's redata is "GET_RECENT_CONTACT"
 //
-void qq_get_recent_contact(QQInfo *info, QQCallBack cb, gpointer usrdata);
+gint qq_get_recent_contact(QQInfo *info, GError **err);
 
 //
 // Get the long nick of bdy.
 // If success, the callback's redata is "GET_SINGLE_LONG_NICK".
 // or, it is the failed information string.
 //
-void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb
-						, gpointer usrdata);
+gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
 
 //
 // Start the poll thread to poll the message form the server.
 //
-void qq_start_poll(QQInfo *info, QQCallBack cb, gpointer usrdata);
+gint qq_start_poll(QQInfo *info, GError **err);
 
 //
 // Send message to friends and group
 //
-void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb
-						, gpointer usrdata);
-void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb
-						, gpointer usrdata);
+gint qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, GError **err);
+gint qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, GError **err);
 
 //
 // Get the face image of uin
 // The redata of the cb function is QQFaceImg struct which contains
 // the information of the face image.
 //
-void qq_get_face_img(QQInfo *info, const gchar *uin, QQCallBack cb
-				, gpointer usrdata);
+gint qq_get_face_img(QQInfo *info, const gchar *uin, GError **err);
 //
 // Save face image to file path/uin.type
 //
-gint qq_save_face_img(QQBuddy *bdy, const gchar *path);
+gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err);
 //
 // Lookup the face image file name.
 //
-const gchar* qq_lookup_image_name(QQInfo *info, const gchar *uin);
+const gchar* qq_lookup_image_name(QQInfo *info, const gchar *uin 
+                    , GError **err);
 #endif
