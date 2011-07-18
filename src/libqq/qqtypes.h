@@ -46,21 +46,22 @@ struct _QQInfo{
 	GMainLoop *pollloop;
 	GMainContext *pollctx;	
 
-	QQBuddy *me;			//myself
+	QQBuddy *me;			        //myself
 
-	GPtrArray *buddies;		//all friends;
+	GPtrArray *buddies;		        //all friends;
 	GHashTable *buddies_image_ht;	//face image file name 
-	GHashTable *buddies_ht; 	//buddies hash table by uin
-	GPtrArray *groups;		//all groups;
-	GHashTable *groups_ht;		//goups hash table by gid
-	GPtrArray *recentcons;		//the recenet contacts
-	GPtrArray *categories;		//all categories
+	GHashTable *buddies_ht; 	    //buddies hash table by uin
+	GPtrArray *groups;		        //all groups;
+	GHashTable *groups_ht;		    //goups hash table by gid
+	GPtrArray *recentcons;		    //the recenet contacts
+	GPtrArray *categories;		    //all categories
 
-	GString *verify_code;		//the verify code return from server
-	GString *vc_type;		//vc_type
-	gboolean need_vcimage;		//if we need get the verify code image
-	GString *vc_image_data;		//store the verify code image data
-	GString *vc_image_type;		//the verify code image file type
+	GString *verify_code;		    //the verify code return from server
+	GString *vc_type;		        //vc_type
+	gboolean need_vcimage;		    //if we need get the verify code image
+	GString *vc_image_data;		    //store the verify code image data
+	GString *vc_image_type;		    //the verify code image file type
+    gint vc_image_size;             //verify code image size
 	GString *ptvfsession;		
 
 	GString *version;
@@ -233,19 +234,6 @@ struct _QQRecentCon{
 QQRecentCon* qq_recentcon_new();
 void qq_recentcon_free(QQRecentCon *rc);
 
-
-/**
- * Used in the lib. Not public. 
- */
-
-/*
- * As the parameter of the do_xxxx functions.
- */
-typedef struct _DoFuncParam{
-	QQInfo *info;
-	QQCallBack cb;
-	gpointer usrdata;
-}DoFuncParam;
 
 /*
  * Get the milliseconds of now.

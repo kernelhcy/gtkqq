@@ -6,46 +6,20 @@
 #include <qqhosts.h>
 #include <json.h>
 #include <string.h>
-/*
- * send message to friends or groups.
- */
 
-typedef struct {
-	QQInfo *info;
-	QQCallBack cb;
-	gpointer usrdata;
-	QQMsg *msg;
-
-	/*
-	 * 1 : to buddy;
-	 * 2 : to group
-	 */
-	gint type;
-}ParStruct;
-
-static gboolean do_sendmsg(gpointer data)
+static gint do_send_msg(QQInfo *info, QQMsg *msg, gint type, GError **err)
 {
-	ParStruct *par = (ParStruct*)data;
-	if(par == NULL){
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	QQMsg *msg = par -> msg;
 	QQBuddy *bdy = msg -> bdy;
-	QQGroup *grp = msg -> grp;
 	GString *uin = NULL;
-	gint t = par -> type;
-	gpointer usrdata = par -> usrdata;
-	g_slice_free(ParStruct, par);
 
-	uin = t == 1 ? msg -> bdy -> uin : msg -> grp -> gid;
+	uin = type == 1 ? msg -> bdy -> uin : msg -> grp -> gid;
 
+    gint ret_code = 0;
 	gchar params[3000];
 	g_debug("Send msg to %s!(%s, %d)", uin -> str
 			, __FILE__, __LINE__);
 	const gchar *path;
-	path = t == 1 ? MSGFRIPATH : MSGGRPPATH;
+	path = type == 1 ? MSGFRIPATH : MSGGRPPATH;
 
 	Request *req = request_new();
 	Response *rps = NULL;
@@ -60,7 +34,7 @@ static gboolean do_sendmsg(gpointer data)
 			"application/x-www-form-urlencoded");
 	request_add_header(req, "Referer"
 			, "http://"MSGHOST"/proxy.html?v=20101025002");
-	if(t == 1){
+	if(type == 1){
 		g_snprintf(params, 3000, "r={\"to\":\"%s\",\"face\":%s,"
 				"\"content\":\"[\\\"%s\\\", [\\\"font\\\","
 				"{\\\"name\\\":\\\"%s\\\",\\\"size\\\":"
@@ -103,12 +77,8 @@ static gboolean do_sendmsg(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-					, usrdata);
-		}
 		request_del(req);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -124,9 +94,7 @@ static gboolean do_sendmsg(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -137,9 +105,6 @@ static gboolean do_sendmsg(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "JSON syntax error.!", usrdata);
-		}
 	}
 
 	json_t *val = json_find_first_label_all(json, "result");
@@ -157,51 +122,26 @@ static gboolean do_sendmsg(gpointer data)
 error:
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
-/*
- * Attach the source to the event loop context
- */
-static void qq_send_msg(QQInfo *info, QQMsg *msg, QQCallBack cb
-			, gpointer usrdata, gint t)
-{
-	GSource *src = g_idle_source_new();
-	ParStruct *par = g_slice_new(ParStruct);
-	par -> info = info;
-	par -> cb = cb;
-	par -> msg = msg;
-	par -> type = t;
-	par -> usrdata = usrdata;
-	g_source_set_callback(src, &do_sendmsg, (gpointer)par, NULL);
-	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach logout source error.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-	g_debug("Add source success. (%s, %d)", __FILE__, __LINE__);
-	g_source_unref(src);
-}
-
-void qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, QQCallBack cb
-					, gpointer usrdata)
+gint qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, GError **err)
 {
 	if(info == NULL || msg == NULL){
 		g_warning("info or msg == NULL. (%s, %d)", __FILE__
 				, __LINE__);
-		return;
+		return -1;
 	}
-	qq_send_msg(info, msg, cb, usrdata, 1);	//buddy
-	return;
+
+    return do_send_msg(info, msg, 1, err); //buddy
 }
-void qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, QQCallBack cb
-					, gpointer usrdata)
+gint qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, GError **err)
 {
 	if(info == NULL || msg == NULL){
 		g_warning("info or msg == NULL. (%s, %d)", __FILE__
 				, __LINE__);
-		return;
+		return -1;
 	}
 	
-	qq_send_msg(info, msg, cb, usrdata, 2);	//group
-	return;
+    return do_send_msg(info, msg, 0, err);  //group
 }

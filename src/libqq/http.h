@@ -11,19 +11,19 @@
  * Request
  *
  * Request = Request-Line
- *		*(( general-header | request-header | entity-header ) CRLF)
- *		CRLF
- *		[ message-body ]
+ *        *(( general-header | request-header | entity-header ) CRLF)
+ *        CRLF
+ *        [ message-body ]
  * Request-Line = Method SP Request-URI SP HTTP-Version CRLF
  */
 typedef struct
 {
-	GString *method;
-	GString *uri;
-	GString *version;
-	
-	GTree *headers;		//the headers and values.
-	GString *msg;		//message
+    GString *method;
+    GString *uri;
+    GString *version;
+    
+    GTree *headers;         //the headers and values.
+    GString *msg;           //message
 }Request;
 
 
@@ -31,21 +31,21 @@ typedef struct
  * Response
  * 
  * Response = Status-Line ; Section 6.1
- *		*(( general-header ; Section 4.5
- *		| response-header ; Section 6.2
- *		| entity-header ) CRLF) ; Section 7.1
- *		CRLF
- *		[ message-body ] ; Section 7.2
+ *        *(( general-header ; Section 4.5
+ *        | response-header ; Section 6.2
+ *        | entity-header ) CRLF) ; Section 7.1
+ *        CRLF
+ *        [ message-body ] ; Section 7.2
  * Status-Line = HTTP-Version SP Status-Code SP Reason-Phrase CRLF
  */
 typedef struct
 {
-	GString* version;
-	GString* status;
-	GString* reason;
-	
-	GTree *headers;		//the headers and values.
-	GString *msg;		//message
+    GString* version;
+    GString* status;
+    GString* reason;
+    
+    GTree *headers;         //the headers and values.
+    GString *msg;           //message
 }Response;
 
 /*
@@ -63,7 +63,7 @@ void request_set_method(Request* r, const gchar* m);
 void request_set_uri(Request* r, const gchar* uri);
 void request_set_version(Request* r, const gchar* v);
 void request_add_header(Request* r, const gchar* name
-				, const gchar* value);
+                        , const gchar* value);
 
 /*
  * Set the some headers to simulate the explorer
@@ -79,7 +79,7 @@ GString* request_get_header(Request* r, const GString* name);
  * Append message body to the request.
  */
 void request_append_msg(Request* r, const gchar* msg
-				, gsize len);
+                            , gsize len);
 
 
 /*******************************************/

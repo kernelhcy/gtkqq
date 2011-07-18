@@ -1,5 +1,3 @@
-#ifndef __LIBQQ_QQ_MANAGEINFO_H
-#define __LIBQQ_QQ_MANAGEINFO_H
 /*
  * Manage the information of the user
  *
@@ -24,32 +22,17 @@
 #include <qqhosts.h>
 #include <unicode.h>
 #include <string.h>
+#include <glib/gprintf.h>
+#include <stdlib.h>
 
-struct GetLNickPar{
-	QQInfo *info;
-	QQCallBack cb;
-	gpointer usrdata;
-	QQBuddy *bdy;
-};
-static gboolean do_get_single_long_nick(gpointer data)
+static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 {
-	struct GetLNickPar *par = (struct GetLNickPar*)data;
-	if(par == NULL){
-		g_warning("par == NULL in do_get_single_long_nick.(%s, %d)"
-				, __FILE__, __LINE__);
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
-	QQBuddy *bdy = par -> bdy;
-	g_slice_free(struct GetLNickPar, par);
-
 	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
 		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
-		return FALSE;
+		return -1;
 	}
 
+    gint ret_code = 0;
 	gchar params[300];
 	g_debug("Get single long nick.(%s, %d)", __FILE__, __LINE__);
 
@@ -57,7 +40,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LNICKPATH"?tuin=%s&vfwebqq=%s&t=%lld"
+	g_sprintf(params, LNICKPATH"?tuin=%s&vfwebqq=%s&t=%ld"
 			, bdy -> uin -> str
 			, info -> vfwebqq -> str, get_now_millisecond());
 	request_set_uri(req, params);
@@ -73,12 +56,8 @@ static gboolean do_get_single_long_nick(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!", usrdata);
-		}
 		request_del(req);
-		g_free(par);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -94,9 +73,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -108,6 +85,7 @@ static gboolean do_get_single_long_nick(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 	json_t *val = json_find_first_label_all(json, "lnick");
@@ -125,35 +103,21 @@ static gboolean do_get_single_long_nick(gpointer data)
 		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
 	}
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "GET_SINGLE_LONG_NICK", usrdata);
-	}
-
 error:
 	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
-static gboolean do_get_online_buddies(gpointer data)
+static gint do_get_online_buddies(QQInfo *info, GError **err)
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		g_warning("par == NULL in do_get_online_buddies.(%s, %d)"
-				, __FILE__, __LINE__);
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
-	g_free(par);
-	
 	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
 		g_warning("Need psessionid!!(%s, %d)", __FILE__, __LINE__);
-		return FALSE;
+		return -1;
 	}
 
+    gint ret_code = -1;
 	gchar params[300];
 	g_debug("Get online buddies!(%s, %d)", __FILE__, __LINE__);
 
@@ -161,7 +125,7 @@ static gboolean do_get_online_buddies(gpointer data)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, ONLINEPATH"?clientid=%s&psessionid=%s&t=%lld"
+	g_sprintf(params, ONLINEPATH"?clientid=%s&psessionid=%s&t=%ld"
 			, info -> clientid -> str
 			, info -> psessionid -> str, get_now_millisecond());
 	request_set_uri(req, params);
@@ -176,13 +140,8 @@ static gboolean do_get_online_buddies(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-					, usrdata);
-		}
 		request_del(req);
-		g_free(par);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -197,9 +156,7 @@ static gboolean do_get_online_buddies(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -211,6 +168,7 @@ static gboolean do_get_online_buddies(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 
@@ -220,8 +178,8 @@ static gboolean do_get_online_buddies(gpointer data)
 	if(val != NULL){
 		val = val -> child;
 		gint i;
-		json_t *cur, *tmp;
-		gchar *uin, *status, *client_type;
+		json_t *cur = NULL, *tmp = NULL;
+		gchar *uin = NULL, *status = NULL, *client_type = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "uin");	
 			if(tmp != NULL){
@@ -262,34 +220,21 @@ static gboolean do_get_online_buddies(gpointer data)
 		}
 	}
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "GET_ONLINE_BUDDIES", usrdata);
-	}
 error:
 	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
-static gboolean do_get_recent_contact(gpointer data)
+static gint do_get_recent_contact(QQInfo *info, GError **err)
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		g_warning("par == NULL in do_recent_contact.(%s, %d)"
-				, __FILE__, __LINE__);
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
-	g_free(par);
-
 	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
-		g_warning("Need vfwebqq!!(%s, %s)", __FILE__, __LINE__);
-		return FALSE;
+		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+		return -1;
 	}
 
+    gint ret_code = -1;
 	gchar params[300];
 	g_debug("Get recent contacts!(%s, %d)", __FILE__, __LINE__);
 
@@ -318,13 +263,8 @@ static gboolean do_get_recent_contact(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-						, usrdata);
-		}
 		request_del(req);
-		g_free(par);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -339,9 +279,7 @@ static gboolean do_get_recent_contact(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -353,6 +291,7 @@ static gboolean do_get_recent_contact(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 
@@ -364,7 +303,7 @@ static gboolean do_get_recent_contact(gpointer data)
 		gint ti;
 		char *endptr;
 		json_t *cur, *tmp;
-		gchar *uin, *type;
+		gchar *uin= NULL, *type = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "uin");	
 			if(tmp != NULL){
@@ -390,35 +329,22 @@ static gboolean do_get_recent_contact(gpointer data)
 		}
 	}
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "GET_RECENT_CONTACE", usrdata);
-	}
 error:
 	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
 
-static gboolean do_get_my_info(gpointer data)
+static gint do_get_my_info(QQInfo *info, GError **err)
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		g_warning("par == NULL in do_get_my_info.(%s, %d)", __FILE__
-				, __LINE__);
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
-	g_free(par);
-
 	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
 		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
-		return FALSE;
+		return -1;
 	}
 
+    gint ret_code = 0;
 	gchar params[500];
 	g_debug("Get my information!(%s, %d)", __FILE__, __LINE__);
 
@@ -428,7 +354,7 @@ static gboolean do_get_my_info(gpointer data)
 	request_set_version(req, "HTTP/1.1");
 
 	g_sprintf(params, GETMYINFO"?tuin=%s&verifysession=&code=&"
-			"vfwebqq=%s&t=%lld"
+			"vfwebqq=%s&t=%ld"
 			, info -> me -> uin -> str
 			, info -> vfwebqq -> str, get_now_millisecond());
 	request_set_uri(req, params);
@@ -443,13 +369,8 @@ static gboolean do_get_my_info(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-					, usrdata);
-		}
 		request_del(req);
-		g_free(par);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -464,9 +385,7 @@ static gboolean do_get_my_info(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -478,6 +397,7 @@ static gboolean do_get_my_info(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 
@@ -672,44 +592,24 @@ static gboolean do_get_my_info(gpointer data)
 		g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
 	}
 
-	/*
-	 * get long nick
-	 */
-	struct GetLNickPar *glnpar = g_slice_new(struct GetLNickPar);
-	glnpar -> info = info;
-	glnpar -> cb = cb;
-	glnpar -> usrdata = usrdata;
-	glnpar -> bdy = info -> me;
+    ret_code = do_get_single_long_nick(info, info -> me, err);
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "GET_MY_INFO", usrdata);
-	}
 error:
 	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
 
-static gboolean do_get_my_friends(gpointer data)
+static gint do_get_my_friends(QQInfo *info, GError **err)
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		g_warning("par == NULL in do_get_my_friends.(%s, %d)", __FILE__
-				, __LINE__);
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
-	g_free(par);
-
 	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
 		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
-		return FALSE;
+		return -1;
 	}
 
+    gint ret_code = -1;
 	gchar params[300];
 	g_debug("Get my friends!(%s, %d)", __FILE__, __LINE__);
 
@@ -738,13 +638,8 @@ static gboolean do_get_my_friends(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-						, usrdata);
-		}
 		request_del(req);
-		g_free(par);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -760,9 +655,7 @@ static gboolean do_get_my_friends(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -774,6 +667,7 @@ static gboolean do_get_my_friends(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 	
@@ -818,8 +712,8 @@ static gboolean do_get_my_friends(gpointer data)
 	val = json_find_first_label_all(json, "info");
 	if(val != NULL){
 		val = val -> child;
-		const gchar *uin, *nick, *face, *flag;
-		json_t *cur, *tmp;
+		const gchar *uin = NULL, *nick = NULL, *face = NULL, *flag = NULL;
+		json_t *cur = NULL, *tmp = NULL;
 		GString *ns;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "uin");
@@ -859,8 +753,8 @@ static gboolean do_get_my_friends(gpointer data)
 	val = json_find_first_label_all(json, "marknames");
 	if(val != NULL){
 		val = val -> child;
-		const gchar *uin, *markname;
-		json_t *cur, *tmp;
+		const gchar *uin = NULL, *markname = NULL;
+		json_t *cur = NULL, *tmp = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "uin");
 			if(tmp != NULL){
@@ -870,7 +764,6 @@ static gboolean do_get_my_friends(gpointer data)
 			if(tmp != NULL){
 				markname = tmp -> child -> text;
 			}
-			gint i;
 			QQBuddy *tmpb;
 			tmpb = qq_info_lookup_buddy(info, uin);
 			if(tmpb != NULL){
@@ -891,8 +784,8 @@ static gboolean do_get_my_friends(gpointer data)
 	val = json_find_first_label_all(json, "friends");
 	if(val != NULL){
 		val = val -> child;
-		const gchar *uin, *cate;
-		json_t *cur, *tmp;
+		const gchar *uin = NULL, *cate = NULL;
+		json_t *cur = NULL, *tmp = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "uin");
 			if(tmp != NULL){
@@ -904,8 +797,8 @@ static gboolean do_get_my_friends(gpointer data)
 			}
 
 			QQCategory *qc = NULL;
-			gint idx, i;
-			char *endptr;
+			gint idx = 0, i = 0;
+			char *endptr = NULL;
 			QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
 			if(bdy != NULL){
 				idx = strtol(cate, &endptr, 10);
@@ -932,34 +825,21 @@ static gboolean do_get_my_friends(gpointer data)
 		}
 	}
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "GET_MY_FRIENDS", usrdata);
-	}
 error:
 	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
-static gboolean do_get_group_name_list_mask(gpointer data)
+static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
 {
-	DoFuncParam *par = (DoFuncParam*)data;
-	if(par == NULL){
-		g_warning("par == NULL in do_get_my_friends.(%s, %d)", __FILE__
-				, __LINE__);
-		return FALSE;
-	}
-	QQInfo *info = par -> info;
-	QQCallBack cb = par -> cb;
-	gpointer usrdata = par -> usrdata;
-	g_free(par);
-
 	if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
 		g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
-		return FALSE;
+		return -1;
 	}
 
+    gint ret_code = 0;
 	gchar params[300];
 	g_debug("Get my group name list mask!(%s, %d)", __FILE__, __LINE__);
 
@@ -988,12 +868,8 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_NETWORKERR, "Can not connect to server!"
-					, usrdata);
-		}
 		request_del(req);
-		return FALSE;
+		return -1;
 	}
 
 	send_request(con, req);
@@ -1009,9 +885,7 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 		 */
 		g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
 				, retstatus, __FILE__, __LINE__);
-		if(cb != NULL){
-			cb(CB_ERROR, "Response error!", usrdata);
-		}
+        ret_code = -1;
 		goto error;
 	}
 
@@ -1023,6 +897,7 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
+        ret_code = -1;
 		goto error;
 	}
 	
@@ -1033,8 +908,8 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	val = json_find_first_label_all(json, "gnamelist");
 	if(val != NULL){
 		val = val -> child;
-		json_t *cur, *tmp;
-		gchar *gid, *code, *flag, *name;
+		json_t *cur = NULL, *tmp = NULL;
+		gchar *gid = NULL, *code = NULL, *flag = NULL, *name = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "gid");
 			if(tmp != NULL){
@@ -1074,8 +949,8 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	val = json_find_first_label_all(json, "gmasklist");
 	if(val != NULL){
 		val = val -> child;
-		json_t *cur, *tmp;
-		gchar *gid, *mask;
+		json_t *cur = NULL, *tmp = NULL;
+		gchar *gid = NULL, *mask = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "gid");
 			if(tmp != NULL){
@@ -1107,8 +982,8 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 	val = json_find_first_label_all(json, "gmarklist");
 	if(val != NULL){
 		val = val -> child;
-		json_t *cur, *tmp;
-		gchar *gid, *mark;
+		json_t *cur = NULL, *tmp = NULL;
+		gchar *gid = NULL, *mark = NULL;
 		for(cur = val -> child; cur != NULL; cur = cur -> next){
 			tmp = json_find_first_label(cur, "gid");
 			if(tmp != NULL){
@@ -1135,136 +1010,69 @@ static gboolean do_get_group_name_list_mask(gpointer data)
 		g_warning("No gmarklist find. (%s, %d)", __FILE__, __LINE__);
 	}
 
-	if(cb != NULL){
-		cb(CB_SUCCESS, "GET_GROUP_NAME_LIST_MASK", usrdata);
-	}
 error:
 	json_free_value(&json);
 	request_del(req);
 	response_del(rps);
-	return FALSE;
+	return ret_code;
 }
 
-/*
- * Dispatch the GSource.
- * @param info 
- * @param cb
- * @param func the callback function of the GSource.
- */
-static void dispatch(QQInfo *info, QQCallBack cb, gpointer usrdata
-				, GSourceFunc func)
-{
-	GSource *src = g_idle_source_new();
-	DoFuncParam *par = g_malloc(sizeof(*par));
-	par -> info = info;
-	par -> cb = cb;
-	par -> usrdata = usrdata;
-	g_source_set_callback(src, func, (gpointer)par, NULL);
-	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach logout source error.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-	g_source_unref(src);
-	return;
-}
-
-void qq_get_my_info(QQInfo *info, QQCallBack cb, gpointer usrdata)
+gint qq_get_my_info(QQInfo *info, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_my_info"
-					, usrdata);
-		}
-		return;
+		return -1;
 	}
 
-	dispatch(info, cb, usrdata, &do_get_my_info);
-	return;
+	return do_get_my_info(info, err);
 }
 
-void qq_get_my_friends(QQInfo *info, QQCallBack cb, gpointer usrdata)
+gint qq_get_my_friends(QQInfo *info, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_my_friends"
-					, usrdata);
-		}
-		return;
+		return -1;
 	}
 
-	dispatch(info, cb, usrdata, &do_get_my_friends);
-	return;
+	return do_get_my_friends(info, err);
 }
 
-void qq_get_group_name_list_mask(QQInfo *info, QQCallBack cb, gpointer usrdata)
+gint qq_get_group_name_list_mask(QQInfo *info, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_my_friends"
-					, usrdata);
-		}
-		return;
+		return -1;
 	}
 
-	dispatch(info, cb, usrdata, &do_get_group_name_list_mask);
-	return;
+	return do_get_group_name_list_mask(info, err);
 }
 
-void qq_get_online_buddies(QQInfo *info, QQCallBack cb, gpointer usrdata)
+gint qq_get_online_buddies(QQInfo *info, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_online_buddies"
-					, usrdata);
-		}
-		return;
+		return -1;
 	}
 
-	dispatch(info, cb, usrdata, &do_get_online_buddies);
-	return;
+	return do_get_online_buddies(info, err);
 }
 
-void qq_get_recent_contact(QQInfo *info, QQCallBack cb, gpointer usrdata)
+gint qq_get_recent_contact(QQInfo *info, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR, "info == NULL in qq_get_recent_contact"
-					, usrdata);
-		}
-		return;
+		return -1;
 	}
 
-	dispatch(info, cb, usrdata, &do_get_recent_contact);
-	return;
+	return do_get_recent_contact(info, err);
 }
 
-void qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, QQCallBack cb
-					, gpointer usrdata)
+gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 {
 	if(info == NULL){
-		if(cb != NULL){
-			cb(CB_ERROR
-				, "info == NULL in qq_get_single_long_nick"
-				, usrdata);
-		}
-		return;
+		return -1;
 	}
 
-	GSource *src = g_idle_source_new();
-	struct GetLNickPar *par = g_slice_new(struct GetLNickPar);
-	par -> info = info;
-	par -> cb = cb;
-	par -> bdy = bdy;
-	par -> usrdata = usrdata;
-	g_source_set_callback(src, &do_get_single_long_nick, (gpointer)par
-			, NULL);
-	if(g_source_attach(src, info -> mainctx) <= 0){
-		g_error("Attach logout source error.(%s, %d)"
-				, __FILE__, __LINE__);
-	}
-	g_source_unref(src);
-	return;
+    if(bdy == NULL){
+        return -1;
+    }
+
+	return do_get_single_long_nick(info, bdy, err);
 }
 
 
-#endif

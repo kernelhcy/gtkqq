@@ -5,6 +5,7 @@
 #include <string.h>
 #include <json.h>
 #include <stdlib.h>
+#include <glib/gprintf.h>
 
 /*
  * Get cookie from r.
@@ -186,6 +187,7 @@ static gint get_vc_image(QQInfo *info)
 	info -> vc_image_data = g_string_new(NULL);
 	g_string_append_len(info -> vc_image_data, rps -> msg -> str
 				, rps -> msg -> len);
+    info -> vc_image_size = rps -> msg -> len;
 
 	gchar *ct = response_get_header_chars(rps, "Content-Type");
 	gchar *vc_ftype = g_strstr_len(ct, -1, "image/");
@@ -200,8 +202,8 @@ static gint get_vc_image(QQInfo *info)
 
 	}
 	vc_ftype += (sizeof("image/") - 1);
-	g_debug("Verify code image file type: %s (%s, %d)", vc_ftype
-				, __FILE__, __LINE__);
+	g_debug("Verify code image file type: %s len %d (%s, %d)", vc_ftype
+                    , info -> vc_image_size, __FILE__, __LINE__);
 	g_strstrip(vc_ftype);
 	info -> vc_image_type = g_string_new(vc_ftype);
 
@@ -272,9 +274,8 @@ error:
  * Then, join the result with the capitalizaion of the verify code.
  * Compute the chekc sum of the new string.
  */
-GString* get_pwvc_md5(const gchar *pwd, const gchar *vc)
+GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
 {
-	int ret = 0;
 	guint8 buf[100];
 	gsize bsize = 100;
 	
@@ -321,10 +322,10 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=1&"
-			"remember_uin=0&aid="APPID"&u1=%s&h=1&"
+	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=10&"
+			"remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
 			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-			"&dumy=&fp=loginerroralert&mibao_css="
+			"&dumy=&fp=loginerroralert&mibao_css=m_webqq"
 			, info -> me -> uin -> str, p, info -> verify_code -> str
 			, LOGIN_S_URL);
 	request_set_uri(req, params);
@@ -443,7 +444,7 @@ static GString *generate_clientid()
 	glong t = now.tv_usec % 1000000;
 
 	gchar buf[20];
-	g_sprintf(buf, "%d%d", r, t);
+	g_sprintf(buf, "%d%ld", (int)r, t);
 
 	return g_string_new(buf);
 }
@@ -592,9 +593,6 @@ error:
 	return ret;
 }
 
-
-extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
-				const gchar *path, const gchar *fname);
 /*
  * Do the real login.
  * Run in the main event loop.
@@ -607,8 +605,13 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		return -1;
 	}
 
+    if(info -> verify_code == NULL){
+        g_warning("Need verify code!!(%s, %d)", __FILE__, __LINE__);
+        return -1;
+    }
+
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
-	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str);
+	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str, err);
 
 	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
 	gint ret = get_ptcz_skey(info, md5 -> str);
@@ -637,6 +640,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 			msg = "Error occured! Please try again.";
 			break;
 		}
+        g_debug("ErrMSG: %s (%s, %d)", msg, __FILE__, __LINE__);
 		return -1;
 	}
 	g_string_free(md5, TRUE);
@@ -647,7 +651,6 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	}
 
 	g_debug("Initial done.");
-	g_slice_free(struct InitParam, data);
 	return 0;
 }
 
@@ -682,7 +685,7 @@ gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
     return do_login(info, uin, passwd, status, err);
 }
 
-static gint do_logout(QQInfo *info, GError **err);
+static gint do_logout(QQInfo *info, GError **err)
 {
     gint ret_code = 0;
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
@@ -696,7 +699,7 @@ static gint do_logout(QQInfo *info, GError **err);
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGOUTPATH"?clientid=%s&psessionid=%s&t=%lld"
+	g_sprintf(params, LOGOUTPATH"?clientid=%s&psessionid=%s&t=%ld"
 			, info -> clientid -> str
 			, info -> psessionid -> str, get_now_millisecond());
 	request_set_uri(req, params);
@@ -761,7 +764,7 @@ error:
 }
 
 
-gint qq_logout(QQInfo *info, GError **err);
+gint qq_logout(QQInfo *info, GError **err)
 {
 	if(info == NULL){
 		return -1;

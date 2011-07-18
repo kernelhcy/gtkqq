@@ -1,7 +1,7 @@
 AM_CFLAGS=-I${srcdir}/../libqq/ 
 AM_CFLAGS+=-I${srcdir}/../comm/
 AM_CFLAGS+=-I${srcdir}/../gui/
-AM_CFLAGS+=${GLIB_CFLAGS}
+AM_CFLAGS+=${GLIB_CFLAGS} -DGTKQQ_DEBUG -Wall -Werror
 
 bin_PROGRAMS=testhttp testjson testcprint testlog testurl testpro
 

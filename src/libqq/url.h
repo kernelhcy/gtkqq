@@ -10,11 +10,11 @@
  * define a connection to any host
  */
 typedef struct{
-	int fd;			//socket fd
-	GIOChannel *channel;	//the GIOChannel of the fd.
+    int fd;                 //socket fd
+    GIOChannel *channel;    //the GIOChannel of the fd.
 
-	gchar *buf;		//use to read data.
-	gsize bufsize;		//buffer size
+    gchar *buf;             //use to read data.
+    gsize bufsize;          //buffer size
 }Connection;
 
 /*

@@ -36,11 +36,11 @@ AC_PROG_LIBTOOL
 
 AC_CHECK_LIB([pthread], [pthread_create])
 
-# AC_CHECK_LIB([zlib], [compress])
+AC_CHECK_LIB([zlib], [compress])
 
 # Checks for header files.
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdint.h\
-		  stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h zlib.h])
+          stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h zlib.h])
 
 AC_ARG_ENABLE(debug,
         [ --enable-debug turn on debug],
@@ -49,124 +49,124 @@ AC_ARG_ENABLE(debug,
 #AC_ARG_ENABLE(libnotify,
 #              AS_HELP_STRING([--enable-libnotify],
 #                             [Enable libnotify support (used to show message\
-#			      notifications) @<:@default=yes@:>@]),,
+#                  notifications) @<:@default=yes@:>@]),,
 #              enable_libnotify="yes")
 
 #AC_ARG_ENABLE(gst,
 #              AS_HELP_STRING([--enable-gst],
 #                             [Enable gstreamer support (used to play alert\
-#			      sounds) @<:@default=yes@:>@]),,
+#                  sounds) @<:@default=yes@:>@]),,
 #              enable_gst="yes")
 # checks for zlib
-#PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
-#			AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
-#			AC_SUBST(ZLIB_CFLAGS)
-#			AC_SUBST(ZLIB_LIBS)
-#			] ,
-#			)
+PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
+            AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
+            AC_SUBST(ZLIB_CFLAGS)
+            AC_SUBST(ZLIB_LIBS)
+            ] ,
+            )
 # checks for gtk+2.0
 PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.1], [
-			AC_DEFINE(USE_GTK, 1, [Use GTK])
-			AC_SUBST(GTK_CFLAGS)
-			AC_SUBST(GTK_LIBS)
-			] ,
-			)
+            AC_DEFINE(USE_GTK, 1, [Use GTK])
+            AC_SUBST(GTK_CFLAGS)
+            AC_SUBST(GTK_LIBS)
+            ] ,
+            )
 # checks for glib2.0
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.1], [
-			AC_DEFINE(USE_GLIB, 1, [Use GLIB])
-			AC_SUBST(GLIB_CFLAGS)
-			AC_SUBST(GLIB_LIBS)
-			] ,
-			)
+            AC_DEFINE(USE_GLIB, 1, [Use GLIB])
+            AC_SUBST(GLIB_CFLAGS)
+            AC_SUBST(GLIB_LIBS)
+            ] ,
+            )
 
 # checks for gthread-2.0
 PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
-			AC_DEFINE(USE_GTHREAD, 1, [Use GTHREAD-2.0])
-			AC_SUBST(GTHREAD_CFLAGS)
-			AC_SUBST(GTHREAD_LIBS)
-		] , )
+            AC_DEFINE(USE_GTHREAD, 1, [Use GTHREAD-2.0])
+            AC_SUBST(GTHREAD_CFLAGS)
+            AC_SUBST(GTHREAD_LIBS)
+        ] , )
 
 # checks for libxml2
 #PKG_CHECK_MODULES(LIBXML, [libxml-2.0], [
-#			AC_DEFINE(USE_LIBXML, 1, [Use LIBXML])
-#			AC_SUBST(LIBXML_CFLAGS)
-#			AC_SUBST(LIBXML_LIBS)
-#		] , )
+#            AC_DEFINE(USE_LIBXML, 1, [Use LIBXML])
+#            AC_SUBST(LIBXML_CFLAGS)
+#            AC_SUBST(LIBXML_LIBS)
+#        ] , )
 
 # checks for libsqlite3
 #PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
-#			AC_DEFINE(USE_SQLITE3, 1, [Use sqlite3])
-#			AC_SUBST(SQLITE3_CFLAGS)
-#			AC_SUBST(SQLITE3_LIBS)
-#		] , [
-#			echo ""
-#			echo "configure: error: "
-##			echo "libsqlite3 development headers not found."
-#			echo "If you're using debian or ubuntu,install it by"
-#			echo "\"sudo apt-get install libsqlite3-dev\""
-#			echo ""
-#			exit -1
-#			 ])
+#            AC_DEFINE(USE_SQLITE3, 1, [Use sqlite3])
+#            AC_SUBST(SQLITE3_CFLAGS)
+#            AC_SUBST(SQLITE3_LIBS)
+#        ] , [
+#            echo ""
+#            echo "configure: error: "
+##            echo "libsqlite3 development headers not found."
+#            echo "If you're using debian or ubuntu,install it by"
+#            echo "\"sudo apt-get install libsqlite3-dev\""
+#            echo ""
+#            exit -1
+#             ])
 
 # checks for libnotify
 #if test "x$enable_libnotify" = "xyes"; then
 #PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
-#			AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
-#						     notification])
-#			AC_SUBST(LIBNOTIFY_CFLAGS)
-#			AC_SUBST(LIBNOTIFY_LIBS)
-#		] , [
-#			echo ""
-#			echo "configure: error: "
-#			echo "libnotify development headers not found."
-#			echo "Use --disable-libnotify if you do not need it."
-#			echo "If you're using debian or ubuntu,install it by "
-#			echo "\"sudo apt-get install libnotify-dev\""
-#			echo ""
-#			exit -1
-#			])
+#            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
+#                             notification])
+#            AC_SUBST(LIBNOTIFY_CFLAGS)
+#            AC_SUBST(LIBNOTIFY_LIBS)
+#        ] , [
+#            echo ""
+#            echo "configure: error: "
+#            echo "libnotify development headers not found."
+#            echo "Use --disable-libnotify if you do not need it."
+#            echo "If you're using debian or ubuntu,install it by "
+#            echo "\"sudo apt-get install libnotify-dev\""
+#            echo ""
+#            exit -1
+#            ])
 #fi
 
 # checks for gstreamer-0.10
 #if test "x$enable_gst" = "xyes"; then
 #PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10], [
-#			AC_DEFINE(USE_GSTREAMER, 1, [Use Gstreamer for\
-#						     playing sound])
-#			AC_SUBST(GSTREAMER_CFLAGS)
-#			AC_SUBST(GSTREAMER_LIBS)
-#		] , [
-#			echo ""
-#			echo "configure: error: "
-#			echo "gstreamer development headers not found."
-#			echo "Use --disable-gst if you do not need it."
-#			echo "If you're using debian or ubuntu,install it by "
-#			echo "\"sudo apt-get install libgstreamer0.10-dev\""
-#			echo ""
-#			exit -1
-#			])
+#            AC_DEFINE(USE_GSTREAMER, 1, [Use Gstreamer for\
+#                             playing sound])
+#            AC_SUBST(GSTREAMER_CFLAGS)
+#            AC_SUBST(GSTREAMER_LIBS)
+#        ] , [
+#            echo ""
+#            echo "configure: error: "
+#            echo "gstreamer development headers not found."
+#            echo "Use --disable-gst if you do not need it."
+#            echo "If you're using debian or ubuntu,install it by "
+#            echo "\"sudo apt-get install libgstreamer0.10-dev\""
+#            echo ""
+#            exit -1
+#            ])
 #fi
 
 # checks for networkmanager
 #if test "x$enable_nm" = "xyes"; then
 #PKG_CHECK_MODULES(NETWORKMANAGER, [NetworkManager >= 0.5.0], [
-#			AC_DEFINE(USE_NETWORKMANAGER, 1, [Use NetworkManager\
-#					 for monitoring network status])
-#			AC_SUBST(NETWORKMANAGER_CFLAGS)
-#			AC_SUBST(NETWORKMANAGER_LIBS)
-#		] , [
-#			echo ""
-#			echo "configure: error: "
-#			echo "NetworkManager development headers not found."
-#			echo "Use --disable-nm if you do not need it."
-#			echo "If you're using debian or ubuntu,install it by "
-#			echo "\"sudo apt-get install libnm-glib-dev\""
-#			echo ""
-#			exit -1
-#			])
+#            AC_DEFINE(USE_NETWORKMANAGER, 1, [Use NetworkManager\
+#                     for monitoring network status])
+#            AC_SUBST(NETWORKMANAGER_CFLAGS)
+#            AC_SUBST(NETWORKMANAGER_LIBS)
+#        ] , [
+#            echo ""
+#            echo "configure: error: "
+#            echo "NetworkManager development headers not found."
+#            echo "Use --disable-nm if you do not need it."
+#            echo "If you're using debian or ubuntu,install it by "
+#            echo "\"sudo apt-get install libnm-glib-dev\""
+#            echo ""
+#            exit -1
+#            ])
 #fi
 
 #PKG_CHECK_MODULES(LIBSSL, [
-#		openssl
+#        openssl
 #])
 
 PKG_CHECK_MODULES(GLIB2, [
@@ -186,18 +186,18 @@ AC_CHECK_FUNCS([bzero gethostbyname memset mkdir select socket strstr strtol])
 AC_CHECK_FUNCS([inet_ntoa])
 
 AC_CONFIG_FILES([Makefile 
-		 src/Makefile 
-		 src/comm/Makefile 
-		 src/libqq/Makefile 
-		 src/cli/Makefile
-		 src/gui/Makefile
-		 src/gui/tencent/Makefile
-		 src/gui/test/Makefile
-		 src/tool/Makefile
-		 src/misc/Makefile
-		 src/misc/status/Makefile
-		 src/misc/qqfaces/Makefile
-		 src/test/Makefile])
+         src/Makefile 
+         src/comm/Makefile 
+         src/libqq/Makefile 
+         src/cli/Makefile
+         src/gui/Makefile
+         src/gui/tencent/Makefile
+         src/gui/test/Makefile
+         src/tool/Makefile
+         src/misc/Makefile
+         src/misc/status/Makefile
+         src/misc/qqfaces/Makefile
+         src/test/Makefile])
 AC_OUTPUT
 
 echo

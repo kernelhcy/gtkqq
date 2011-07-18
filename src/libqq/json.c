@@ -1335,7 +1335,7 @@ json_unescape (char *text)
 					}
 					else
 					{
-						fprintf (stderr, "JSON: unsupported unicode value: 0x%lX\n", unicode);
+						fprintf (stderr, "JSON: unsupported unicode value: 0x%lX\n", (long unsigned int)unicode);
 					}
 				}
 				break;
@@ -2807,12 +2807,12 @@ json_saxy_parse (struct json_saxy_parser_status *jsps, struct json_saxy_function
 {
 	/*TODO handle a string instead of a single char */
 	/* temp variables */
-	rcstring *temp;
+	//rcstring *temp;
 
 	/* make sure everything is in it's place */
 	assert (jsps != NULL);
 	assert (jsf != NULL);
-	temp = NULL;
+	//temp = NULL;
 
 	/* goto where we left off */
 	switch (jsps->state)

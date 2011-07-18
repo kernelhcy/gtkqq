@@ -1,5 +1,5 @@
 #include <unicode.h>
-
+#if 0
 static gboolean is_space(gchar c)
 {
         if(c == ' ' || c == '\t' || c == '\n' || c == '\r'){
@@ -7,7 +7,7 @@ static gboolean is_space(gchar c)
         }
         return FALSE;
 }
-
+#endif
 
 static guint hex2char(gchar c)
 {
@@ -80,16 +80,16 @@ void ucs4toutf8(GString *to, const gchar *from)
         if(to == NULL || from == NULL){
                 return;
         }
-	const gchar *c;
-	for(c = from; *c != '\0'; ++c){
-		if(*c == '\\' && *(c + 1) == 'u'){
-			do_ucs4toutf8(to, c);
-			c+= 5;
-		}else{
-			g_string_append_c(to, *c);
-			continue;
-		}
-	}
+    const gchar *c;
+    for(c = from; *c != '\0'; ++c){
+        if(*c == '\\' && *(c + 1) == 'u'){
+            do_ucs4toutf8(to, c);
+            c+= 5;
+        }else{
+            g_string_append_c(to, *c);
+            continue;
+        }
+    }
 }
 
 
