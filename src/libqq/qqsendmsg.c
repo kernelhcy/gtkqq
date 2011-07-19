@@ -33,7 +33,7 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     GString *content;
     if(msg -> type == 0){
         content = qq_sendmsg_contents_tostring(msg);
-        g_snprintf(params, 3000, "r={\"to\":\"%s\",\"face\":%s,"
+        g_snprintf(params, 3000, "r={\"to\":%s,\"face\":%s,"
                 "%s,\"msg_id\":%d,"
                 "\"clientid\":\"%s\",\"psessionid\":\"%s\"}"
                 , uin -> str, msg -> face -> str
@@ -55,9 +55,12 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     }
     gchar *euri = g_uri_escape_string(params, "=", FALSE);
     request_append_msg(req, euri, strlen(euri));
-    g_snprintf(params, 3000, "%d", strlen(euri));
-    request_add_header(req, "Content-Length", params);
     g_free(euri);
+    g_snprintf(params, 3000, "&clientid=%s&psessionid=%s"
+                    , info -> clientid -> str, info -> psessionid -> str);
+    request_append_msg(req, params, strlen(params));
+    g_snprintf(params, 3000, "%d", strlen(req -> msg -> str));
+    request_add_header(req, "Content-Length", params);
 
     Connection *con = connect_to_host(MSGHOST, 80);
     if(con == NULL){

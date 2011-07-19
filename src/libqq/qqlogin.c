@@ -376,38 +376,38 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	}else if(status == 1){
 		g_debug("Server busy! Please try again.(%s, %d)"
 				, __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Server busy!");
+		//g_sprintf(info -> errmsg, "Server busy!");
 		goto error;
 	}else if(status == 2){
 		g_debug("Out of date QQ number!(%s, %d)"
 				, __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Out of date QQ number.");
+		//g_sprintf(info -> errmsg, "Out of date QQ number.");
 		goto error;
 	}else if(status == 3){
 		g_debug("Wrong password!(%s, %d)", __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Wrong password.");
+		//g_sprintf(info -> errmsg, "Wrong password.");
 		goto error;
 	}else if(status == 4){
 		g_debug("Wrong verify code!(%s, %d)", __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Wrong verify code.");
+		//g_sprintf(info -> errmsg, "Wrong verify code.");
 		goto error;
 	}else if(status == 5){
 		g_debug("Verify failed!(%s, %d)", __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Verify failed.");
+		//g_sprintf(info -> errmsg, "Verify failed.");
 		goto error;
 	}else if(status == 6){
 		g_debug("You may need to try login again.(%s, %d)", __FILE__
 				, __LINE__);
-		g_sprintf(info -> errmsg, "Please try again.");
+		//g_sprintf(info -> errmsg, "Please try again.");
 		goto error;
 	}else if(status == 7){
 		g_debug("Wrong input!(%s, %d)", __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Wrong input.");
+		//g_sprintf(info -> errmsg, "Wrong input.");
 		goto error;
 	}else if(status == 8){
 		g_debug("Too many logins on this IP. Please try again.(%s, %d)"
 				, __FILE__, __LINE__);
-		g_sprintf(info -> errmsg, "Too many logins on this IP.");
+		//g_sprintf(info -> errmsg, "Too many logins on this IP.");
 		goto error;
 	}else{
 		g_debug("Server response message:(%s, %d)\n\t%s"

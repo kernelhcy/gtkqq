@@ -84,8 +84,6 @@ struct _QQInfo{
     GString *clientid;        
     GString *cookie;
 
-    gchar errmsg[500];        //store error message.
-
     /*
      * Maybe we need a lock...
      */
@@ -127,14 +125,12 @@ void qq_msgfont_free(QQMsgFont *font);
 // type :
 //      1, face.    eg: ["face", 21]
 //      2, string.  eg: "some string"
-//      3, font.    eg: ["font", ["size": 11, "color": "0000000", ...]]
 //
 struct _QQMsgContent{
     gint type;              //the type of the content.
     union{
         gint face;
         GString *str;
-        QQMsgFont *font;
     }value;
 };
 //
@@ -143,12 +139,6 @@ struct _QQMsgContent{
 // Example:
 //      qq_msgcontent_new(1, 20);               // face
 //      qq_msgcontent_new(2, "somg string");    // string
-//      qq_msgcontent_new(3                     // font
-//                      , "font name"   // font name
-//                      , 12            // font size
-//                      , "000000"      // color
-//                      , 0, 0, 0       // style
-//                      );
 //
 QQMsgContent *qq_msgcontent_new(gint type, ...);
 void qq_msgcontent_free(QQMsgContent *cnt);
@@ -168,19 +158,21 @@ struct _QQSendMsg{
     GString *face;          // Only used when this is buddy message.
 
     GPtrArray *contents;    // Message contents. An array of QQMsgContent.
+    QQMsgFont *font;
 
     GString *msg_id;
     GString *clientid;
     GString *psessionid;
 };
 QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin);
-void qq_sendmsg_free(QQSendMsg *);
-void qq_sendmsg_set_face(QQSendMsg *, const gchar *face);
-void qq_sendmsg_add_context(QQSendMsg *, QQMsgContent *content);
+void qq_sendmsg_free(QQSendMsg *msg);
+void qq_sendmsg_set_font(QQSendMsg *msg, const gchar *name, gint size, const gchar *color
+                                , gint sa, gint sb, gint sc);
+void qq_sendmsg_add_context(QQSendMsg *msg, QQMsgContent *content);
 //
 // Convert contents to string
 //
-GString * qq_sendmsg_contents_tostring(QQSendMsg *);
+GString * qq_sendmsg_contents_tostring(QQSendMsg *msg);
 
 //
 // The received message

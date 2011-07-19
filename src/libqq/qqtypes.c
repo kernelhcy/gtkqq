@@ -167,16 +167,6 @@ QQMsgContent *qq_msgcontent_new(gint type, ...)
     case 2:         //string
         cnt -> value.str = g_string_new(va_arg(ap, const gchar *));
         break;
-    case 3:         //font
-        cnt -> value.font = qq_msgfont_new(
-                                va_arg(ap, const gchar *),  // name
-                                va_arg(ap, gint),           // size
-                                va_arg(ap, const gchar *),  // color
-                                va_arg(ap, gint),           // style.a 
-                                va_arg(ap, gint),           // style.b 
-                                va_arg(ap, gint)            // style.c
-                            );
-        break;
     default:
         g_warning("Unknown QQMsgContent type: %d! (%s, %d)"
                             , type, __FILE__, __LINE__);
@@ -186,26 +176,6 @@ QQMsgContent *qq_msgcontent_new(gint type, ...)
     }
     va_end(ap);
     return cnt;
-}
-void qq_sendmsg_set_face(QQSendMsg *msg, const gchar *face)
-{
-    if(msg == NULL){
-        return;
-    }
-    g_string_truncate(msg -> face, 0);
-    g_string_append(msg -> face, face);
-}
-void qq_sendmsg_add_context(QQSendMsg *msg, QQMsgContent *content)
-{
-    if(msg == NULL || msg -> contents == NULL){
-        return;
-    }
-
-    if(content == NULL){
-        return;
-    }
-
-    g_ptr_array_add(msg -> contents, content);
 }
 void qq_msgcontent_free(QQMsgContent *cnt)
 {
@@ -220,9 +190,6 @@ void qq_msgcontent_free(QQMsgContent *cnt)
         break;
     case 2:     //string
         g_string_free(cnt -> value.str, TRUE);
-        break;
-    case 3:     //font
-        qq_msgfont_free(cnt -> value.font);
         break;
     default:
         g_warning("Unknown QQMsgContent type: %d! (%s, %d)"
@@ -248,27 +215,17 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt)
     case 2:         //string, \"test\"
         g_snprintf(buf, 500, "\\\"%s\\\"", cnt -> value.str -> str);
         break;
-    case 3:         //font, ["font",{"size":11,"color":"000000"
-                    //      ,"style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}]
-        g_snprintf(buf, 500, "[\"font\", {\"size\": %d, \"color\": \"%s\", "
-                            "\"style\":[%d,%d,%d], \"name\":\"%s\"}]"
-                            , cnt -> value.font -> size
-                            , cnt -> value.font -> color -> str
-                            , cnt -> value.font -> style.a
-                            , cnt -> value.font -> style.b
-                            , cnt -> value.font -> style.c
-                            , cnt -> value.font -> name -> str);
-        break;
     default:
         g_snprintf(buf, 500, "%s", "");
         break;
     }
     return g_string_new(buf);
 }
+
 //
 // QQSendMsg
 //
-QQSendMsg* qq_sendmsg_new()
+QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin)
 {
     QQSendMsg *msg = g_slice_new0(QQSendMsg);
 
@@ -283,16 +240,44 @@ QQSendMsg* qq_sendmsg_new()
         g_slice_free(QQSendMsg, msg);
         return NULL;
     }
-#define NEW_STR(x) msg -> x = g_string_new("")
-    NEW_STR(to_uin);
-    NEW_STR(face);
-    NEW_STR(msg_id);
-    NEW_STR(clientid);
-    NEW_STR(psessionid);
+    gchar buf[20];
+    g_snprintf(buf, 20, "%d", info -> msg_id ++);
+#define NEW_STR(x, y) msg -> x = g_string_new(y)
+    NEW_STR(to_uin, to_uin);
+    NEW_STR(face, info -> me -> face -> str);
+    NEW_STR(msg_id, buf);
+    NEW_STR(clientid, info -> clientid -> str);
+    NEW_STR(psessionid, info -> psessionid -> str);
 #undef NEW_STR
     return msg;
 }
 
+void qq_sendmsg_set_font(QQSendMsg *msg, const gchar *name, gint size, const gchar *color
+                                , gint sa, gint sb, gint sc)
+{
+       if(msg == NULL){
+            return;
+       }
+
+       QQMsgFont *font = qq_msgfont_new(name, size, color, sa, sb, sc);
+       if(font == NULL){
+           return;
+       }
+
+       msg -> font = font;
+}
+void qq_sendmsg_add_context(QQSendMsg *msg, QQMsgContent *content)
+{
+    if(msg == NULL || msg -> contents == NULL){
+        return;
+    }
+
+    if(content == NULL){
+        return;
+    }
+
+    g_ptr_array_add(msg -> contents, content);
+}
 void qq_sendmsg_free(QQSendMsg *msg)
 {
     if(msg == NULL){
@@ -305,6 +290,7 @@ void qq_sendmsg_free(QQSendMsg *msg)
     FREE_STR(clientid);
     FREE_STR(psessionid);
 #undef FREE_STR
+    qq_msgfont_free(msg -> font);
     g_slice_free(QQSendMsg, msg);
 }
 
@@ -333,7 +319,24 @@ GString * qq_sendmsg_contents_tostring(QQSendMsg *msg)
         g_string_free(tmp, TRUE);
         g_string_append(str, ",");
     }
-    g_string_append(str, "\"\"]\"");
+    g_string_append(str, "\\\"\\\", ");
+        
+    //add font
+    //font, ["font",{"size":"11","color":"000000"
+    //      ,"style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}]
+    gchar buf[500];
+    g_snprintf(buf, 500, "[\\\"font\\\", {\\\"name\\\": \\\"%s\\\", "
+                        "\\\"size\\\": \\\"%d\\\", "
+                        "\\\"style\\\": [%d,%d,%d], "
+                        "\\\"color\\\": \\\"%s\\\"}]"
+                        , msg -> font -> name -> str
+                        , msg -> font -> size
+                        , msg -> font -> style.a
+                        , msg -> font -> style.b
+                        , msg -> font -> style.c
+                        , msg -> font -> color -> str);
+
+    g_string_append(str, "]\"");
     g_debug("contents_tostring: %s (%s, %d)", str -> str, __FILE__, __LINE__);
     return str;
 }

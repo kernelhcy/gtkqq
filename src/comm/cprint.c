@@ -53,7 +53,7 @@ int fvcprintf(int fd, FgColor fc, BgColor bc, Ptype t
 	sprintf(nfmt + idx, "\e[0m");
 	
 	//maybe this is enough.
-	int strlen = 5000;
+	int strlen = 40960;
 	char *str = malloc(strlen * sizeof(char));
 	memset(str, '\0', strlen * sizeof(char));
 	

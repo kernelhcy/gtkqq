@@ -102,8 +102,8 @@ gint send_request(Connection *con, Request *r)
     }
     
     GString *rq = request_tostring(r);
-    g_printf("\nMESSAGE:  (%s, %d)Send reqeust : %s\n"
-            ,__FILE__, __LINE__,  rq -> str);
+//    g_printf("\nMESSAGE:  (%s, %d)Send reqeust : %s\n"
+//            ,__FILE__, __LINE__,  rq -> str);
 
     GIOStatus status;
     GError *err = NULL;
@@ -121,9 +121,9 @@ gint send_request(Connection *con, Request *r)
         case G_IO_STATUS_NORMAL:
             //write success.
             has_written += bytes_written;
-            g_debug("Write %d bytes data.(%s, %d)"
-                    , bytes_written, __FILE__
-                    , __LINE__);
+            //g_debug("Write %d bytes data.(%s, %d)"
+            //        , bytes_written, __FILE__
+            //        , __LINE__);
             break;
         case G_IO_STATUS_EOF:
             g_warning("Write data EOF!! What's happenning?(%s, %d)"
@@ -150,7 +150,7 @@ gint send_request(Connection *con, Request *r)
         g_warning("Flush io channel error! But don't warry...(%s, %d)"
                 , __FILE__, __LINE__);
     }    
-    g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
+    //g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
     g_string_free(rq, TRUE);
     return 0;
 }
@@ -261,7 +261,7 @@ gint rcv_response(Connection *con, Response **rp)
     gsize bytes_read = 0;
     gsize want_read = 0;
     
-    g_debug("Begin to read data.(%s, %d)", __FILE__, __LINE__);
+    //g_debug("Begin to read data.(%s, %d)", __FILE__, __LINE__);
     while(need_to_read > 0){
         want_read = BUFSIZE < need_to_read ? BUFSIZE : need_to_read;
         status = g_io_channel_read_chars(con -> channel, buf
@@ -322,12 +322,12 @@ gint rcv_response(Connection *con, Response **rp)
                 gotcl = TRUE;
                 //calculate the message we have not read.
                 cl = atoi(clen);
-                g_debug("Content-Length: %d.(%s, %d)"
-                        , cl, __FILE__, __LINE__);
+                //g_debug("Content-Length: %d.(%s, %d)"
+                //        , cl, __FILE__, __LINE__);
                 need_to_read = cl - r -> msg -> len;
-                g_debug("Message need to read %d bytes."
-                        "(%s, %d)", need_to_read
-                        , __FILE__, __LINE__);
+                //g_debug("Message need to read %d bytes."
+                //        "(%s, %d)", need_to_read
+                //        , __FILE__, __LINE__);
             }
 
             //Find the Transfering-Encoding 's value
@@ -351,8 +351,8 @@ gint rcv_response(Connection *con, Response **rp)
             gchar *connection = response_get_header_chars(r
                         , "Connection");    
             if(connection != NULL){
-                g_debug("Connection: %s (%s, %d)", connection
-                        , __FILE__, __LINE__);
+                //g_debug("Connection: %s (%s, %d)", connection
+                //        , __FILE__, __LINE__);
                 if(g_strstr_len(connection, -1, "close") 
                             != NULL){
                     conclose = TRUE;
@@ -405,7 +405,7 @@ gint rcv_response(Connection *con, Response **rp)
             break;
         }    
     }//end of while(need_to_read > 0)...
-    g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
+    //g_debug("Read all data.(%s, %d)", __FILE__, __LINE__);
 
     if(r == NULL){
         //we do not find "\r\n\r\n".
@@ -420,8 +420,8 @@ gint rcv_response(Connection *con, Response **rp)
         //copy the message to r -> msg;
         g_string_append_len(r -> msg, data -> str, data -> len);
     }else{
-        g_debug("Total chunk length: %d (%s, %d)", totalchunklen
-                    , __FILE__, __LINE__);
+        //g_debug("Total chunk length: %d (%s, %d)", totalchunklen
+        //            , __FILE__, __LINE__);
     }
     #undef BUFSIZE
     

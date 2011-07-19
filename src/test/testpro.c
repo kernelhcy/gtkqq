@@ -41,26 +41,24 @@ int main(int argc, char **argv)
     qq_get_recent_contact(info, NULL);
 
     QQSendMsg *msg = qq_sendmsg_new(info, 0
-                    , (QQBuddy*)(g_ptr_array_index(info -> buddies, 0)) -> uin -> str);
-    msg -> info = info;
-    msg -> type = 0;
-    msg -> bdy = info -> buddies -> pdata[0];
-    msg -> content = g_string_new("test from gtkqq.来自gtkqq的测试."
-            "我只是在测试程序，各位可以无视我。打扰了。^v^");
-    msg -> font.name = g_string_new("微软雅黑");
-    msg -> font.color = g_string_new("00000");
-    msg -> font.size = 15;
-    msg -> font.style.a = 0;
-    msg -> font.style.b = 0;
-    msg -> font.style.c = 0;
-    //msg -> grp = info -> groups -> pdata[0];
-    //qq_sendmsg_to_group(info, msg, NULL);
+                    , ((QQBuddy*)(g_ptr_array_index(info -> buddies, 0))) -> uin -> str);
+    QQMsgContent *ctent = qq_msgcontent_new(1, 62);
+    qq_sendmsg_add_context(msg, ctent);
+    ctent = qq_msgcontent_new(1, 51);
+    qq_sendmsg_add_context(msg, ctent);
+    ctent = qq_msgcontent_new(2, "来自GtkQQ的测试！！Test ^v^...");
+    qq_sendmsg_add_context(msg, ctent);
+    ctent = qq_msgcontent_new(3, "宋体", 20, "000000", 0, 0, 0);
+    qq_sendmsg_add_context(msg, ctent);
+    qq_send_message(info, msg, NULL);
+    qq_sendmsg_free(msg);
+
+    qq_get_face_img(info, "65359140", NULL);
+    qq_get_face_img(info, "1421032531", NULL);
 
     g_message("start poll ...");
     qq_start_poll(info, NULL);
-    qq_sendmsg_to_friend(info, msg, NULL);
-    qq_get_face_img(info, "65359140", NULL);
-    qq_get_face_img(info, "1421032531", NULL);
+
     g_message("Will logout...");
     qq_logout(info, NULL);
     return 0;
