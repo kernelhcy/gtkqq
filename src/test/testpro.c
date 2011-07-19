@@ -40,8 +40,10 @@ int main(int argc, char **argv)
     g_message("get recent contact...");
     qq_get_recent_contact(info, NULL);
 
-    QQMsg *msg = qq_msg_new();
+    QQSendMsg *msg = qq_sendmsg_new(info, 0
+                    , (QQBuddy*)(g_ptr_array_index(info -> buddies, 0)) -> uin -> str);
     msg -> info = info;
+    msg -> type = 0;
     msg -> bdy = info -> buddies -> pdata[0];
     msg -> content = g_string_new("test from gtkqq.来自gtkqq的测试."
             "我只是在测试程序，各位可以无视我。打扰了。^v^");

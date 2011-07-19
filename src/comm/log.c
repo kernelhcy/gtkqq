@@ -31,7 +31,9 @@ static void log_handler(const gchar *log_domain,
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, message);
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, "\n");
 		break;
-	case (G_LOG_LEVEL_ERROR  | G_LOG_FLAG_FATAL | G_LOG_FLAG_RECURSION):
+	case G_LOG_LEVEL_ERROR:
+	case G_LOG_FLAG_FATAL:
+	case G_LOG_FLAG_RECURSION:
 		fcprintf(STDOUT_FILENO, RED_F, UNSET_B, HIGHLIGHT
 				, "!!ERROR!! : ");
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, message);

@@ -35,7 +35,25 @@
 ]}
 
 //单独
-{"retcode":0,"result":[{"poll_type":"message","value":{"msg_id":19928,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":137201,"msg_type":9,"reply_ip":2887500009,"time":1298638022,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],"hello"],"raw_content":"hello"}}]}
+{"retcode":0,
+"result":[
+{
+    "poll_type":"message",
+    "value":{
+        "msg_id":19928
+        ,"from_uin":3187951892
+        ,"to_uin":1421032531
+        ,"msg_id2":137201
+        ,"msg_type":9
+        ,"reply_ip":2887500009
+        ,"time":1298638022
+        ,"content":[
+            ["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}]
+            ,"hello"
+         ]
+         ,"raw_content":"hello"
+     }
+}]}
 
 //群
 {"retcode":0,

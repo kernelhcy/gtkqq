@@ -51,7 +51,7 @@ gint qq_logout(QQInfo *info, GError **err);
 // This function will return immediately after called. After the 
 // message has been send, cb will be called.
 //
-gint qq_sendmsg(QQMsg *msg, GError **err);
+gint qq_sendmsg(QQSendMsg *msg, GError **err);
 GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
 
 //
@@ -101,8 +101,7 @@ gint qq_start_poll(QQInfo *info, GError **err);
 //
 // Send message to friends and group
 //
-gint qq_sendmsg_to_friend(QQInfo *info, QQMsg *msg, GError **err);
-gint qq_sendmsg_to_group(QQInfo *info, QQMsg *msg, GError **err);
+gint qq_send_message(QQInfo *info, QQSendMsg *msg, GError **err);
 
 //
 // Get the face image of uin
