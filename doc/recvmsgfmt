@@ -90,5 +90,11 @@
 ]
 }
 
+//状态变化
+{"retcode":0,"result":[{"poll_type":"buddies_status_change","value":{
+"uin":963499172,
+"status":"online",
+"client_type":41}}]}
+
 //发送图片
 {"retcode":0,"result":[{"poll_type":"message","value":{"msg_id":19938,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":151848,"msg_type":9,"reply_ip":2887459631,"time":1298638601,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],["face",109],["face",108],["face",38],"hello",["face",110],["offpic",{"success":1,"file_path":"/43da94dc-0d70-4729-b38f-b04e9ebd3855"}]],"raw_content":"\u0014\u00AE\u0014\u00AD\u0014ghello\u0014\u00AF\u0016  7711 661AB      8633Owebqq_icon.pngf/43da94dc-0d70-4729-b38f-b04e9ebd3855A"}}]}

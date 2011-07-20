@@ -20,6 +20,15 @@ typedef struct _QQCategory      QQCategory;
 typedef struct _QQRecentCon     QQRecentCon;
 typedef struct _QQFaceImg       QQFaceImg;
 
+typedef enum  _QQErrorCode      QQErrorCode;
+enum _QQErrorCode{
+    PARAMETER_ERR = 0,      // the parameter(s) is(are) not suitable.
+    NETWORK_ERR,            // networking error.
+    WRONGPWD_ERR,           // wrong password
+    WRONGVC_ERR,            // wrong verify code
+    WRONGUIN_ERR,           // wrong uin
+    OTHER_ERR               // others wrong.
+};
 /*
  * Store the face image data and type
  */
@@ -36,34 +45,25 @@ void qq_faceimg_free(QQFaceImg *img);
  */
 struct _QQInfo{
     /*
-     * The main event loop
+     * The poll thread
      */
-    GThread *mainloopthread;
-    GMainLoop *mainloop;
-    GMainContext *mainctx;    
-
-    /*
-     * The poll event loop
-     */
-    GThread *pollloopthread;
-    GMainLoop *pollloop;
-    GMainContext *pollctx;    
+    GThread *pollthread;
 
     QQBuddy *me;                    //myself
 
-    GPtrArray *buddies;                //all friends;
-    GHashTable *buddies_image_ht;    //face image file name 
+    GPtrArray *buddies;             //all friends;
+    GHashTable *buddies_image_ht;   //face image file name 
     GHashTable *buddies_ht;         //buddies hash table by uin
-    GPtrArray *groups;                //all groups;
-    GHashTable *groups_ht;            //goups hash table by gid
-    GPtrArray *recentcons;            //the recenet contacts
-    GPtrArray *categories;            //all categories
+    GPtrArray *groups;              //all groups;
+    GHashTable *groups_ht;          //goups hash table by gid
+    GPtrArray *recentcons;          //the recenet contacts
+    GPtrArray *categories;          //all categories
 
-    GString *verify_code;            //the verify code return from server
-    GString *vc_type;                //vc_type
-    gboolean need_vcimage;            //if we need get the verify code image
-    GString *vc_image_data;            //store the verify code image data
-    GString *vc_image_type;            //the verify code image file type
+    GString *verify_code;           //the verify code return from server
+    GString *vc_type;               //vc_type
+    gboolean need_vcimage;          //if we need get the verify code image
+    GString *vc_image_data;         //store the verify code image data
+    GString *vc_image_type;         //the verify code image file type
     gint vc_image_size;             //verify code image size
     GString *ptvfsession;        
 
@@ -128,12 +128,15 @@ void qq_msgfont_free(QQMsgFont *font);
 // type :
 //      1, face.    eg: ["face", 21]
 //      2, string.  eg: "some string"
+//      3, font.    eg: ["font", {"name":"Arial", "size":10
+//                          ,"style":[1, 0, 0], "color":"000000"}]
 //
 struct _QQMsgContent{
     gint type;              //the type of the content.
     union{
         gint face;
         GString *str;
+        QQMsgFont *font;
     }value;
 };
 //
@@ -142,6 +145,11 @@ struct _QQMsgContent{
 // Example:
 //      qq_msgcontent_new(1, 20);               // face
 //      qq_msgcontent_new(2, "somg string");    // string
+//      qq_msgcontent_new(3,                    // string
+//                         "name",      //name
+//                         10,          //size
+//                         "000000",    //color
+//                         1,0,0);      //style
 //
 QQMsgContent *qq_msgcontent_new(gint type, ...);
 void qq_msgcontent_free(QQMsgContent *cnt);
@@ -161,7 +169,6 @@ struct _QQSendMsg{
     GString *face;          // Only used when this is buddy message.
 
     GPtrArray *contents;    // Message contents. An array of QQMsgContent.
-    QQMsgFont *font;
 
     GString *msg_id;
     GString *clientid;
@@ -169,9 +176,7 @@ struct _QQSendMsg{
 };
 QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin);
 void qq_sendmsg_free(QQSendMsg *msg);
-void qq_sendmsg_set_font(QQSendMsg *msg, const gchar *name, gint size, const gchar *color
-                                , gint sa, gint sb, gint sc);
-void qq_sendmsg_add_context(QQSendMsg *msg, QQMsgContent *content);
+void qq_sendmsg_add_content(QQSendMsg *msg, QQMsgContent *content);
 //
 // Convert contents to string
 //
@@ -194,10 +199,14 @@ struct _QQRecvMsg{
     GString *time;
     gint info_seq;              // only group message
 
+    GString *uin, *status, *client_type;       //only buddy status change
+
     GPtrArray *contents;
     GString *raw_content;       // the raw content.
 };
-QQRecvMsg* qq_recvmsg_new();
+QQRecvMsg* qq_recvmsg_new(QQInfo *info, const gchar *poll_type);
+void qq_recvmsg_set(QQRecvMsg *msg, const gchar *name, const gchar *value);
+void qq_recvmsg_add_content(QQRecvMsg *msg, QQMsgContent *content);
 void qq_recvmsg_free(QQRecvMsg *);
 
 /*
@@ -315,9 +324,9 @@ QQRecentCon* qq_recentcon_new();
 void qq_recentcon_free(QQRecentCon *rc);
 
 
-/*
- * Get the milliseconds of now.
- */
+//
+// Get the milliseconds of now.
+//
 glong get_now_millisecond();
 
 #endif

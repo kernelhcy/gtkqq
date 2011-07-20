@@ -37,9 +37,6 @@ void qq_info_free(QQInfo *info)
         return;
     }
     
-    g_main_loop_unref(info -> mainloop);
-    g_main_context_unref(info -> mainctx);
-
     qq_buddy_free(info -> me);
 
 #define FREE_STR(x) g_string_free(info -> x, TRUE)
@@ -155,7 +152,8 @@ QQMsgContent *qq_msgcontent_new(gint type, ...)
         g_warning("OOM...(%s, %d)", __FILE__, __LINE__);
         return NULL;
     }
-
+    const gchar *name, *color;
+    gint size, sa, sb, sc;
     cnt -> type = type;
     va_list ap;
     va_start(ap, type);
@@ -166,6 +164,15 @@ QQMsgContent *qq_msgcontent_new(gint type, ...)
         break;
     case 2:         //string
         cnt -> value.str = g_string_new(va_arg(ap, const gchar *));
+        break;
+    case 3:         //font
+        name = va_arg(ap, const gchar *);
+        size = va_arg(ap, gint);
+        color = va_arg(ap, const gchar *);
+        sa= va_arg(ap, gint);
+        sb= va_arg(ap, gint);
+        sc = va_arg(ap, gint);
+        cnt -> value.font = qq_msgfont_new(name, size, color, sa, sb, sc);
         break;
     default:
         g_warning("Unknown QQMsgContent type: %d! (%s, %d)"
@@ -191,6 +198,9 @@ void qq_msgcontent_free(QQMsgContent *cnt)
     case 2:     //string
         g_string_free(cnt -> value.str, TRUE);
         break;
+    case 3:     //font
+        qq_msgfont_free(cnt -> value.font);
+        break;
     default:
         g_warning("Unknown QQMsgContent type: %d! (%s, %d)"
                             , cnt -> type, __FILE__, __LINE__);
@@ -214,6 +224,19 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt)
         break;
     case 2:         //string, \"test\"
         g_snprintf(buf, 500, "\\\"%s\\\"", cnt -> value.str -> str);
+        break;
+    case 3:
+        g_snprintf(buf, 500, "[\\\"font\\\", {\\\"name\\\": \\\"%s\\\", "
+                        "\\\"size\\\": %d, "
+                        "\\\"style\\\": [%d,%d,%d], "
+                        "\\\"color\\\": \\\"%s\\\"}]"
+                        , cnt -> value.font -> name -> str
+                        , cnt -> value.font -> size
+                        , cnt -> value.font -> style.a
+                        , cnt -> value.font -> style.b
+                        , cnt -> value.font -> style.c
+                        , cnt -> value.font -> color -> str);
+
         break;
     default:
         g_snprintf(buf, 500, "%s", "");
@@ -252,21 +275,7 @@ QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin)
     return msg;
 }
 
-void qq_sendmsg_set_font(QQSendMsg *msg, const gchar *name, gint size, const gchar *color
-                                , gint sa, gint sb, gint sc)
-{
-       if(msg == NULL){
-            return;
-       }
-
-       QQMsgFont *font = qq_msgfont_new(name, size, color, sa, sb, sc);
-       if(font == NULL){
-           return;
-       }
-
-       msg -> font = font;
-}
-void qq_sendmsg_add_context(QQSendMsg *msg, QQMsgContent *content)
+void qq_sendmsg_add_content(QQSendMsg *msg, QQMsgContent *content)
 {
     if(msg == NULL || msg -> contents == NULL){
         return;
@@ -290,7 +299,11 @@ void qq_sendmsg_free(QQSendMsg *msg)
     FREE_STR(clientid);
     FREE_STR(psessionid);
 #undef FREE_STR
-    qq_msgfont_free(msg -> font);
+    guint i;
+    for(i = 0; i < msg -> contents -> len; ++i){
+        qq_msgcontent_free(
+                (QQMsgContent*)g_ptr_array_index(msg -> contents, i));
+    }
     g_slice_free(QQSendMsg, msg);
 }
 
@@ -317,28 +330,122 @@ GString * qq_sendmsg_contents_tostring(QQSendMsg *msg)
                     (QQMsgContent*)g_ptr_array_index(msg -> contents, i));
         g_string_append(str, tmp -> str);
         g_string_free(tmp, TRUE);
-        g_string_append(str, ",");
+        if(i != msg -> contents -> len - 1){
+            g_string_append(str, ",");
+        }
     }
         
-    //add font
-    //font, ["font",{"size":"11","color":"000000"
-    //      ,"style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}]
-    gchar buf[500];
-    g_snprintf(buf, 500, "[\\\"font\\\", {\\\"name\\\": \\\"%s\\\", "
-                        "\\\"size\\\": \\\"%d\\\", "
-                        "\\\"style\\\": [%d,%d,%d], "
-                        "\\\"color\\\": \\\"%s\\\"}]"
-                        , msg -> font -> name -> str
-                        , msg -> font -> size
-                        , msg -> font -> style.a
-                        , msg -> font -> style.b
-                        , msg -> font -> style.c
-                        , msg -> font -> color -> str);
-
-    g_string_append(str, buf);
     g_string_append(str, "]\"");
     g_debug("contents_tostring: %s (%s, %d)", str -> str, __FILE__, __LINE__);
     return str;
+}
+//
+// QQRecvMsg
+//
+QQRecvMsg* qq_recvmsg_new(QQInfo *info, const gchar *poll_type)
+{
+    QQRecvMsg *msg = g_slice_new0(QQRecvMsg);
+    if(msg == NULL){
+        g_warning("OOM...(%s, %d)", __FILE__, __LINE__); 
+        return NULL;
+    }
+
+#define NEW_STR(x, y) msg -> x = g_string_new(y)
+    NEW_STR(poll_type, poll_type);
+    NEW_STR(msg_id, "");
+    NEW_STR(msg_id2, "");
+    NEW_STR(from_uin, "");
+    NEW_STR(to_uin, "");
+    NEW_STR(reply_ip, "");
+    NEW_STR(group_code, "");
+    NEW_STR(send_uin, "");
+    NEW_STR(time, "");
+    NEW_STR(raw_content, "");
+    NEW_STR(uin, "");
+    NEW_STR(status, "");
+    NEW_STR(client_type, "");
+#undef NEW_STR
+
+    msg -> contents = g_ptr_array_new();
+    return msg;
+}
+void qq_recvmsg_add_content(QQRecvMsg *msg, QQMsgContent *content)
+{
+    if(msg == NULL || msg -> contents == NULL){
+        return;
+    }
+
+    if(content == NULL){
+        return;
+    }
+
+    g_ptr_array_add(msg -> contents, content);
+}
+void qq_recvmsg_set(QQRecvMsg *msg, const gchar *name, const gchar *value)
+{
+    if(msg == NULL || name == NULL){
+        return;
+    }
+#define SET_STR(x)  g_string_truncate(msg -> x, 0);\
+                    g_string_append(msg -> x, value);
+    if(g_strcmp0(name, "poll_type") == 0){
+        SET_STR(poll_type);
+    }else if(g_strcmp0(name, "msg_id") == 0){
+        SET_STR(msg_id);
+    }else if(g_strcmp0(name, "msg_id2") == 0){
+        SET_STR(msg_id2);
+    }else if(g_strcmp0(name, "from_uin") == 0){
+        SET_STR(from_uin);
+    }else if(g_strcmp0(name, "to_uin") == 0){
+        SET_STR(to_uin);
+    }else if(g_strcmp0(name, "reply_ip") == 0){
+        SET_STR(reply_ip);
+    }else if(g_strcmp0(name, "group_code") == 0){
+        SET_STR(group_code);
+    }else if(g_strcmp0(name, "send_uin") == 0){
+        SET_STR(send_uin);
+    }else if(g_strcmp0(name, "time") == 0){
+        SET_STR(time);
+    }else if(g_strcmp0(name, "raw_content") == 0){
+        SET_STR(raw_content);
+    }else if(g_strcmp0(name, "uin") == 0){
+        SET_STR(uin);
+    }else if(g_strcmp0(name, "status") == 0){
+        SET_STR(status);
+    }else if(g_strcmp0(name, "client_type") == 0){
+        SET_STR(client_type);
+    }else{
+        g_warning("Unknown QQRecvMsg memeber: %s=%s (%s, %d)", name, value
+                                    , __FILE__, __LINE__);
+    }
+#undef SET_STR
+}
+
+void qq_recvmsg_free(QQRecvMsg *msg)
+{
+    if(msg == NULL){
+        return;
+    }
+
+#define FREE_STR(x) g_string_free(msg -> x, TRUE)
+    FREE_STR(poll_type);
+    FREE_STR(msg_id);
+    FREE_STR(msg_id2);
+    FREE_STR(from_uin);
+    FREE_STR(to_uin);
+    FREE_STR(reply_ip);
+    FREE_STR(group_code);
+    FREE_STR(send_uin);
+    FREE_STR(time);
+    FREE_STR(raw_content);
+#undef FREE_STR
+
+    guint i;
+    for(i = 0; i < msg -> contents -> len; ++i){
+        qq_msgcontent_free(
+                (QQMsgContent*)g_ptr_array_index(msg -> contents, i));
+    }
+    g_slice_free(QQRecvMsg, msg);
 }
 
 //
@@ -354,26 +461,29 @@ void qq_buddy_free(QQBuddy *bd)
 {
     if(bd == NULL){
         return;
-    }    
-    g_string_free(bd -> uin, TRUE);
-    g_string_free(bd -> status, TRUE);
-    g_string_free(bd -> nick, TRUE);
-    g_string_free(bd -> markname, TRUE);
-    g_string_free(bd -> country, TRUE);
-    g_string_free(bd -> city, TRUE);
-    g_string_free(bd -> province, TRUE);
-    g_string_free(bd -> gender, TRUE);
-    g_string_free(bd -> face, TRUE);
-    g_string_free(bd -> flag, TRUE);
-    g_string_free(bd -> phone, TRUE);
-    g_string_free(bd -> mobile, TRUE);
-    g_string_free(bd -> email, TRUE);
-    g_string_free(bd -> college, TRUE);
-    g_string_free(bd -> occupation, TRUE);
-    g_string_free(bd -> personal, TRUE);
-    g_string_free(bd -> homepage, TRUE);
-    g_string_free(bd -> lnick, TRUE);
-    g_string_free(bd -> faceimgfile, TRUE);
+    }
+
+#define FREE_STR(x) g_string_free(bd -> x, TRUE)
+    FREE_STR(uin);
+    FREE_STR(status);
+    FREE_STR(nick);
+    FREE_STR(markname);
+    FREE_STR(country);
+    FREE_STR(city);
+    FREE_STR(province);
+    FREE_STR(gender);
+    FREE_STR(face);
+    FREE_STR(flag);
+    FREE_STR(phone);
+    FREE_STR(mobile);
+    FREE_STR(email);
+    FREE_STR(college);
+    FREE_STR(occupation);
+    FREE_STR(personal);
+    FREE_STR(homepage);
+    FREE_STR(lnick);
+    FREE_STR(faceimgfile);
+#undef FREE_STR
 
     qq_faceimg_free(bd -> faceimg);
 

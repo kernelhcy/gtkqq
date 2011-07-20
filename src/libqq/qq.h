@@ -94,9 +94,26 @@ gint qq_get_recent_contact(QQInfo *info, GError **err);
 gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
 
 //
-// Start the poll thread to poll the message form the server.
+// The callback of the poll fuction.
+// @param msg : the message received
+// @param data : the user data
 //
-gint qq_start_poll(QQInfo *info, GError **err);
+typedef gint (*QQPollCallBack)(QQRecvMsg *msg, gpointer data);
+//
+// Start the poll thread to poll the message form the server.
+// When a new message received, the QQPollCallBack is called.
+// data is passed to cb.
+//
+// NOTE:
+//  This function will create a new thread to poll message.
+//  This function will return immeditally.
+//  The callback function will called in the new created thread.
+//
+gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err);
+//
+// Stop poll message.
+//
+void qq_stop_poll(QQInfo *info);
 
 //
 // Send message to friends and group

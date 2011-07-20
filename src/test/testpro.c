@@ -28,6 +28,9 @@ int main(int argc, char **argv)
     }
 
     qq_login(info, qquin, qqpwd, "online", NULL);
+    
+    g_debug("poll...");
+    qq_start_poll(info, NULL, NULL, NULL);
 
     g_message("get my information...");
     qq_get_my_info(info, NULL);
@@ -48,18 +51,18 @@ int main(int argc, char **argv)
         if(g_strcmp0("quit", buf) == 0){
             break;
         }
-        QQSendMsg *msg = qq_sendmsg_new(info, 0
+        QQSendMsg *msg = qq_sendmsg_new(info, 0 //buddy message
                     , ((QQBuddy*)(g_ptr_array_index(info -> buddies, 0))) -> uin -> str);
         QQMsgContent *ctent = qq_msgcontent_new(1, 62);
-        qq_sendmsg_add_context(msg, ctent);
+        qq_sendmsg_add_content(msg, ctent);
         ctent = qq_msgcontent_new(1, 51);
-        qq_sendmsg_add_context(msg, ctent);
+        qq_sendmsg_add_content(msg, ctent);
         ctent = qq_msgcontent_new(2, buf);
-        qq_sendmsg_add_context(msg, ctent);
-        qq_sendmsg_set_font(msg, "宋体", 20, "000000", 0, 0, 0);
+        qq_sendmsg_add_content(msg, ctent);
+        ctent = qq_msgcontent_new(3, "宋体", 20, "0000FF", 1, 0, 1);
+        qq_sendmsg_add_content(msg, ctent);
         qq_send_message(info, msg, NULL);
         qq_sendmsg_free(msg);
-        qq_start_poll(info, NULL);
     }
 
     qq_get_face_img(info, "65359140", NULL);
