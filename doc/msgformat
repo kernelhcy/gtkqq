@@ -28,12 +28,55 @@ r={
                 \"来自GtkQQ的测试！！Test ^v^...\",\"\"]",
                 "msg_id":1001,"clientid":"66112734",
                 "psessionid":"83ca7b3501c826d1d9b23e9ec4b2b23"}
-r=%7B%22to%22%3A%221363755325%22%2C%22face%22%3A519%2C%22content%22%3A%22%5B%5B%5C%22font%5C%22%2C%20%7B%5C%22size%5C%22%3A%20%5C%2220%5C%22%2C%20%5C%22color%5C%22%3A%20%5C%220000FF%5C%22%2C%20%5C%22style%5C%22%3A%5B0%2C1%2C1%5D%2C%20%5C%22name%5C%22%3A%5C%22%E5%BE%AE%E8%BD%AF%E9%9B%85%E9%BB%91%5C%22%7D%5D%2C%5B%5C%22face%5C%22%2C%2020%5D%2C%5B%5C%22face%5C%22%2C%2022%5D%2C%5C%22%E6%9D%A5%E8%87%AAGtkQQ%E7%9A%84%E6%B5%8B%E8%AF%95%EF%BC%81%EF%BC%81Test%20%5Ev%5E...%5C%22%2C%5C%22%5C%22%5D%22%2C%22msg_id%22%3A1001%2C%22clientid%22%3A%2240813652%22%2C%22psessionid%22%3A%228368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000021310000034d036e0400533cb3546d0000000a4057324b5a567554554c6d00000028f4eab6f18ddade57b17ced7f0912146ed21230a9f23d03fe27324d360acfc548b7b47ea0e5cf4a5d%22%7D&clientid=40813652&psessionid=8368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000021310000034d036e0400533cb3546d0000000a4057324b5a567554554c6d00000028f4eab6f18ddade57b17ced7f0912146ed21230a9f23d03fe27324d360acfc548b7b47ea0e5cf4a5d
-r=%7B%22to%22%3A1363755325%2C%22face%22%3A519%2C%22content%22%3A%22%5B%5C%22hello%5C%22%2C%5B%5C%22face%5C%22%2C95%5D%2C%5C%22%5C%22%2C%5C%22%5C%5Cn%E3%80%90%E6%8F%90%E7%A4%BA%EF%BC%9A%E6%AD%A4%E7%94%A8%E6%88%B7%E6%AD%A3%E5%9C%A8%E4%BD%BF%E7%94%A8WebQQ%EF%BC%9Ahttp%3A%2F%2Fweb.qq.com%2F%E3%80%91%5C%22%2C%5B%5C%22font%5C%22%2C%7B%5C%22name%5C%22%3A%5C%22%E5%AE%8B%E4%BD%93%5C%22%2C%5C%22size%5C%22%3A%5C%2210%5C%22%2C%5C%22style%5C%22%3A%5B0%2C0%2C0%5D%2C%5C%22color%5C%22%3A%5C%22000000%5C%22%7D%5D%5D%22%2C%22msg_id%22%3A67750001%2C%22clientid%22%3A%2244775237%22%2C%22psessionid%22%3A%228368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000003140000034e036e0400533cb3546d0000000a4057324b5a567554554c6d00000028d2f99901833e8ad1c2701609d87dcc047091abb185c2b5f5f611a9500942c2e86b061af48d4af9c0%22%7D&clientid=44775237&psessionid=8368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000003140000034e036e0400533cb3546d0000000a4057324b5a567554554c6d00000028d2f99901833e8ad1c2701609d87dcc047091abb185c2b5f5f611a9500942c2e86b061af48d4af9c0
 
-r={"to":"1363755325","face":519,"content":"[[\"font\", {\"size\": \"20\", \"color\": \"0000FF\", \"style\":[0,1,1], \"name\":\"微软雅黑\"}],[\"face\", 20],[\"face\", 22],\"来自GtkQQ的测试！！Test ^v^...\",\"\"]","msg_id":1001,"clientid":"40813652","psessionid":"8368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000021310000034d036e0400533cb3546d0000000a4057324b5a567554554c6d00000028f4eab6f18ddade57b17ced7f0912146ed21230a9f23d03fe27324d360acfc548b7b47ea0e5cf4a5d"}&clientid=40813652&psessionid=8368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000021310000034d036e0400533cb3546d0000000a4057324b5a567554554c6d00000028f4eab6f18ddade57b17ced7f0912146ed21230a9f23d03fe27324d360acfc548b7b47ea0e5cf4a5d
-r={"to":1363755325,"face":519,"content":"[\"hello\",[\"face\",95],\"\",\"\\n【提示：此用户正在使用WebQQ：http://web.qq.com/】\",[\"font\",{\"name\":\"宋体\",\"size\":\"10\",\"style\":[0,0,0],\"color\":\"000000\"}]]","msg_id":67750001,"clientid":"44775237","psessionid":"8368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000003140000034e036e0400533cb3546d0000000a4057324b5a567554554c6d00000028d2f99901833e8ad1c2701609d87dcc047091abb185c2b5f5f611a9500942c2e86b061af48d4af9c0"}&clientid=44775237&psessionid=8368046764001e636f6e6e7365727665725f77656271714031302e3132382e36362e313135000003140000034e036e0400533cb3546d0000000a4057324b5a567554554c6d00000028d2f99901833e8ad1c2701609d87dcc047091abb185c2b5f5f611a9500942c2e86b061af48d4af9c0
-r={"to":3020565611,"face":81,"content":"[[\"face\",95],[\"face\",93],[\"face\",87],\"\",[\"font\",{\"name\":\"微软雅黑\",\"size\":\"11\",\"style\":[0,0,0],\"color\":\"000000\"}]]","msg_id":71420005,"clientid":"10142607","psessionid":"8368046764001d636f6e6e7365727665725f77656271714031302e3133342e362e31333800003ec900000cd7016e0400fd70791d6d0000000a40437658416d4d7944676d00000028fe01181263f1ae45ada8d8d7b1d932994154ce7ccc956ca3859472d8d6cb19bbdd3f425267799e45"}&clientid=10142607&psessionid=8368046764001d636f6e6e7365727665725f77656271714031302e3133342e362e31333800003ec900000cd7016e0400fd70791d6d0000000a40437658416d4d7944676d00000028fe01181263f1ae45ada8d8d7b1d932994154ce7ccc956ca3859472d8d6cb19bbdd3f425267799e45
+
+
+r={"to":3417595619,"face":519,"content":"[[\"face\",110],\"hello\",[\"face\",118],\"test\",[\"font\",{\"name\":\"宋体\",\"size\":\"10\",\"style\":[0,0,0],\"color\":\"000000\"}]]","msg_id":13960001,"clientid":"1396267","psessionid":"836804"}&clientid=1396267&psessionid=8368049
+r={"to":3417595619,"face":519,"content":"[[\"face\", 62],[\"face\", 51],\"Test ^v^\",[\"font\", {\"name\": \"宋体\", \"size\": \"20\", \"style\": [0,0,0], \"color\": \"000000\"}]]","msg_id":2130001,"clientid":"857280","psessionid":"1"}&clientid=85728036&psessionid=8368
+r={"to":3417595619,"face":519,"content":"[\"Test ^v^\",\"\", [\"font\", {\"name\": \"宋体\", \"size\": \"20\", \"style\": [0,0,0], \"color\": \"000000\"}]]","msg_id":1001,"clientid":"6270941","psessionid":"8c7"}&clientid=6270941&psessionid=8367
+
+POST /channel/send_buddy_msg2 HTTP/1.1
+Host: d.web2.qq.com
+User-Agent: Mozilla/5.0 (X11; Linux i686; rv:5.0) Gecko/20100101 Firefox/5.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip, deflate
+Accept-Charset: GB2312,utf-8;q=0.7,*;q=0.7
+Connection: keep-alive
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+Referer: http://d.web2.qq.com/proxy.html?v=20110331002&callback=2
+Content-Length: 1036
+Cookie: pgv_pvid=8027906167; pt2gguin=o1421032531; pvid=970962480; 
+verifysession=h00c310b78c1c026ae24e5624591c2c80d683473464dea1c3f404eaabede5
+84ce910d8014c0778c15f37dd0740bbd353ee0; ptisp=cnc; 
+pgv_info=pgvReferrer=&ssid=s2769498424; ptui_width=360; 
+ptui_height=177; uin=o1421032531; skey=@ABopSEI9c; 
+ptwebqq=463fd9fd0e67a72ef0dee280cc007a99fed5e96fe02612fb377a47fc663098bc
+Pragma: no-cache
+Cache-Control: no-cache
+
+
+POST /channel/send_buddy_msg2 HTTP/1.1
+Accept: text/html, application/xml;q=0.9, application/xhtml+xml, image/png, image/jpeg, image/gif, image/x-xbitmap, */*;q=0.1
+Accept-Charset: GBK, utf-8, utf-16, *;q=0.1
+Accept-Encoding: deflate, gzip, x-gzip, identity, *;q=0
+Accept-Language: en-US,zh-CN,zh;q=0.9,en;q=0.8
+Connection: Keep-Alive
+Content-Length: 777
+Content-Type: application/x-www-form-urlencoded
+Cookie: ptcz=8e36f7c83f9f1375918fa74858bae36c8aac185645b1166a0f6e9e7e85052315;
+skey=@ABopSEI9c;ptwebqq5daf043104df82a3ee5106d8a1d25703a717741c1115e3e2fdd51adefc54ee3e;
+ptuserinfo=e998bfe587a1e8bebe;uin=o1421032531;
+ptisp=cnc;pt2gguin=o1421032531
+Host: d.web2.qq.com
+Origin: http://d.web2.qq.com
+Referer: http://d.web2.qq.com/proxy.html?v=20101025002
+User-Agent: Mozilla/5.0 (X11; U; Linux i686; en-US) AppleWebKit/534.13 (KHTML, like Gecko) Chrome/9.0.597.45 Safari/534.13
+
+
+
+
+
 //群
 r={
     "group_uin":2626552497

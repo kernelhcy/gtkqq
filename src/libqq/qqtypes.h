@@ -80,6 +80,9 @@ struct _QQInfo{
     GString *index;
     GString *port;
     GString *vfwebqq;
+    GString *uin;
+    GString *ptisp;
+    GString *pt2gguin;
 
     GString *clientid;        
     GString *cookie;
@@ -88,7 +91,7 @@ struct _QQInfo{
      * Maybe we need a lock...
      */
     GMutex *lock;            
-    gint msg_id;            //used to send message
+    glong msg_id;            //used to send message
 };
 
 QQInfo* qq_info_new();

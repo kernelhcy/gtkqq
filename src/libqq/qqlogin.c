@@ -419,9 +419,25 @@ static int get_ptcz_skey(QQInfo *info, const gchar *p)
 	info -> skey = get_cookie(rps, "skey");
 	info -> ptwebqq = get_cookie(rps, "ptwebqq");
 	info -> ptuserinfo = get_cookie(rps, "ptuserinfo");
+    info -> uin = get_cookie(rps, "uin");
+    info -> ptisp = get_cookie(rps, "ptisp");
+    info -> pt2gguin = get_cookie(rps, "pt2gguin");
 	//sotre the cookie
-	info -> cookie = g_string_new(response_get_header_chars(rps
-				, "Set-Cookie"));
+	info -> cookie = g_string_new("");
+    g_string_append(info -> cookie, "ptcz=");
+    g_string_append(info -> cookie, info -> ptcz -> str);
+    g_string_append(info -> cookie, ";skey=");
+    g_string_append(info -> cookie, info -> skey -> str);
+    g_string_append(info -> cookie, ";ptwebqq=");
+    g_string_append(info -> cookie, info -> ptwebqq -> str);
+    g_string_append(info -> cookie, ";ptuserinfo=");
+    g_string_append(info -> cookie, info -> ptuserinfo -> str);
+    g_string_append(info -> cookie, ";uin=");
+    g_string_append(info -> cookie, info -> uin -> str);
+    g_string_append(info -> cookie, ";ptisp=");
+    g_string_append(info -> cookie, info -> ptisp -> str);
+    g_string_append(info -> cookie, ";pt2gguin=");
+    g_string_append(info -> cookie, info -> pt2gguin -> str);
 error:
 	request_del(req);
 	response_del(rps);

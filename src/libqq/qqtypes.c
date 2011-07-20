@@ -22,12 +22,12 @@ QQInfo* qq_info_new()
 
     info -> lock = g_mutex_new();
 
-    /*
-     * Just set to 1000.
-     * I don't know how to calculate the msg_id.
-     * But this works.
-     */
-    info -> msg_id = 1000;
+	GTimeVal now;
+	g_get_current_time(&now);
+    glong v = now.tv_usec;
+    v = (v - v % 1000) / 1000;
+    v = v % 10000 * 10000;
+    info -> msg_id = v;
     return info;
 }
 
@@ -241,7 +241,7 @@ QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin)
         return NULL;
     }
     gchar buf[20];
-    g_snprintf(buf, 20, "%d", info -> msg_id ++);
+    g_snprintf(buf, 20, "%ld", ++(info -> msg_id));
 #define NEW_STR(x, y) msg -> x = g_string_new(y)
     NEW_STR(to_uin, to_uin);
     NEW_STR(face, info -> me -> face -> str);
@@ -319,7 +319,6 @@ GString * qq_sendmsg_contents_tostring(QQSendMsg *msg)
         g_string_free(tmp, TRUE);
         g_string_append(str, ",");
     }
-    g_string_append(str, "\\\"\\\", ");
         
     //add font
     //font, ["font",{"size":"11","color":"000000"
@@ -336,6 +335,7 @@ GString * qq_sendmsg_contents_tostring(QQSendMsg *msg)
                         , msg -> font -> style.c
                         , msg -> font -> color -> str);
 
+    g_string_append(str, buf);
     g_string_append(str, "]\"");
     g_debug("contents_tostring: %s (%s, %d)", str -> str, __FILE__, __LINE__);
     return str;

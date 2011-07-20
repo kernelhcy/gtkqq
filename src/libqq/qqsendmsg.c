@@ -29,26 +29,26 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     request_add_header(req, "Content-Type", 
             "application/x-www-form-urlencoded");
     request_add_header(req, "Referer"
-            , "http://"MSGHOST"/proxy.html?v=20101025002");
+            , "http://"MSGHOST"/proxy.html?v=20101025002&callback=2");
     GString *content;
     if(msg -> type == 0){
         content = qq_sendmsg_contents_tostring(msg);
         g_snprintf(params, 3000, "r={\"to\":%s,\"face\":%s,"
-                "%s,\"msg_id\":%d,"
+                "%s,\"msg_id\":%s,"
                 "\"clientid\":\"%s\",\"psessionid\":\"%s\"}"
                 , uin -> str, msg -> face -> str
                 , content -> str
-                , (info -> msg_id)++    
+                , msg -> msg_id -> str
                 , info -> clientid -> str
                 , info -> psessionid -> str);
         g_string_free(content, TRUE);
     }else{
         content = qq_sendmsg_contents_tostring(msg);
         g_snprintf(params, 3000, "r={\"group_uin\":\"%s\","
-                "%s,\"msg_id\":%d,"
+                "%s,\"msg_id\":%s,"
                 "\"clientid\":\"%s\",\"psessionid\":\"%s\"}"
                 , uin -> str, content -> str
-                , (info -> msg_id)++    
+                , msg -> msg_id -> str
                 , info -> clientid -> str
                 , info -> psessionid -> str);
         g_string_free(content, TRUE);
@@ -56,9 +56,7 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     gchar *euri = g_uri_escape_string(params, "=", FALSE);
     request_append_msg(req, euri, strlen(euri));
     g_free(euri);
-    g_snprintf(params, 3000, "&clientid=%s&psessionid=%s"
-                    , info -> clientid -> str, info -> psessionid -> str);
-    request_append_msg(req, params, strlen(params));
+
     g_snprintf(params, 3000, "%d", strlen(req -> msg -> str));
     request_add_header(req, "Content-Length", params);
 

@@ -124,3 +124,16 @@ glib会以正确的形式输出和现实。）
 	再对这个字符串用md5加密。
 
 
+clientid = String(m.random(0, 99)) + String((new Date()).getTime() % 1000000)
+
+msg_id 
+v = (new Date()).getTime();
+        v = (v - v % 1000) / 1000;
+        v = v % 10000 * 10000;
+        var u = function() {
+            p++;
+            return v + p;
+        };
+        
+        
+
