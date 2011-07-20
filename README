@@ -1,3 +1,17 @@
-基于webqq协议和gtk2的桌面版qq------gtkqq。
+GtkQQ is a QQ client. It is written using gtk and based on the webqq protocol.
 
-相当于做了一个高度定制的浏览器，所以不存在版权问题。
+The webqq protocol is based on the HTTP. 
+Visit http://web.qq.com to see it.
+
+Maybe GtkQQ is a browser, whick can only visit http://web.qq.com.
+I think there is no copyright problem, because I just write a highly custommed
+broswer.
+
+src-|
+    |--comm     some common codes, such as log
+    |--libqq    the core library
+    |--gui      the gui version
+    |--cli      the command line version
+    |--misc     some resource files. such as pictures.
+    |--tool     some tool used to develop
+    |--test     the test codes.
