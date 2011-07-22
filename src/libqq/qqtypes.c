@@ -825,6 +825,7 @@ QQGMember* qq_gmember_new_from_string(gchar *str)
     }
 
     QQGMember *m = g_slice_new0(QQGMember);
+    gsize len = strlen(str);
     
     if(m == NULL){
         g_warning("OOM...(%s, %d)", __FILE__, __LINE__);
@@ -849,6 +850,7 @@ QQGMember* qq_gmember_new_from_string(gchar *str)
     SET_VALUE_STR(nick);
     SET_VALUE_STR(card);
 #undef SET_VALUE_STR
+    return m;
 }
 GString* qq_gmember_tostring(QQGMember *mb)
 {
@@ -859,16 +861,16 @@ GString* qq_gmember_tostring(QQGMember *mb)
     GString *str = g_string_new("");
 
     g_string_append(str, "uin:");
-    g_string_append(str, bdy -> uin -> str);
-    g_string_append(str, "\n")
+    g_string_append(str, mb -> uin -> str);
+    g_string_append(str, "\n");
 
     g_string_append(str, "nick:");
-    g_string_append(str, bdy -> nick -> str);
-    g_string_append(str, "\n")
+    g_string_append(str, mb -> nick -> str);
+    g_string_append(str, "\n");
 
     g_string_append(str, "card:");
-    g_string_append(str, bdy -> card-> str);
-    g_string_append(str, "\n\r")
+    g_string_append(str, mb -> card-> str);
+    g_string_append(str, "\n\r");
     return str;
 }
 
@@ -925,10 +927,13 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
     if(grp == NULL || name == NULL){
         return;
     }
-
-#define SET_STR(x)  g_string_truncate(bdy -> x, 0);\
+    
+    va_list ap;
+    va_start(ap, name);
+    const gchar *strvalue;
+#define SET_STR(x)  g_string_truncate(grp -> x, 0);\
                     strvalue = va_arg(ap, const gchar *);\
-                    g_string_append(bdy -> x, strvalue)
+                    g_string_append(grp -> x, strvalue)
     if(g_strcmp0("name", name) == 0){
         SET_STR(name);
     }else if(g_strcmp0("gid", name) == 0){
@@ -948,17 +953,18 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
     }else if(g_strcmp0("fingermemo", name) == 0){
         SET_STR(fingermemo);
     }else if(g_strcmp0("option", name) == 0){
-        m -> option = va_arg(ap, gint);
+        grp -> option = va_arg(ap, gint);
     }else if(g_strcmp0("gclass", name) == 0){
-        m -> gclass= va_arg(ap, gint);
+        grp -> gclass= va_arg(ap, gint);
     }else if(g_strcmp0("level", name) == 0){
-        m -> level = va_arg(ap, gint);
+        grp -> level = va_arg(ap, gint);
     }else if(g_strcmp0("face", name) == 0){
-        m -> face = va_arg(ap, gint);
+        grp -> face = va_arg(ap, gint);
     }else if(g_strcmp0("createTime", name) == 0){
-        m -> createTime = va_arg(ap, glong);
+        grp -> createTime = va_arg(ap, glong);
     }
 #undef SET_STR
+    va_end(ap);
     return;
 }
 
@@ -978,6 +984,9 @@ QQGroup* qq_group_new_from_string(gchar *str)
     }
     *(members + 2) = '\0'; // change '{' to '\0'
     members += 5;
+
+
+    return grp;
 }
 
 GString* qq_group_tostring(QQGroup *grp)
@@ -1016,7 +1025,7 @@ GString* qq_group_tostring(QQGroup *grp)
     //Create time
     g_string_append(str, "createTime:");\
     g_string_append_printf(str, "%ld", grp -> createTime);\
-    g_string_append(str, "\n\r{\n\r")
+    g_string_append(str, "\n\r{\n\r");
 
     gint i;
     GString *tmp;
@@ -1026,13 +1035,13 @@ GString* qq_group_tostring(QQGroup *grp)
         g_string_free(tmp, TRUE);
     }
     //The end
-    g_string_append(str, "\n\r}\n\r")
+    g_string_append(str, "\n\r}\n\r");
     return str;
 }
 
 gint qq_group_add(QQGroup *grp, QQGMember *m)
 {
-
+    return 0;
 }
 //
 // QQCategory

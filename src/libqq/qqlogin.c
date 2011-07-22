@@ -505,7 +505,7 @@ static int get_psessionid(QQInfo *info)
 
 	request_append_msg(req, msg, strlen(msg));
 	gchar cl[10];
-	g_sprintf(cl, "%ld", strlen(msg));
+	g_sprintf(cl, "%u", strlen(msg));
 	request_add_header(req, "Content-Length", cl);
 	request_add_header(req, "Content-Type"
 			, "application/x-www-form-urlencoded");
