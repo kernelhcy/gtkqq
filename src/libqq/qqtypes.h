@@ -330,17 +330,19 @@ struct _QQCategory{
     gint index;
 
     /*
-     * The pointers of the members
-     * QQBuddy instance.
+     * The pointers of the members QQBuddy instance.
      */
     GPtrArray *members;
 };
 QQCategory* qq_category_new();
 void qq_category_free(QQCategory *);
 
-QQCategory* qq_category_new_from_string(gchar *str);
+QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str);
 GString* qq_category_to_string(QQCategory *cate);
 
+//
+// QQRecentCon
+//
 struct _QQRecentCon{
     GString *uin;
     /*

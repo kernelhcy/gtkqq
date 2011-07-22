@@ -565,10 +565,7 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         SET_STR(lnick);
     }else if(g_strcmp0(name, "faceimgfile") == 0){
         SET_STR(lnick);
-    }
-#undef SET_STR
-
-    if(g_strcmp0(name, "faceimg") == 0){
+    }else if(g_strcmp0(name, "faceimg") == 0){
         bdy -> faceimg = va_arg(ap, QQFaceImg *);
     }else if(g_strcmp0(name, "vip_info") == 0){
         bdy -> vip_info = va_arg(ap, gint);
@@ -593,6 +590,7 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         g_warning("Unknown member %s in QQBuddy. (%s, %d)", name
                             , __FILE__, __LINE__);
     }
+#undef SET_STR
     va_end(ap);
 }
 
@@ -850,6 +848,11 @@ QQGMember* qq_gmember_new_from_string(gchar *str)
     SET_VALUE_STR(nick);
     SET_VALUE_STR(card);
 #undef SET_VALUE_STR
+
+    //We don't know the status of the members.
+    //Just set to offline
+    m -> status = g_string_new("offline");
+    m -> faceimg = NULL;
     return m;
 }
 GString* qq_gmember_tostring(QQGMember *mb)
@@ -985,7 +988,67 @@ QQGroup* qq_group_new_from_string(gchar *str)
     *(members + 2) = '\0'; // change '{' to '\0'
     members += 5;
 
+    gchar *colon, *nl;
+    gchar *name, *value;
+#define SET_VALUE_STR(x) \
+    name = g_strstr_len(str, len, #x);\
+    if(name != NULL){\
+        colon = name;\
+        while(*colon != '\0' && *colon != ':') ++colon;\
+        value = colon + 1;\
+        nl = value;\
+        while(*nl != '\n' && *nl != '\n') ++nl;\
+        *nl = '\0';\
+        grp -> x = g_string_new(value);\
+        *nl = '\n';\
+    }
 
+    SET_VALUE_STR(name);
+    SET_VALUE_STR(gid);
+    SET_VALUE_STR(code);
+    SET_VALUE_STR(flag);
+    SET_VALUE_STR(owner);
+    SET_VALUE_STR(mark);
+    SET_VALUE_STR(mask);
+    SET_VALUE_STR(memo);
+    SET_VALUE_STR(fingermemo);
+#undef SET_VALUE_STR
+
+    gint tmpi;
+#define SET_VALUE_INT(x) \
+    name = g_strstr_len(str, len, #x);\
+    if(name != NULL){\
+        colon = name;\
+        while(*colon != '\0' && *colon != ':') ++colon;\
+        value = colon + 1;\
+        nl = value;\
+        while(*nl != '\n' && *nl != '\n') ++nl;\
+        *nl = '\0';\
+        tmpi = (gint)strtol(value, NULL, 10);\
+        grp -> x = tmpi;\
+        *nl = '\n';\
+    }
+
+    SET_VALUE_INT(option);
+    SET_VALUE_INT(gclass);
+    SET_VALUE_INT(level);
+    SET_VALUE_INT(face);
+    SET_VALUE_INT(createTime);
+#undef SET_VALUE_INT
+
+    //read members
+    QQGMember *m = NULL;
+    gchar *end;
+    do{
+        end = g_strstr_len(members, strlen(members), "\n\r");
+        if(end == NULL){
+            break;
+        }
+        *end = '\0';
+        m = qq_gmember_new_from_string(members);
+        qq_group_add(grp, m);
+        members = end + 2;
+    }while(end != NULL);
     return grp;
 }
 
@@ -1041,6 +1104,10 @@ GString* qq_group_tostring(QQGroup *grp)
 
 gint qq_group_add(QQGroup *grp, QQGMember *m)
 {
+    if(grp == NULL || m == NULL){
+        return -1;
+    }
+    g_ptr_array_add(grp -> members, m);
     return 0;
 }
 //
@@ -1059,6 +1126,88 @@ void qq_category_free(QQCategory *cty)
     }
     g_ptr_array_free(cty -> members, TRUE);
     g_slice_free(QQCategory, cty);
+}
+
+QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str)
+{
+    if(str == NULL){
+        return qq_category_new();
+    }
+
+    QQCategory *cate = g_slice_new0(QQCategory);
+    cate -> members = g_ptr_array_new();
+    gssize len = strlen(str);
+    gchar *members = g_strstr_len(str, len, "\n\r{\n\r");
+    if(members == NULL){
+        g_warning("Category has no memebr!!(%s, %d)", __FILE__, __LINE__);
+    }
+    *(members + 2) = '\0'; // change '{' to '\0'
+    members += 5;
+    
+    gchar *colon, *nl;
+    gchar *name, *value;
+    name = g_strstr_len(str, len, "name");
+    if(name != NULL){
+        colon = name;
+        while(*colon != '\0' && *colon != ':') ++colon;
+        value = colon + 1;
+        nl = value;
+        while(*nl != '\n' && *nl != '\n') ++nl;
+        *nl = '\0';
+        cate -> name = g_string_new(value);
+        *nl = '\n';
+    }
+
+    name = g_strstr_len(str, len, "index");
+    if(name != NULL){
+        colon = name;
+        while(*colon != '\0' && *colon != ':') ++colon;
+        value = colon + 1;
+        nl = value;
+        while(*nl != '\n' && *nl != '\n') ++nl;
+        *nl = '\0';
+        cate -> index = (gint)strtol(value, NULL, 10);
+        *nl = '\n';
+    }
+    
+    gchar *uin, *end;
+    uin = members;
+    QQBuddy *bdy;
+    while(*uin != '\n'){
+        end = uin;
+        while(*end != ' ') ++end;
+        *end = '\0';
+        bdy = qq_info_lookup_buddy(info, uin);
+        g_ptr_array_add(cate -> members, bdy);
+        ++end;
+        uin = end;
+    }
+
+    return cate;
+}
+GString* qq_category_to_string(QQCategory *cate)
+{
+    GString *str = g_string_new("");
+    if(cate == NULL){
+        return str;
+    }
+
+    g_string_append(str, "name:");
+    g_string_append(str, cate -> name -> str);
+    g_string_append(str, "\n");
+
+    g_string_append(str, "index:");
+    g_string_append_printf(str, "%d", cate -> index);
+    g_string_append(str, "\n\r{\n\r");
+    gint i;
+    QQBuddy *bdy;
+    for(i = 0; i < cate -> members -> len; ++i){
+        bdy = (QQBuddy *)g_ptr_array_index(cate -> members, i);
+        g_string_append(str, bdy -> uin -> str);
+        g_string_append(str, " ");
+    }
+    g_string_append(str, "\n\r}\n\r");
+    return str;
 }
 
 //

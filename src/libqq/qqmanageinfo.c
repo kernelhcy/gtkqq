@@ -737,8 +737,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
                 idx = strtol(cate, &endptr, 10);
                 if(endptr == cate){
                     g_warning("strtol error. %s:%d (%s, %d)"
-                            , cate, idx, __FILE__
-                            , __LINE__);
+                                , cate, idx, __FILE__, __LINE__);
                 }
                 for(i = 0; i < info -> categories -> len; ++i){
                     qc = info -> categories -> pdata[i];
@@ -861,14 +860,16 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
                 name = tmp -> child -> text;
             }
             QQGroup *grp = qq_group_new();
-            grp -> gid = g_string_new(gid);
-            grp -> code = g_string_new(code);
-            grp -> flag = g_string_new(flag);
-            grp -> name = g_string_new(NULL);
-            ucs4toutf8(grp -> name, name);
-//            g_debug("gid: %s, code %s, flag %s, name %s (%s, %d)"
-//                    , gid, code, flag, grp -> name -> str
-//                    , __FILE__, __LINE__);
+            qq_group_set(grp, "gid", gid);
+            qq_group_set(grp, "code", code);
+            qq_group_set(grp, "flag", flag);
+            GString *tmps = g_string_new(NULL);
+            ucs4toutf8(tmps, name);
+            g_debug("gid: %s, code %s, flag %s, name %s (%s, %d)"
+                    , gid, code, flag, tmps -> str
+                    , __FILE__, __LINE__);
+            qq_group_set(grp, "name", tmps -> str);
+            g_string_free(tmps, TRUE);
             g_ptr_array_add(info -> groups, grp);
             g_hash_table_insert(info -> groups_ht, grp -> gid, grp);
         }
@@ -899,9 +900,9 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
                 tmpg = (QQGroup *)info -> groups -> pdata[i];
                 if(g_strstr_len(tmpg -> gid -> str, -1, gid)
                         != NULL){
-                    g_debug("Find group %s (%s, %d)", gid
+                    g_debug("Find group %s for mask %s(%s, %d)", gid, mask
                             , __FILE__, __LINE__);
-                    tmpg -> mask = g_string_new(mask);
+                    qq_group_set(tmpg, "mask", mask);
                 }
             }
         }
@@ -928,16 +929,19 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
             }
             gint i;
             QQGroup *tmpg;
+            GString *tmps = g_string_new(NULL);
             for(i = 0; i < info -> groups -> len; ++i){
                 tmpg = (QQGroup *)info -> groups -> pdata[i];
                 if(g_strstr_len(tmpg -> gid -> str, -1, gid)
                         != NULL){
-                    g_debug("Find group %s (%s, %d)", gid
+                    g_string_truncate(tmps, 0);
+                    ucs4toutf8(tmps, mark);
+                    g_debug("Find group %s for mark %s(%s, %d)", gid, tmps -> str
                             , __FILE__, __LINE__);
-                    tmpg -> mark = g_string_new(NULL);
-                    ucs4toutf8(tmpg -> mark, mark);
+                    qq_group_set(tmpg, "mark", tmps -> str);
                 }
             }
+            g_string_free(tmps, TRUE);
         }
     }else{
         g_warning("No gmarklist find. (%s, %d)", __FILE__, __LINE__);
