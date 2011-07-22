@@ -589,6 +589,9 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         bdy -> birthday.day = va_arg(ap, gint);
     }else if(g_strcmp0(name, "cate") == 0){
         bdy -> cate = va_arg(ap, QQCategory*);
+    }else{
+        g_warning("Unknown member %s in QQBuddy. (%s, %d)", name
+                            , __FILE__, __LINE__);
     }
     va_end(ap);
 }
@@ -745,10 +748,23 @@ GString* qq_buddy_tostring(QQBuddy *bdy)
     return str;
 }
 
+//
+// QQGMeber
+//
 QQGMember* qq_gmember_new()
 {
     QQGMember *m = g_slice_new0(QQGMember);
+    
+    if(m == NULL){
+        g_warning("OOM...(%s, %d)", __FILE__, __LINE__);
+        return NULL;
+    }
 
+    m -> uin = g_string_new("");
+    m -> nick = g_string_new("");
+    m -> flag = g_string_new("");
+    m -> status = g_string_new("");
+    m -> card = g_string_new("");
     return m;
 }
 void qq_gmember_free(QQGMember *m)
@@ -766,10 +782,115 @@ void qq_gmember_free(QQGMember *m)
     qq_faceimg_free(m -> faceimg);
     g_slice_free(QQGMember, m);
 }
+void qq_gmember_set(QQGMember *m, const gchar *name, ...)
+{
+    if(m == NULL || name == NULL){
+        return ;
+    }
+
+    va_list ap;
+    va_start(ap, name);
+    const gchar *value = NULL;
+#define SET_VALUE_STR(x)    \
+    value = va_arg(ap, const gchar *);\
+    g_string_truncate(m -> x, 0);\
+    g_string_append(m -> x, value)
+    
+    if(g_strcmp0("uin", name) == 0){
+        SET_VALUE_STR(uin);
+    }else if(g_strcmp0("nick", name) == 0){
+        SET_VALUE_STR(nick);
+    }else if(g_strcmp0("flag", name) == 0){
+        SET_VALUE_STR(flag);
+    }else if(g_strcmp0("status", name) == 0){
+        SET_VALUE_STR(status);
+    }else if(g_strcmp0("card", name) == 0){
+        SET_VALUE_STR(card);
+    }else if(g_strcmp0("faceimg", name) == 0){
+        QQFaceImg *img = va_arg(ap, QQFaceImg*);
+        m -> faceimg = img;
+    }else{
+        g_warning("Unknown member %s in QQGMember. (%s, %d)", name
+                        , __FILE__, __LINE__);
+    }
+#undef SET_VALUE_STR
+    va_end(ap);
+    return ;
+}
+
+QQGMember* qq_gmember_new_from_string(gchar *str)
+{
+    if(str == NULL){
+        return qq_gmember_new();
+    }
+
+    QQGMember *m = g_slice_new0(QQGMember);
+    
+    if(m == NULL){
+        g_warning("OOM...(%s, %d)", __FILE__, __LINE__);
+        return NULL;
+    }
+    gchar *colon, *nl;
+    gchar *name, *value;
+#define SET_VALUE_STR(x) \
+    name = g_strstr_len(str, len, #x);\
+    if(name != NULL){\
+        colon = name;\
+        while(*colon != '\0' && *colon != ':') ++colon;\
+        value = colon + 1;\
+        nl = value;\
+        while(*nl != '\n' && *nl != '\n') ++nl;\
+        *nl = '\0';\
+        m -> x = g_string_new(value);\
+        *nl = '\n';\
+    }
+
+    SET_VALUE_STR(uin);
+    SET_VALUE_STR(nick);
+    SET_VALUE_STR(card);
+#undef SET_VALUE_STR
+}
+GString* qq_gmember_tostring(QQGMember *mb)
+{
+    if(mb == NULL){
+        return g_string_new("");
+    }
+
+    GString *str = g_string_new("");
+
+    g_string_append(str, "uin:");
+    g_string_append(str, bdy -> uin -> str);
+    g_string_append(str, "\n")
+
+    g_string_append(str, "nick:");
+    g_string_append(str, bdy -> nick -> str);
+    g_string_append(str, "\n")
+
+    g_string_append(str, "card:");
+    g_string_append(str, bdy -> card-> str);
+    g_string_append(str, "\n\r")
+    return str;
+}
+
+//
+// QQGroup
+//
 QQGroup* qq_group_new()
 {
     QQGroup *grp = g_slice_new0(QQGroup);
     grp -> members = g_ptr_array_new();
+
+#define NEW_STR(x) grp -> x = g_string_new("")
+    NEW_STR(name);
+    NEW_STR(gid);
+    NEW_STR(code);
+    NEW_STR(flag);
+    NEW_STR(owner);
+    NEW_STR(mark);
+    NEW_STR(mask);
+    NEW_STR(memo);
+    NEW_STR(fingermemo);
+#undef NEW_STR
     return grp;
 }
 void qq_group_free(QQGroup *grp)
@@ -778,15 +899,17 @@ void qq_group_free(QQGroup *grp)
         return;
     }
 
-    g_string_free(grp -> name, TRUE);
-    g_string_free(grp -> gid, TRUE);
-    g_string_free(grp -> code, TRUE);
-    g_string_free(grp -> flag, TRUE);
-    g_string_free(grp -> owner, TRUE);
-    g_string_free(grp -> mark, TRUE);
-    g_string_free(grp -> mask, TRUE);
-    g_string_free(grp -> memo, TRUE);
-    g_string_free(grp -> fingermemo, TRUE);
+#define FREE_STR(x)    g_string_free(grp -> x, TRUE)
+    FREE_STR(name);
+    FREE_STR(gid);
+    FREE_STR(code);
+    FREE_STR(flag);
+    FREE_STR(owner);
+    FREE_STR(mark);
+    FREE_STR(mask);
+    FREE_STR(memo);
+    FREE_STR(fingermemo);
+#undef FREE_STR
 
     gint i;
     for(i = 0; i < grp -> members -> len; ++i){
@@ -797,6 +920,123 @@ void qq_group_free(QQGroup *grp)
     g_slice_free(QQGroup, grp);
 }
 
+void qq_group_set(QQGroup *grp, const gchar *name, ...)
+{
+    if(grp == NULL || name == NULL){
+        return;
+    }
+
+#define SET_STR(x)  g_string_truncate(bdy -> x, 0);\
+                    strvalue = va_arg(ap, const gchar *);\
+                    g_string_append(bdy -> x, strvalue)
+    if(g_strcmp0("name", name) == 0){
+        SET_STR(name);
+    }else if(g_strcmp0("gid", name) == 0){
+        SET_STR(gid);
+    }else if(g_strcmp0("code", name) == 0){
+        SET_STR(code);
+    }else if(g_strcmp0("flag", name) == 0){
+        SET_STR(flag);
+    }else if(g_strcmp0("owner", name) == 0){
+        SET_STR(owner);
+    }else if(g_strcmp0("mark", name) == 0){
+        SET_STR(mark);
+    }else if(g_strcmp0("mask", name) == 0){
+        SET_STR(mask);
+    }else if(g_strcmp0("memo", name) == 0){
+        SET_STR(memo);
+    }else if(g_strcmp0("fingermemo", name) == 0){
+        SET_STR(fingermemo);
+    }else if(g_strcmp0("option", name) == 0){
+        m -> option = va_arg(ap, gint);
+    }else if(g_strcmp0("gclass", name) == 0){
+        m -> gclass= va_arg(ap, gint);
+    }else if(g_strcmp0("level", name) == 0){
+        m -> level = va_arg(ap, gint);
+    }else if(g_strcmp0("face", name) == 0){
+        m -> face = va_arg(ap, gint);
+    }else if(g_strcmp0("createTime", name) == 0){
+        m -> createTime = va_arg(ap, glong);
+    }
+#undef SET_STR
+    return;
+}
+
+QQGroup* qq_group_new_from_string(gchar *str)
+{
+    if(str == NULL){
+        return qq_group_new();
+    }
+
+    QQGroup *grp = g_slice_new0(QQGroup);
+    grp -> members = g_ptr_array_new();
+
+    gssize len = strlen(str);
+    gchar *members = g_strstr_len(str, len, "\n\r{\n\r");
+    if(members == NULL){
+        g_warning("Group has no memebr!!(%s, %d)", __FILE__, __LINE__);
+    }
+    *(members + 2) = '\0'; // change '{' to '\0'
+    members += 5;
+}
+
+GString* qq_group_tostring(QQGroup *grp)
+{
+    GString *str = g_string_new("");
+
+    if(grp == NULL){
+        return str;
+    }
+
+#define APP_STR(x) \
+    g_string_append(str, #x":");\
+    g_string_append(str, grp -> x -> str);\
+    g_string_append(str, "\n")\
+
+    APP_STR(name);
+    APP_STR(gid);
+    APP_STR(code);
+    APP_STR(flag);
+    APP_STR(owner);
+    APP_STR(mark);
+    APP_STR(mask);
+    APP_STR(memo);
+    APP_STR(fingermemo);
+#undef APP_STR     
+#define APP_STR_INT(x) \
+    g_string_append(str, #x":");\
+    g_string_append_printf(str, "%d", grp -> x);\
+    g_string_append(str, "\n")
+
+    APP_STR_INT(option);
+    APP_STR_INT(gclass);
+    APP_STR_INT(level);
+    APP_STR_INT(face);
+#undef APP_STR_INT
+    //Create time
+    g_string_append(str, "createTime:");\
+    g_string_append_printf(str, "%ld", grp -> createTime);\
+    g_string_append(str, "\n\r{\n\r")
+
+    gint i;
+    GString *tmp;
+    for(i = 0; i < grp -> members -> len; ++i){
+        tmp = qq_gmember_tostring((QQGMember*)(grp -> members -> pdata[i]));
+        g_string_append(str, tmp -> str);
+        g_string_free(tmp, TRUE);
+    }
+    //The end
+    g_string_append(str, "\n\r}\n\r")
+    return str;
+}
+
+gint qq_group_add(QQGroup *grp, QQGMember *m)
+{
+
+}
+//
+// QQCategory
+//
 QQCategory* qq_category_new()
 {
     QQCategory *c = g_slice_new0(QQCategory);
@@ -812,6 +1052,9 @@ void qq_category_free(QQCategory *cty)
     g_slice_free(QQCategory, cty);
 }
 
+//
+// QQRecentCon
+//
 QQRecentCon* qq_recentcon_new()
 {
     QQRecentCon *rc = g_slice_new0(QQRecentCon);
@@ -827,6 +1070,9 @@ void qq_recentcon_free(QQRecentCon *rc)
     g_slice_free(QQRecentCon, rc);
 }
 
+//
+// QQFaceImg
+//
 QQFaceImg* qq_faceimg_new()
 {
     QQFaceImg *img = g_slice_new0(QQFaceImg);

@@ -57,7 +57,7 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     request_append_msg(req, euri, strlen(euri));
     g_free(euri);
 
-    g_snprintf(params, 3000, "%d", strlen(req -> msg -> str));
+    g_snprintf(params, 3000, "%ld", strlen(req -> msg -> str));
     request_add_header(req, "Content-Length", params);
 
     Connection *con = connect_to_host(MSGHOST, 80);

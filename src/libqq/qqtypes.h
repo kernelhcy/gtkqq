@@ -286,6 +286,11 @@ struct _QQGMember{
 };
 QQGMember* qq_gmember_new();
 void qq_gmember_free(QQGMember *m);
+
+void qq_gmember_set(QQGMember *m, const gchar *name, ...);
+
+QQGMember* qq_gmember_new_from_string(gchar *str);
+GString* qq_gmember_tostring(QQGMember *mb);
 /*
  * QQ group
  */
@@ -313,6 +318,12 @@ void qq_group_free(QQGroup *);
 
 QQGroup* qq_group_new_from_string(gchar *str);
 GString* qq_group_tostring(QQGroup *grp);
+void qq_group_set(QQGroup *grp, const gchar *name, ...);
+//
+// Add group member
+// Return the index or -1 for failed
+//
+gint qq_group_add(QQGroup *grp, QQGMember *m);
 
 struct _QQCategory{
     GString *name;
