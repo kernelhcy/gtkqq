@@ -285,7 +285,7 @@ gint rcv_response(Connection *con, Response **rp)
                 //we got all the data.
                 g_debug("Server close the connection. "
                         "data has gotten: %u(%s, %d)"
-                        ,bytes_read ,__FILE__, __LINE__);
+                        , (unsigned int)bytes_read ,__FILE__, __LINE__);
                 break;
             }
             break;
@@ -428,7 +428,7 @@ gint rcv_response(Connection *con, Response **rp)
     if(gotcl && r -> msg -> len != cl && tev == NULL){
         g_warning("No read all the message!! content length:%d"
                 " msg -> len: %u. (%s, %d)"
-                , cl, r -> msg -> len, __FILE__, __LINE__);
+                , cl, (unsigned int)r -> msg -> len, __FILE__, __LINE__);
     }
 
     if(isgzip){
@@ -440,8 +440,8 @@ gint rcv_response(Connection *con, Response **rp)
         g_string_truncate(r -> msg, 0);
         g_string_append(r -> msg, out -> str);
         g_string_free(out, TRUE);
-        g_debug("Ungzip data. After len %u.(%s, %d)" , r -> msg -> len
-                    , __FILE__, __LINE__);
+        g_debug("Ungzip data. After len %u.(%s, %d)"
+                    , (unsigned int)r -> msg -> len, __FILE__, __LINE__);
     }
 
     *rp = r;
