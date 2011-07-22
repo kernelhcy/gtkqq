@@ -1,4 +1,7 @@
 #include <qqtypes.h>
+#include <stdarg.h>
+#include <string.h>
+#include <stdlib.h>
 
 /*
  * QQInfo
@@ -22,8 +25,8 @@ QQInfo* qq_info_new()
 
     info -> lock = g_mutex_new();
 
-	GTimeVal now;
-	g_get_current_time(&now);
+    GTimeVal now;
+    g_get_current_time(&now);
     glong v = now.tv_usec;
     v = (v - v % 1000) / 1000;
     v = v % 10000 * 10000;
@@ -455,6 +458,28 @@ QQBuddy* qq_buddy_new()
 {
     QQBuddy *bd = g_slice_new0(QQBuddy);
     bd -> vip_info = -1;
+#define NEW_STR(x) bd -> x = g_string_new("")
+    NEW_STR(uin);
+    NEW_STR(status);
+    NEW_STR(nick);
+    NEW_STR(markname);
+    NEW_STR(country);
+    NEW_STR(city);
+    NEW_STR(province);
+    NEW_STR(gender);
+    NEW_STR(face);
+    NEW_STR(flag);
+    NEW_STR(phone);
+    NEW_STR(mobile);
+    NEW_STR(email);
+    NEW_STR(college);
+    NEW_STR(occupation);
+    NEW_STR(personal);
+    NEW_STR(homepage);
+    NEW_STR(lnick);
+    NEW_STR(faceimgfile);
+#undef NEW_STR
+
     return bd;
 }
 void qq_buddy_free(QQBuddy *bd)
@@ -488,6 +513,236 @@ void qq_buddy_free(QQBuddy *bd)
     qq_faceimg_free(bd -> faceimg);
 
     g_slice_free(QQBuddy, bd);
+}
+
+void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
+{
+    if(bdy == NULL || name == NULL){
+        return;
+    }
+
+    va_list ap;
+    va_start(ap, name);
+    const gchar *strvalue;
+#define SET_STR(x)  g_string_truncate(bdy -> x, 0);\
+                    strvalue = va_arg(ap, const gchar *);\
+                    g_string_append(bdy -> x, strvalue);
+    if(g_strcmp0(name, "uin") == 0){
+        SET_STR(uin);
+    }else if(g_strcmp0(name, "status") == 0){
+        SET_STR(status);
+    }else if(g_strcmp0(name, "nick") == 0){
+        SET_STR(nick);
+    }else if(g_strcmp0(name, "markname") == 0){
+        SET_STR(markname);
+    }else if(g_strcmp0(name, "country") == 0){
+        SET_STR(country);
+    }else if(g_strcmp0(name, "province") == 0){
+        SET_STR(province);
+    }else if(g_strcmp0(name, "city") == 0){
+        SET_STR(city);
+    }else if(g_strcmp0(name, "gender") == 0){
+        SET_STR(gender);
+    }else if(g_strcmp0(name, "face") == 0){
+        SET_STR(face);
+    }else if(g_strcmp0(name, "flag") == 0){
+        SET_STR(flag);
+    }else if(g_strcmp0(name, "phone") == 0){
+        SET_STR(phone);
+    }else if(g_strcmp0(name, "mobile") == 0){
+        SET_STR(mobile);
+    }else if(g_strcmp0(name, "email") == 0){
+        SET_STR(email);
+    }else if(g_strcmp0(name, "occupation") == 0){
+        SET_STR(occupation);
+    }else if(g_strcmp0(name, "college") == 0){
+        SET_STR(college);
+    }else if(g_strcmp0(name, "homepage") == 0){
+        SET_STR(homepage);
+    }else if(g_strcmp0(name, "personal") == 0){
+        SET_STR(personal);
+    }else if(g_strcmp0(name, "lnick") == 0){
+        SET_STR(lnick);
+    }else if(g_strcmp0(name, "faceimgfile") == 0){
+        SET_STR(lnick);
+    }
+#undef SET_STR
+
+    if(g_strcmp0(name, "faceimg") == 0){
+        bdy -> faceimg = va_arg(ap, QQFaceImg *);
+    }else if(g_strcmp0(name, "vip_info") == 0){
+        bdy -> vip_info = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "blood") == 0){
+        bdy -> blood = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "shengxiao") == 0){
+        bdy -> shengxiao = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "constel") == 0){
+        bdy -> constel = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "allow") == 0){
+        bdy -> allow = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "client_type") == 0){
+        bdy -> client_type = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "category") == 0){
+    }else if(g_strcmp0(name, "birthday") == 0){
+        bdy -> birthday.year = va_arg(ap, gint);
+        bdy -> birthday.month = va_arg(ap, gint);
+        bdy -> birthday.day = va_arg(ap, gint);
+    }else if(g_strcmp0(name, "cate") == 0){
+        bdy -> cate = va_arg(ap, QQCategory*);
+    }
+    va_end(ap);
+}
+
+QQBuddy* qq_buddy_new_from_string(gchar *str)
+{
+    gssize len = strlen(str);
+    if(str == NULL || len <=0){
+        return qq_buddy_new();
+    }
+    QQBuddy *bdy = g_slice_new0(QQBuddy);
+    gchar *colon, *nl;
+    gchar *name, *value;
+#define SET_VALUE_STR(x) \
+    name = g_strstr_len(str, len, #x);\
+    if(name != NULL){\
+        colon = name;\
+        while(*colon != '\0' && *colon != ':') ++colon;\
+        value = colon + 1;\
+        nl = value;\
+        while(*nl != '\n' && *nl != '\n') ++nl;\
+        *nl = '\0';\
+        bdy -> x = g_string_new(value);\
+        *nl = '\n';\
+    }
+
+    SET_VALUE_STR(uin);
+    SET_VALUE_STR(status);
+    SET_VALUE_STR(nick);
+    SET_VALUE_STR(markname);
+    SET_VALUE_STR(country);
+    SET_VALUE_STR(province);
+    SET_VALUE_STR(city);
+    SET_VALUE_STR(gender);
+    SET_VALUE_STR(face);
+    SET_VALUE_STR(flag);
+    SET_VALUE_STR(phone);
+    SET_VALUE_STR(mobile);
+    SET_VALUE_STR(email);
+    SET_VALUE_STR(occupation);
+    SET_VALUE_STR(college);
+    SET_VALUE_STR(homepage);
+    SET_VALUE_STR(personal);
+    SET_VALUE_STR(lnick);
+#undef SET_VALUE_STR
+    
+    gint tmpi;
+#define SET_VALUE_INT(x) \
+    name = g_strstr_len(str, len, #x);\
+    if(name != NULL){\
+        colon = name;\
+        while(*colon != '\0' && *colon != ':') ++colon;\
+        value = colon + 1;\
+        nl = value;\
+        while(*nl != '\n' && *nl != '\n') ++nl;\
+        *nl = '\0';\
+        tmpi = (gint)strtol(value, NULL, 10);\
+        bdy -> x = tmpi;\
+        *nl = '\n';\
+    }
+    
+    SET_VALUE_INT(vip_info);
+    SET_VALUE_INT(blood);
+    SET_VALUE_INT(shengxiao);
+    SET_VALUE_INT(constel);
+    SET_VALUE_INT(allow);
+    SET_VALUE_INT(client_type);
+#undef SET_VALUE_INT
+
+    //birthday
+    gint y, m, d;
+    gchar *ys, *ms, *ds;
+    name = g_strstr_len(str, len, "birthday");
+    if(name != NULL){
+        colon = name;
+        while(*colon != '\0' && *colon != ':') ++colon;
+        value = colon + 1;
+        nl = value;
+        //year
+        while(*nl > '9' || *nl < '0') ++nl;
+        ys = nl; 
+        while(*nl <= '9' && *nl >= '0') ++nl;
+        *nl = '\0';
+        //month
+        while(*nl > '9' || *nl < '0') ++nl;
+        ms = nl;
+        while(*nl <= '9' && *nl >= '0') ++nl;
+        *nl = '\0';
+        //day
+        while(*nl > '9' || *nl < '0') ++nl;
+        ds = nl;
+        while(*nl <= '9' && *nl >= '0') ++nl;
+        *nl = '\0';
+
+        y = (gint)strtol(ys, NULL, 10);
+        m = (gint)strtol(ms, NULL, 10);
+        d = (gint)strtol(ds, NULL, 10);
+        bdy -> birthday.year = y;
+        bdy -> birthday.month = m;
+        bdy -> birthday.day = d;
+    }
+    return bdy;
+}
+
+GString* qq_buddy_tostring(QQBuddy *bdy)
+{
+    if(bdy == NULL){
+        g_string_new("");
+    }
+    GString *str = g_string_new("");
+#define APP_STR(x) \
+    g_string_append(str, #x":");\
+    g_string_append(str, bdy -> x -> str);\
+    g_string_append(str, "\n")\
+
+    APP_STR(uin);
+    APP_STR(status);
+    APP_STR(nick);
+    APP_STR(markname);
+    APP_STR(country);
+    APP_STR(province);
+    APP_STR(city);
+    APP_STR(gender);
+    APP_STR(face);
+    APP_STR(flag);
+    APP_STR(phone);
+    APP_STR(mobile);
+    APP_STR(email);
+    APP_STR(occupation);
+    APP_STR(college);
+    APP_STR(homepage);
+    APP_STR(personal);
+    APP_STR(lnick);
+#undef APP_STR
+
+#define APP_STR_INT(x) \
+    g_string_append(str, #x":");\
+    g_string_append_printf(str, "%d", bdy -> x);\
+    g_string_append(str, "\n")
+
+    APP_STR_INT(vip_info);
+    APP_STR_INT(blood);
+    APP_STR_INT(shengxiao);
+    APP_STR_INT(constel);
+    APP_STR_INT(allow);
+    APP_STR_INT(client_type);
+#undef APP_STR_INT
+
+    g_string_append(str, "birthday:");
+    g_string_append_printf(str, "%d ", bdy -> birthday.year);
+    g_string_append_printf(str, "%d ", bdy -> birthday.month);
+    g_string_append_printf(str, "%d", bdy -> birthday.day);
+    g_string_append(str, "\n\r");
+    return str;
 }
 
 QQGMember* qq_gmember_new()

@@ -7,20 +7,23 @@
 /*
  * The data structures of gtkqq
  */
-
 typedef struct _QQInfo          QQInfo;
+
 typedef struct _QQSendMsg       QQSendMsg;
 typedef struct _QQRecvMsg       QQRecvMsg;
 typedef struct _QQMsgContent    QQMsgContent;
 typedef struct _QQMsgFont       QQMsgFont;
+
 typedef struct _QQBuddy         QQBuddy;
 typedef struct _QQGroup         QQGroup;
 typedef struct _QQGMember       QQGMember;
 typedef struct _QQCategory      QQCategory;
+
 typedef struct _QQRecentCon     QQRecentCon;
 typedef struct _QQFaceImg       QQFaceImg;
 
 typedef enum  _QQErrorCode      QQErrorCode;
+
 enum _QQErrorCode{
     PARAMETER_ERR = 0,      // the parameter(s) is(are) not suitable.
     NETWORK_ERR,            // networking error.
@@ -216,10 +219,10 @@ struct _QQBuddy{
     GString *uin;
     GString *status;
     gint vip_info;
-    GString *nick;                //
+    GString *nick;              //
     GString *markname;
-    QQFaceImg *faceimg;             //the face image data
-    GString *faceimgfile;             //the face image file name
+    QQFaceImg *faceimg;         //the face image data
+    GString *faceimgfile;       //the face image file name
 
     GString *country;
     GString *province;
@@ -232,7 +235,7 @@ struct _QQBuddy{
     struct Birthday{
         gint year, month, day;
     }birthday;
-    gint blood;                //A, B, AB or O
+    gint blood;                 //A, B, AB or O
     gint shengxiao;            
 
     gint constel;
@@ -258,7 +261,17 @@ struct _QQBuddy{
 
 };
 QQBuddy* qq_buddy_new();
+//Create a new buddy instance from the string
+//NOTE:
+//  The parameter will be changed!
+QQBuddy* qq_buddy_new_from_string(gchar *);
+
 void qq_buddy_free(QQBuddy *);
+//Store the buddy information in string format
+GString* qq_buddy_tostring(QQBuddy *);
+//Set the value of the member named `name`
+void qq_buddy_set(QQBuddy *, const gchar *name, ...);
+
 
 /*
  * The member of the group.
@@ -298,6 +311,9 @@ struct _QQGroup{
 QQGroup* qq_group_new();
 void qq_group_free(QQGroup *);
 
+QQGroup* qq_group_new_from_string(gchar *str);
+GString* qq_group_tostring(QQGroup *grp);
+
 struct _QQCategory{
     GString *name;
     gint index;
@@ -311,6 +327,8 @@ struct _QQCategory{
 QQCategory* qq_category_new();
 void qq_category_free(QQCategory *);
 
+QQCategory* qq_category_new_from_string(gchar *str);
+GString* qq_category_to_string(QQCategory *cate);
 
 struct _QQRecentCon{
     GString *uin;

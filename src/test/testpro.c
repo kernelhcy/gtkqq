@@ -36,14 +36,21 @@ int main(int argc, char **argv)
     qq_get_my_info(info, NULL);
     g_message("get my friends...");
     qq_get_my_friends(info, NULL);
-    /* 
     g_message("get group name list mask...");
     qq_get_group_name_list_mask(info, NULL);
     g_message("get online buddies...");
     qq_get_online_buddies(info, NULL);
     g_message("get recent contact...");
     qq_get_recent_contact(info, NULL);
-*/
+
+    printf("\n\n%s\n", qq_buddy_tostring(info -> me) -> str);
+    printf("\n%s\n", qq_buddy_tostring(
+                        qq_buddy_new_from_string(
+                            qq_buddy_tostring(info -> me) -> str
+                        )
+                 ) -> str);
+
+
     gchar buf[500];
     while(1){
         printf("MSG:");
