@@ -255,7 +255,7 @@ static gint do_get_recent_contact(QQInfo *info, GError **err)
 			, info -> vfwebqq -> str);
 	gchar *euri = g_uri_escape_string(params, "=", FALSE);
 	request_append_msg(req, euri, strlen(euri));
-	g_snprintf(params, 300, "%d", strlen(euri));
+	g_snprintf(params, 300, "%ld", strlen(euri));
 	request_add_header(req, "Content-Length", params);
 	g_free(euri);
 
@@ -630,7 +630,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
 			, info -> vfwebqq -> str);
 	gchar *euri = g_uri_escape_string(params, "=", FALSE);
 	request_append_msg(req, euri, strlen(euri));
-	g_snprintf(params, 300, "%d", strlen(euri));
+	g_snprintf(params, 300, "%ld", strlen(euri));
 	request_add_header(req, "Content-Length", params);
 	g_free(euri);
 
@@ -860,7 +860,7 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
 			, info -> vfwebqq -> str);
 	gchar *euri = g_uri_escape_string(params, "=", FALSE);
 	request_append_msg(req, euri, strlen(euri));
-	g_snprintf(params, 300, "%d", strlen(euri));
+	g_snprintf(params, 300, "%ld", strlen(euri));
 	request_add_header(req, "Content-Length", params);
 	g_free(euri);
 
