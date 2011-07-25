@@ -338,7 +338,7 @@ QQCategory* qq_category_new();
 void qq_category_free(QQCategory *);
 
 QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str);
-GString* qq_category_to_string(QQCategory *cate);
+GString* qq_category_tostring(QQCategory *cate);
 
 //
 // QQRecentCon

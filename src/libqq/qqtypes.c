@@ -977,16 +977,17 @@ QQGroup* qq_group_new_from_string(gchar *str)
         return qq_group_new();
     }
 
-    QQGroup *grp = g_slice_new0(QQGroup);
-    grp -> members = g_ptr_array_new();
-
     gssize len = strlen(str);
     gchar *members = g_strstr_len(str, len, "\n\r{\n\r");
     if(members == NULL){
-        g_warning("Group has no memebr!!(%s, %d)", __FILE__, __LINE__);
+        g_warning("Error format!!(%s, %d)", __FILE__, __LINE__);
+        return qq_group_new();
     }
     *(members + 2) = '\0'; // change '{' to '\0'
     members += 5;
+
+    QQGroup *grp = g_slice_new0(QQGroup);
+    grp -> members = g_ptr_array_new();
 
     gchar *colon, *nl;
     gchar *name, *value;
@@ -1041,7 +1042,7 @@ QQGroup* qq_group_new_from_string(gchar *str)
     gchar *end;
     do{
         end = g_strstr_len(members, strlen(members), "\n\r");
-        if(end == NULL){
+        if(end == NULL || *(end + 2) == '}'){
             break;
         }
         *end = '\0';
@@ -1134,16 +1135,17 @@ QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str)
         return qq_category_new();
     }
 
-    QQCategory *cate = g_slice_new0(QQCategory);
-    cate -> members = g_ptr_array_new();
     gssize len = strlen(str);
     gchar *members = g_strstr_len(str, len, "\n\r{\n\r");
     if(members == NULL){
-        g_warning("Category has no memebr!!(%s, %d)", __FILE__, __LINE__);
+        g_warning("Error format!!(%s, %d)", __FILE__, __LINE__);
+        return qq_category_new();
     }
     *(members + 2) = '\0'; // change '{' to '\0'
     members += 5;
     
+    QQCategory *cate = g_slice_new0(QQCategory);
+    cate -> members = g_ptr_array_new();
     gchar *colon, *nl;
     gchar *name, *value;
     name = g_strstr_len(str, len, "name");
@@ -1173,11 +1175,17 @@ QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str)
     gchar *uin, *end;
     uin = members;
     QQBuddy *bdy;
-    while(*uin != '\n'){
+    while(TRUE){
         end = uin;
-        while(*end != ' ') ++end;
+        while(*end != ' ' && *end !='\n') ++end;
+        if(*end == '\n'){
+            break;
+        }
         *end = '\0';
         bdy = qq_info_lookup_buddy(info, uin);
+        if(bdy == NULL){
+            g_warning("Unknown buddy %s (%s, %d)", uin , __FILE__, __LINE__);
+        }
         g_ptr_array_add(cate -> members, bdy);
         ++end;
         uin = end;
@@ -1185,7 +1193,7 @@ QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str)
 
     return cate;
 }
-GString* qq_category_to_string(QQCategory *cate)
+GString* qq_category_tostring(QQCategory *cate)
 {
     GString *str = g_string_new("");
     if(cate == NULL){

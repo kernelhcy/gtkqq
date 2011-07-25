@@ -98,3 +98,90 @@
 
 //发送图片
 {"retcode":0,"result":[{"poll_type":"message","value":{"msg_id":19938,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":151848,"msg_type":9,"reply_ip":2887459631,"time":1298638601,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],["face",109],["face",108],["face",38],"hello",["face",110],["offpic",{"success":1,"file_path":"/43da94dc-0d70-4729-b38f-b04e9ebd3855"}]],"raw_content":"\u0014\u00AE\u0014\u00AD\u0014ghello\u0014\u00AF\u0016  7711 661AB      8633Owebqq_icon.pngf/43da94dc-0d70-4729-b38f-b04e9ebd3855A"}}]}
+
+//群详细信息
+{"retcode":0,
+"result":{
+"stats":
+    [
+        {"client_type":1,"uin":50147212,"stat":20},
+        {"client_type":21,"uin":61856063,"stat":20},
+        {"client_type":1,"uin":2590762767,"stat":50},
+        {"client_type":41,"uin":2603249443,"stat":10}
+     ],
+ "minfo":
+    [
+        {"nick":"","uin":4140323856},
+        {"nick":"","uin":915281510},
+        {"nick":"","uin":195708268},
+        {"nick":"","uin":3096286850},
+        {"nick":"   ","uin":1692575581},
+        {"nick":"","uin":89855791},
+        {"nick":"","uin":3832803273},
+        {"nick":"","uin":378380366},
+        {"nick":"mi","uin":759791859},
+        {"nick":"","uin":2377228318},
+        {"nick":"I\u0027m David","uin":4105128357},
+        {"nick":"","uin":2827472859},
+        {"nick":"","uin":50147212},
+        {"nick":"","uin":3037058864},
+        {"nick":"","uin":785840572},
+        {"nick":" ","uin":2244280609},{"nick":"","uin":75108497},
+        {"nick":"Brent","uin":1444534068},{"nick":"T.i.e","uin":3737920216},
+        {"nick":"","uin":1955931042},{"nick":"Kernel","uin":494498045},
+        {"nick":"snowinner","uin":2232004056},{"nick":"","uin":3527224666},
+        {"nick":"","uin":2415982607},{"nick":"~~","uin":1559825477},
+        {"nick":"","uin":61856063},{"nick":"","uin":2958743622},
+        {"nick":"","uin":2225662545},{"nick":"","uin":4145729752},
+        {"nick":"","uin":683322769},{"nick":"","uin":2592033020},
+        {"nick":"2HB","uin":3666565211},{"nick":"","uin":2986141664},
+        {"nick":"Marian","uin":2223820529},{"nick":"Canon","uin":1857096820},
+        {"nick":"","uin":1756020802},{"nick":"","uin":1730798730},
+        {"nick":"","uin":2500628357},{"nick":"    Vulcan","uin":2090558518},
+        {"nick":"","uin":1462878956},{"nick":"Andy","uin":2590762767},
+        {"nick":"","uin":79278028},{"nick":"","uin":326622078},
+        {"nick":"cg","uin":2422174135},{"nick":"","uin":2603249443}
+    ],
+"ginfo":{
+    "face":3,"memo":"~","class":4269,"uin":2124415890,"fingermemo":"20062",
+    "code":1131667467,"createtime":1186382100,"flag":1048577,
+    "level":0,"name":"(2)","gid":3025609487,"owner":494498045,
+    "markname":"",
+    "members":[
+        {"muin":4140323856,"mflag":0},{"muin":915281510,"mflag":4},
+        {"muin":195708268,"mflag":0},{"muin":3096286850,"mflag":136},
+        {"muin":1692575581,"mflag":0},{"muin":89855791,"mflag":8},
+        {"muin":3832803273,"mflag":128},{"muin":378380366,"mflag":128},
+        {"muin":759791859,"mflag":9},{"muin":2377228318,"mflag":0},
+        {"muin":4105128357,"mflag":128},{"muin":2827472859,"mflag":0},
+        {"muin":50147212,"mflag":9},{"muin":3037058864,"mflag":0},
+        {"muin":785840572,"mflag":128},{"muin":2244280609,"mflag":0},
+        {"muin":75108497,"mflag":12},{"muin":1444534068,"mflag":0},
+        {"muin":3737920216,"mflag":128},{"muin":1955931042,"mflag":0},
+        {"muin":494498045,"mflag":12},{"muin":2232004056,"mflag":136},
+        {"muin":3527224666,"mflag":0},{"muin":2415982607,"mflag":0},
+        {"muin":1559825477,"mflag":128},{"muin":61856063,"mflag":0},
+        {"muin":2958743622,"mflag":9},{"muin":2225662545,"mflag":8},{
+        "muin":4145729752,"mflag":8},{"muin":683322769,"mflag":136},
+        {"muin":2592033020,"mflag":128},{"muin":3666565211,"mflag":128},
+        {"muin":2986141664,"mflag":0},{"muin":2223820529,"mflag":192},
+        {"muin":1857096820,"mflag":8},{"muin":1756020802,"mflag":0},
+        {"muin":1730798730,"mflag":136},{"muin":2500628357,"mflag":0},
+        {"muin":2090558518,"mflag":136},{"muin":1462878956,"mflag":128},
+        {"muin":2590762767,"mflag":0},{"muin":79278028,"mflag":0},
+        {"muin":326622078,"mflag":128},{"muin":2422174135,"mflag":128},
+        {"muin":2603249443,"mflag":4}],
+    "option":2},
+"cards":[
+    {"muin":2090558518,"card":""},{"muin":75108497,"card":""},
+    {"muin":4145729752,"card":""},{"muin":759791859,"card":""},
+    {"muin":2232004056,"card":""},{"muin":1857096820,"card":"Canon"},
+    {"muin":89855791,"card":""},{"muin":2244280609,"card":""},
+    {"muin":3737920216,"card":""},{"muin":2223820529,"card":""},
+    {"muin":3832803273,"card":""},{"muin":785840572,"card":""},
+    {"muin":2590762767,"card":""},{"muin":326622078,"card":""},
+    {"muin":79278028,"card":""},{"muin":4140323856,"card":""},
+    {"muin":3527224666,"card":""},{"muin":195708268,"card":""},
+    {"muin":2592033020,"card":""},{"muin":1692575581,"card":""},
+    {"muin":1462878956,"card":""}]}
+}

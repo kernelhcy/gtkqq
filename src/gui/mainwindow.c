@@ -3,7 +3,7 @@
 #include <splashpanel.h>
 #include <mainpanel.h>
 #include <qq.h>
-#include <config.h>
+#include <gqqconfig.h>
 #include <stdlib.h>
 
 /*
@@ -11,20 +11,17 @@
  */
 static GMainContext *gtkctx;
 extern QQInfo *info;
-extern QQConfig *cfg;
+extern GQQConfig *cfg;
 
 static void qq_mainwindow_init(QQMainWindow *win);
 static void qq_mainwindowclass_init(QQMainWindowClass *wc);
-static void qq_mainwindow_destroy(GObject *obj);
-static void destroy_handle(GtkWidget *widget, gpointer  data);
 
-static void logout_cb(CallBackResult re, gpointer redata, gpointer usrdata);
 /*
  * The handler of "destroy" singal
  */
 static void destroy_handler(GtkWidget *widget, gpointer  data)
 {
-	qq_logout(info, logout_cb, NULL);
+	qq_logout(info, NULL);
 }
 
 GType qq_mainwindow_get_type()
@@ -108,10 +105,6 @@ static void qq_mainwindowclass_init(QQMainWindowClass *wc)
 	 */
 	gtkctx = g_main_context_default();
 }
-static void qq_mainwindow_destroy(GObject *obj)
-{
-
-}
 
 void qq_mainwindow_show_loginpanel(GtkWidget *win)
 {
@@ -141,19 +134,3 @@ void qq_mainwindow_show_mainpanel(GtkWidget *win)
 				QQ_MAINWINDOW(win) -> notebook), 2);
 }
 
-static gboolean gtk_idle(gpointer data)
-{
-	//
-	// Quit other event loop.
-	//
-	qq_finalize(info);
-	gtk_main_quit();
-	exit(0);
-}
-static void logout_cb(CallBackResult re, gpointer redata, gpointer usrdata)
-{
-	GSource *src = g_idle_source_new();
-	g_source_set_callback(src, (GSourceFunc)gtk_idle, NULL, NULL);
-	g_source_attach(src, gtkctx);
-	g_source_unref(src);
-}

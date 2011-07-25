@@ -665,7 +665,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	if(get_psessionid(info) == -1){
 		return -1;
 	}
-
+    
 	g_debug("Initial done.");
 	return 0;
 }

@@ -101,7 +101,7 @@ PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
 #        ] , [
 #            echo ""
 #            echo "configure: error: "
-##            echo "libsqlite3 development headers not found."
+#            echo "libsqlite3 development headers not found."
 #            echo "If you're using debian or ubuntu,install it by"
 #            echo "\"sudo apt-get install libsqlite3-dev\""
 #            echo ""
@@ -177,8 +177,6 @@ PKG_CHECK_MODULES(GOBJECT2, [
         gobject-2.0 >= 2.1
 ])
 
-# Checks for typedefs, structures, and compiler characteristics.
-
 # Checks for library functions.
 AC_FUNC_FORK
 AC_FUNC_MALLOC
@@ -200,8 +198,6 @@ AC_CONFIG_FILES([Makefile
          src/test/Makefile])
 AC_OUTPUT
 
-echo
 #echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
-echo

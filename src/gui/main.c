@@ -5,32 +5,29 @@
 #include <mainwindow.h>
 #include <qq.h>
 #include <log.h>
-#include <config.h>
+#include <gqqconfig.h>
 
 /*
  * Global
  */
 QQInfo *info = NULL;
-QQConfig *cfg = NULL;
+GQQConfig *cfg = NULL;
 
 int main(int argc, char **argv)
 {
 	gtk_init(&argc, &argv);
 
 	log_init();
-	cfg = qq_config_init();
-	qq_config_read(cfg);
-	if(cfg == NULL){
-		return -1;
-	}
-	info = qq_init(NULL, NULL);
+	info = qq_init(NULL);
 	if(info == NULL){
 		return -1;
 	}
+    cfg = qq_config_new(info);
 
 	GtkWidget *win = qq_mainwindow_new();
 	gtk_widget_show_all(win);
 	
 	gtk_main();
+    qq_finalize(info, NULL);
 	return 0;
 }

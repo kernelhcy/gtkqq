@@ -1,5 +1,6 @@
 #include <statusbutton.h>
-#include <consts.h>
+
+static const gchar *status_label[] = {"online", "hidden", "away", "offline", NULL};
 
 static QQStatusButtonClass *this_class = NULL;
 
@@ -167,7 +168,7 @@ const gchar* qq_statusbutton_get_status_string(QQStatusButton *btn)
 	}
 
 	gint idx = gtk_combo_box_get_active(GTK_COMBO_BOX(btn));
-	return status_label_en[idx];
+	return status_label[idx];
 }
 
 QQStatusButtonStatus qq_statusbutton_get_status(QQStatusButton *btn)
