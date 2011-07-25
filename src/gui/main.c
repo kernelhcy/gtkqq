@@ -22,7 +22,8 @@ int main(int argc, char **argv)
 	if(info == NULL){
 		return -1;
 	}
-    cfg = qq_config_new(info);
+    cfg = gqq_config_new(info);
+    gqq_config_load_last(cfg);
 
 	GtkWidget *win = qq_mainwindow_new();
 	gtk_widget_show_all(win);

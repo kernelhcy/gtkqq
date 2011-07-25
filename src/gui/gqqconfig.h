@@ -55,12 +55,16 @@ struct __GQQConfigClass{
                             , gpointer usr_data);
 };
 
-GQQConfig* qq_config_new(QQInfo *info);
+GQQConfig* gqq_config_new(QQInfo *info);
 GType gqq_config_get_type();
 //
 // Load the configuration of uin
 //
 gint gqq_config_load(GQQConfig *cfg, GString *uin);
+//
+// Load the configuration fo the last user.
+//
+gint gqq_config_load_last(GQQConfig *cfg);
 //
 // Save all the configuration into the configuration files.
 // Contains:

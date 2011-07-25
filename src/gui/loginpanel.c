@@ -91,12 +91,17 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 {
     obj -> uin_label = gtk_label_new("QQ Number:");
     obj -> uin_entry = gtk_combo_box_entry_new_text();
-    gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
-            , "1421032531");
+
+    gchar *tmp;
+    g_object_get(cfg, "uin", &tmp, NULL);
+    gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry), tmp);
+    gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> uin_entry), 0);
 
     obj -> passwd_label = gtk_label_new("Password:");
     obj -> passwd_entry = gtk_entry_new();
-    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), "1234567890");
+    g_object_get(cfg, "passwd", &tmp, NULL);
+    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), tmp);
+
     //not visibily 
     gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
     gtk_widget_set_size_request(obj -> uin_entry, 200, -1);

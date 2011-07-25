@@ -17,8 +17,10 @@
 typedef struct{
     QQInfo *info;
     GHashTable *ht;
-    //stored password
-    GString *passwd;
+
+    GString *passwd;    //stored password
+    GString *uin;       //current user's uin
+    GString *lastuser;  //The last user's uin
 }GQQConfigPriv;
 
 //
@@ -27,7 +29,9 @@ typedef struct{
 enum{
     GQQ_CONFIG_PROPERTY_0,
     GQQ_CONFIG_PROPERTY_INFO,
-    GQQ_CONFIG_PROPERTY_PASSWD
+    GQQ_CONFIG_PROPERTY_PASSWD,
+    GQQ_CONFIG_PROPERTY_UIN,
+    GQQ_CONFIG_PROPERTY_LASTUSER
 };
 
 static void gqq_config_init(GQQConfig *self);
@@ -65,7 +69,7 @@ GType gqq_config_get_type()
     return type_id;
 }
 
-GQQConfig* qq_config_new(QQInfo *info)
+GQQConfig* gqq_config_new(QQInfo *info)
 {
     if(info == NULL){
         g_error("info == NULL (%s, %d)", __FILE__, __LINE__);
@@ -86,6 +90,7 @@ static void gqq_config_getter(GObject *object, guint property_id,
                 return;
         }
         
+        g_debug("GQQConfig getter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
         GQQConfig *obj = G_TYPE_CHECK_INSTANCE_CAST(
                                         object, gqq_config_get_type(), GQQConfig);
         GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
@@ -97,7 +102,13 @@ static void gqq_config_getter(GObject *object, guint property_id,
             g_value_set_pointer(value, priv -> info);
             break;
         case GQQ_CONFIG_PROPERTY_PASSWD:
-            g_value_set_string(value, priv -> passwd -> str);
+            g_value_set_static_string(value, priv -> passwd -> str);
+            break;
+        case GQQ_CONFIG_PROPERTY_UIN:
+            g_value_set_static_string(value, priv -> uin -> str);
+            break;
+        case GQQ_CONFIG_PROPERTY_LASTUSER:
+            g_value_set_static_string(value, priv -> lastuser -> str);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -114,7 +125,7 @@ static void gqq_config_setter(GObject *object, guint property_id,
         if(object == NULL || value == NULL || property_id < 0){
                 return;
         }
-        
+        g_debug("GQQConfig setter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
         GQQConfig *obj = G_TYPE_CHECK_INSTANCE_CAST(
                                         object, gqq_config_get_type(), GQQConfig);
         GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
@@ -128,6 +139,14 @@ static void gqq_config_setter(GObject *object, guint property_id,
         case GQQ_CONFIG_PROPERTY_PASSWD:
             g_string_truncate(priv -> passwd, 0);
             g_string_append(priv -> passwd, g_value_get_string(value));
+            break;
+        case GQQ_CONFIG_PROPERTY_UIN:
+            g_string_truncate(priv -> uin, 0);
+            g_string_append(priv -> uin, g_value_get_string(value));
+            break;
+        case GQQ_CONFIG_PROPERTY_LASTUSER:
+            g_string_truncate(priv -> lastuser, 0);
+            g_string_append(priv -> lastuser, g_value_get_string(value));
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -201,8 +220,17 @@ static void gqq_config_init(GQQConfig *self)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(self
                                         , GQQ_TYPE_CONFIG, GQQConfigPriv);
 
-    priv -> ht = g_hash_table_new(g_str_hash, g_str_equal);
+    //
+    // Store the configuration items.
+    // The key is the item name, which is string.
+    // The value is GVariant type.
+    //
+    priv -> ht = g_hash_table_new_full(g_str_hash, g_str_equal
+                                , (GDestroyNotify)g_free
+                                , (GDestroyNotify)g_variant_unref);
     priv -> passwd = g_string_new(NULL);
+    priv -> lastuser = g_string_new(NULL);
+    priv -> uin = g_string_new(NULL);
 }
 
 static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
@@ -242,8 +270,71 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
                                 , G_PARAM_READABLE | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_PASSWD, pspec);
+
+    //install the uin property
+    pspec = g_param_spec_string("uin"
+                                , "uin"
+                                , "The uin of current user."
+                                , ""
+                                , G_PARAM_READABLE | G_PARAM_WRITABLE);
+    g_object_class_install_property(G_OBJECT_CLASS(klass)
+                                    , GQQ_CONFIG_PROPERTY_UIN, pspec);
+
+    //install the lastuser property
+    pspec = g_param_spec_string("lastuser"
+                                , "last user's uin"
+                                , "The uin of the last user who uses this program."
+                                , ""
+                                , G_PARAM_READABLE | G_PARAM_WRITABLE);
+    g_object_class_install_property(G_OBJECT_CLASS(klass)
+                                    , GQQ_CONFIG_PROPERTY_LASTUSER, pspec);
 }
 
+gint gqq_config_load_last(GQQConfig *cfg)
+{
+    if(cfg == NULL){
+        return -1;
+    }
+    if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS)){
+        /*
+         * The program is first run. Create the configure dir.
+         */
+        g_debug("Config mkdir "CONFIGDIR" (%s, %d)", __FILE__, __LINE__);
+        if(-1 == g_mkdir(CONFIGDIR, 0777)){
+            g_error("Create config dir %s error!(%s, %d)"
+                            , CONFIGDIR, __FILE__, __LINE__);
+            return -1;
+        }
+    }
+
+    gchar buf[500];
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+    //read lastuser
+    g_snprintf(buf, 500, "%s/lastuser", CONFIGDIR);
+    g_debug("Config open %s (%s, %d)", buf, __FILE__, __LINE__);
+    if(!g_file_test(buf, G_FILE_TEST_EXISTS)){
+        //First run
+        return 0; 
+    }
+    gint fd = g_open(buf, O_RDONLY);
+    if(fd == -1){
+        g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
+                                                , __FILE__, __LINE__);
+        return -1;
+    }
+    gsize len = (gsize)read(fd, buf, 500);
+    g_string_truncate(priv -> lastuser, 0);
+    g_string_append_len(priv -> lastuser, buf, len);
+    close(fd);
+
+    g_string_truncate(priv -> uin, 0);
+    g_string_append(priv -> uin, priv -> lastuser -> str);
+
+    g_debug("Config: read lastuser. %s (%s, %d)", priv -> uin -> str
+                                        , __FILE__, __LINE__);
+    return gqq_config_load(cfg, priv -> lastuser);
+}
 gint gqq_config_load(GQQConfig *cfg, GString *uin)
 {
     if(cfg == NULL || uin == NULL){
@@ -261,6 +352,7 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
     }
 
     gchar buf[500];
+    gsize len;
     g_snprintf(buf, 500, "%s/%s", CONFIGDIR, uin -> str);
     if(!g_file_test(buf, G_FILE_TEST_EXISTS)){
         /*
@@ -282,8 +374,6 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
    
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
-    GHashTable *ht = priv -> ht;
-    //QQInfo *info = priv -> info;
 
     //read config
     g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, uin -> str);
@@ -294,14 +384,21 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
         return -1;
     }
     GString *confstr = g_string_new(NULL);
-    while(read(fd, buf, 500) != -1){
-        g_string_append(confstr, buf);
+    while(TRUE){
+        len = read(fd, buf, 500);
+        if(len <= 0){
+            break;
+        }
+        g_string_append_len(confstr, buf, len);
     }
     close(fd);
     gchar *key, *value, *eq, *nl;
     glong tmpl;
     eq = confstr -> str;
     while(TRUE){
+        if(confstr -> len <=0){
+            break;
+        }
         key = eq;
         while(*eq != '\0' && *eq != '=') ++eq;
         if(*eq == '\0'){
@@ -318,21 +415,17 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
         switch(*key)
         {
         case 's':
-            g_hash_table_insert(ht, g_strdup(key + 2)
-                                , g_variant_new_string(value));
+            gqq_config_set_str(cfg, g_strdup(key + 2), value);
             break;
         case 'i':
             tmpl = strtol(value, NULL, 10);
-            g_hash_table_insert(ht, g_strdup(key + 2)
-                                , g_variant_new_int32((gint32)tmpl));
+            gqq_config_set_int(cfg, g_strdup(key + 2), tmpl);
             break;
         case 'b':
             if(g_strcmp0(value, "true") == 0){
-                g_hash_table_insert(ht, g_strdup(key + 2)
-                                , g_variant_new_boolean(TRUE));
+                gqq_config_set_bool(cfg, g_strdup(key + 2), TRUE);
             }else if(g_strcmp0(value, "false") == 0){
-                g_hash_table_insert(ht, g_strdup(key + 2)
-                                , g_variant_new_boolean(FALSE));
+                gqq_config_set_bool(cfg, g_strdup(key + 2), FALSE);
             }else{
                 g_warning("Wrong value!! %s=%s (%s, %d)", key, value
                                     , __FILE__, __LINE__);
@@ -345,6 +438,8 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
         }
         eq = nl + 1; 
     }
+    g_debug("Config: read config %s.(%s, %d)", confstr -> str
+                            , __FILE__, __LINE__);
     g_string_free(confstr, TRUE);
 
     //read .passwd
@@ -355,10 +450,12 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
                                                 , __FILE__, __LINE__);
         return -1;
     }
-    gsize len = (gsize)read(fd, buf, 500);
+    len = (gsize)read(fd, buf, 500);
+    buf[len] = '\0';
     g_string_truncate(priv -> passwd, 0);
     guchar *depw = g_base64_decode(buf, &len);
     g_string_append_len(priv -> passwd, (const gchar *)depw, len);
+    g_free(depw);
     close(fd);
 
     //read buddies
@@ -467,11 +564,24 @@ gint gqq_config_save(GQQConfig *cfg)
     //Base64 encode
     gchar *b64pw = g_base64_encode((const guchar *)priv -> passwd -> str
                                     , priv -> passwd -> len);
-    if(safe_write(fd, b64pw, (gsize)strlen(b64pw))
-                != configstr -> len){
-        g_warning("Write to config error!!(%s, %d)", __FILE__, __LINE__);
+    if(safe_write(fd, b64pw, (gsize)strlen(b64pw)) < 0){
+        g_warning("Write to .passwd error!!(%s, %d)", __FILE__, __LINE__);
     }
     g_free(b64pw);
+    close(fd);
+
+    //write lastuser
+    g_snprintf(buf, 500, "%s/lastuser", CONFIGDIR);
+    fd = g_open(buf, O_WRONLY | O_CREAT);
+    if(fd == -1){
+        g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
+                                                , __FILE__, __LINE__);
+        return -1;
+    }
+    if(safe_write(fd, priv -> lastuser -> str, priv -> lastuser -> len)
+                            != priv -> lastuser -> len){
+        g_warning("Write to lastuser error!!(%s, %d)", __FILE__, __LINE__);
+    }
     close(fd);
 
     GString *tmp = NULL;
@@ -595,15 +705,10 @@ gint gqq_config_set_str(GQQConfig *cfg, const gchar *key, const gchar *value)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
         
-    GVariant *v = (GVariant*)g_hash_table_lookup(priv -> ht, key);
-    if(v != NULL){
-        g_hash_table_remove(priv -> ht, key);
-        g_variant_unref(v);
-    }
-    v = g_variant_new_string(value);
-    g_hash_table_insert(priv -> ht, (gpointer)key, v);
+    GVariant *v = g_variant_new_string(value);
+    g_hash_table_replace(priv -> ht, g_strdup(key), v);
+    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, v);
     return 0;
-
 }
 gint gqq_config_set_int(GQQConfig *cfg, const gchar *key, gint value)
 {
@@ -613,13 +718,9 @@ gint gqq_config_set_int(GQQConfig *cfg, const gchar *key, gint value)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
         
-    GVariant *v = (GVariant*)g_hash_table_lookup(priv -> ht, key);
-    if(v != NULL){
-        g_hash_table_remove(priv -> ht, key);
-        g_variant_unref(v);
-    }
-    v = g_variant_new_int32((gint32)value);
-    g_hash_table_insert(priv -> ht, (gpointer)key, v);
+    GVariant *v = g_variant_new_int32((gint32)value);
+    g_hash_table_replace(priv -> ht, g_strdup(key), v);
+    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, v);
     return 0;
 
 }
@@ -632,14 +733,9 @@ gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
         
-    GVariant *v = (GVariant*)g_hash_table_lookup(priv -> ht, key);
-    if(v != NULL){
-        g_hash_table_remove(priv -> ht, key);
-        g_variant_unref(v);
-    }
-    v = g_variant_new_boolean(value);
-    g_hash_table_insert(priv -> ht, (gpointer)key, v);
+    GVariant *v = g_variant_new_boolean(value);
+    g_hash_table_replace(priv -> ht, g_strdup(key), v);
+    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, v);
     return 0;
-
 }
 
