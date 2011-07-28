@@ -487,13 +487,36 @@ gint gqq_config_save(GQQConfig *cfg)
     QQInfo *info = priv -> info;
     gchar buf[500];
 
-    if(info -> me == NULL){
+    g_snprintf(buf, 500, "%s/%s", CONFIGDIR, info -> me -> uin -> str);
+    if(!g_file_test(buf, G_FILE_TEST_EXISTS)){
+        /*
+         * This is the first time that this user uses this program.
+         */
+        if(-1 == g_mkdir(buf, 0777)){
+            g_error("Create user config dir %s error!(%s, %d)"
+                            , buf, __FILE__, __LINE__);
+            return -1;
+        }
+        g_snprintf(buf, 500, "%s/%s/%s", CONFIGDIR
+                                , info -> me -> uin  -> str, "faces");
+        if(-1 == g_mkdir(buf, 0777)){
+            g_error("Create dir %s error!(%s, %d)", buf, __FILE__, __LINE__);
+            return -1;
+        }
+        // There is nothing to read. Just return.
         return 0;
     }
-
+   
+    if(info -> me == NULL){
+        g_debug("No configuration to save. (%s, %d)", __FILE__, __LINE__);
+        return 0;
+    }
+    
+    mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
+    
     //write config
     g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, info -> me -> uin -> str);
-    gint fd = g_open(buf, O_WRONLY | O_CREAT);
+    gint fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
                                                 , __FILE__, __LINE__);
@@ -510,7 +533,7 @@ gint gqq_config_save(GQQConfig *cfg)
 
     //write .passwd 
     g_snprintf(buf, 500, "%s/%s/.passwd", CONFIGDIR, info -> me -> uin -> str);
-    fd = g_open(buf, O_WRONLY | O_CREAT);
+    fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
                                                 , __FILE__, __LINE__);
@@ -527,7 +550,7 @@ gint gqq_config_save(GQQConfig *cfg)
 
     //write lastuser
     g_snprintf(buf, 500, "%s/lastuser", CONFIGDIR);
-    fd = g_open(buf, O_WRONLY | O_CREAT);
+    fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
                                                 , __FILE__, __LINE__);
@@ -543,7 +566,7 @@ gint gqq_config_save(GQQConfig *cfg)
     guint i;
     //write buddies
     g_snprintf(buf, 500, "%s/%s/buddies", CONFIGDIR, info -> me -> uin -> str);
-    fd = g_open(buf, O_WRONLY | O_CREAT);
+    fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
                                                 , __FILE__, __LINE__);
@@ -560,7 +583,7 @@ gint gqq_config_save(GQQConfig *cfg)
 
     //write groups
     g_snprintf(buf, 500, "%s/%s/groups", CONFIGDIR, info -> me -> uin -> str);
-    fd = g_open(buf, O_WRONLY | O_CREAT);
+    fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
                                                 , __FILE__, __LINE__);
@@ -577,7 +600,7 @@ gint gqq_config_save(GQQConfig *cfg)
 
     //write categories
     g_snprintf(buf, 500, "%s/%s/categories", CONFIGDIR, info -> me -> uin -> str);
-    fd = g_open(buf, O_WRONLY | O_CREAT);
+    fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
                                                 , __FILE__, __LINE__);

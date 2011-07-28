@@ -210,9 +210,14 @@ static int ungzip(GString *in, GString *out)
         {
         case Z_STREAM_END:
             done = TRUE;
+            g_debug("Unzip done.(%s, %d)", __FILE__, __LINE__);
             break;
         case Z_OK:
+            g_debug("Unzip ok...(%s, %d)", __FILE__, __LINE__);
+            break;
         case Z_BUF_ERROR:
+            g_debug("Unzip error!(%s, %d)", __FILE__, __LINE__);
+            done = TRUE;
             break;
         case Z_DATA_ERROR:
         case Z_MEM_ERROR:
@@ -224,9 +229,11 @@ static int ungzip(GString *in, GString *out)
         }
         g_string_append_len(out, buf, BUFSIZE - strm.avail_out);
     }
-
 #undef BUFSIZE
     
+    g_debug("Before %d bytes, after %d bytes (%s, %d)", in -> len, out -> len
+                                        , __FILE__, __LINE__);
+    g_printf("UNZIP: %s\n", out -> str);
     return 1;
 
 }
@@ -265,7 +272,7 @@ gint rcv_response(Connection *con, Response **rp)
     while(need_to_read > 0){
         want_read = BUFSIZE < need_to_read ? BUFSIZE : need_to_read;
         status = g_io_channel_read_chars(con -> channel, buf
-                , want_read, &bytes_read, &err);
+                                            , want_read, &bytes_read, &err);
         switch(status)
         {
         case G_IO_STATUS_NORMAL:
@@ -290,10 +297,9 @@ gint rcv_response(Connection *con, Response **rp)
             }
             break;
         case G_IO_STATUS_ERROR:
-            g_warning("Read data ERROR!! code:%d msg:%s"
-                    "(%s, %d)"
-                    , err -> code, err -> message
-                    , __FILE__, __LINE__);
+            g_warning("Read data ERROR!! code:%d msg:%s(%s, %d)"
+                            , err -> code, err -> message
+                            , __FILE__, __LINE__);
             g_string_free(data, TRUE);
             g_error_free(err);
             return -1;
@@ -301,8 +307,7 @@ gint rcv_response(Connection *con, Response **rp)
             g_warning("Channel temporarily unavailable.");
             break;
         default:
-            g_warning("Unknown io status!(%s, %d)"
-                    , __FILE__, __LINE__);
+            g_warning("Unknown io status!(%s, %d)", __FILE__, __LINE__);
             g_string_free(data, TRUE);
             return -1;
         }
@@ -316,14 +321,12 @@ gint rcv_response(Connection *con, Response **rp)
             g_string_truncate(data, 0);
             gotallheaders = TRUE;
             //Find the Content-Length 's value
-            gchar *clen = response_get_header_chars(r
-                        , "Content-Length");
+            gchar *clen = response_get_header_chars(r, "Content-Length");
             if(clen != NULL){
                 gotcl = TRUE;
                 //calculate the message we have not read.
                 cl = atoi(clen);
-                //g_debug("Content-Length: %d.(%s, %d)"
-                //        , cl, __FILE__, __LINE__);
+                g_debug("Content-Length: %d.(%s, %d)" , cl, __FILE__, __LINE__);
                 need_to_read = cl - r -> msg -> len;
                 //g_debug("Message need to read %d bytes."
                 //        "(%s, %d)", need_to_read
@@ -331,12 +334,10 @@ gint rcv_response(Connection *con, Response **rp)
             }
 
             //Find the Transfering-Encoding 's value
-            tev = response_get_header_chars(r
-                        , "Transfer-Encoding");
-            if(tev != NULL && g_strstr_len(tev, -1
-                            , "chunked") != NULL){
+            tev = response_get_header_chars(r, "Transfer-Encoding");
+            if(tev != NULL && g_strstr_len(tev, -1, "chunked") != NULL){
                 g_debug("The message body is chunked.(%s, %d)"
-                        , __FILE__, __LINE__);
+                                , __FILE__, __LINE__);
                 ischunked = TRUE;
 
                 //copy the message back to data
@@ -411,7 +412,7 @@ gint rcv_response(Connection *con, Response **rp)
         //we do not find "\r\n\r\n".
         //Should not happen.
         g_warning("Read all data, but not find all headers.!"
-                "(%s, %d)", __FILE__, __LINE__);
+                    "(%s, %d)", __FILE__, __LINE__);
         g_string_free(data, TRUE);
         return -1;
     }
@@ -427,8 +428,8 @@ gint rcv_response(Connection *con, Response **rp)
     
     if(gotcl && r -> msg -> len != cl && tev == NULL){
         g_warning("No read all the message!! content length:%d"
-                " msg -> len: %u. (%s, %d)"
-                , cl, (unsigned int)r -> msg -> len, __FILE__, __LINE__);
+                    " msg -> len: %u. (%s, %d)"
+                    , cl, (unsigned int)r -> msg -> len, __FILE__, __LINE__);
     }
 
     if(isgzip){

@@ -36,7 +36,7 @@ int main(int argc, char **argv)
 	
 	gtk_main();
 	qq_logout(info, NULL);
-    qq_finalize(info, NULL);
     gqq_config_save(cfg);
+    qq_finalize(info, NULL);
 	return 0;
 }
