@@ -82,3 +82,14 @@ error:
     return 0;
 }
 
+void create_error_msg(GError **err, gint code, const gchar *fmt, ...)
+{
+    va_list ap;
+    va_start(ap, fmt);
+
+    if(err != NULL){
+        *err = g_error_new_valist(g_quark_from_string("GtkQQ")
+                                        , code, fmt, ap);
+    }
+    va_end(ap);
+}

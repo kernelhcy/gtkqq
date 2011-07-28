@@ -33,51 +33,44 @@ gint qq_check_verifycode(QQInfo *info, const gchar *uin, GError **err);
 // @param status the status of the user. If NULL, this func
 // 	will not change the status.
 //
-// If success, the callback's redata is "LOGIN"
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		                    , const gchar *status, GError **err);
 
 //
 // Logout
-// If success, the callback's redata is "LOGOUT"
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_logout(QQInfo *info, GError **err);
 
 //
 // Send message
-// This function will return immediately after called. After the 
-// message has been send, cb will be called.
+// If success, return 0. or error code and set *err.
 //
 gint qq_sendmsg(QQSendMsg *msg, GError **err);
 GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
 
 //
 // Get information of myself
-// If success, the callback's redata is "GET_MY_INFO"
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_get_my_info(QQInfo *info, GError **err);
 //
 // Get all my friends' information.
 // Just simple information.
-// If success, the callback's redata is "GET_MY_FRIENDS"
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_get_my_friends(QQInfo *info, GError **err);
 //
 // Get the group name list mask.
-// If success, the callback's redata is "GET_GROUP_NAME_LIST_MASK"
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_get_group_name_list_mask(QQInfo *info, GError **err);
 
 //
 // Get the online buddies
-//If success, the callback's redata is "GET_ONLINE_BUDDIES"
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_get_online_buddies(QQInfo *info, GError **err);
 //
@@ -88,8 +81,7 @@ gint qq_get_recent_contact(QQInfo *info, GError **err);
 
 //
 // Get the long nick of bdy.
-// If success, the callback's redata is "GET_SINGLE_LONG_NICK".
-// or, it is the failed information string.
+// If success, return 0. or error code and set *err.
 //
 gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
 
@@ -109,7 +101,8 @@ typedef gint (*QQPollCallBack)(QQRecvMsg *msg, gpointer data);
 //  This function will return immeditally.
 //  The callback function will called in the new created thread.
 //
-gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err);
+gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data
+                                                , GError **err);
 //
 // Stop poll message.
 //

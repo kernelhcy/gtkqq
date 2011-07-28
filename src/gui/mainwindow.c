@@ -21,7 +21,9 @@ static void qq_mainwindowclass_init(QQMainWindowClass *wc);
  */
 static void destroy_handler(GtkWidget *widget, gpointer  data)
 {
-	qq_logout(info, NULL);
+    gtk_main_quit();
+    g_debug("Destroy window.(%s, %d)", __FILE__, __LINE__);
+    return;
 }
 
 GType qq_mainwindow_get_type()

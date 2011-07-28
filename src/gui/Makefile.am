@@ -11,6 +11,7 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
 bin_PROGRAMS=gtkqq
 gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la
 gtkqq_SOURCES=main.c \
+          msgloop.c msgpoll.h\
           loginpanel.c loginpanel.h \
           mainpanel.h mainpanel.c\
           mainwindow.h mainwindow.c \

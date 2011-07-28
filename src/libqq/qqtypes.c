@@ -42,7 +42,7 @@ void qq_info_free(QQInfo *info)
     
     qq_buddy_free(info -> me);
 
-#define FREE_STR(x) g_string_free(info -> x, TRUE)
+#define FREE_STR(x) if(info -> x != NULL){g_string_free(info -> x, TRUE);}
     FREE_STR(vc_type);
     FREE_STR(vc_image_data);
     FREE_STR(vc_image_type);

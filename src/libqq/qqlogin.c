@@ -64,7 +64,7 @@ static gint check_verify_code(QQInfo *info)
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 
@@ -88,7 +88,7 @@ static gint check_verify_code(QQInfo *info)
        	s = rps -> msg -> str;
 	if(g_strstr_len(s, -1, "ptui_checkVC") == NULL){
 		g_warning("Get vc_type error!(%s, %d)", __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 
@@ -131,7 +131,7 @@ static gint check_verify_code(QQInfo *info)
 				, info -> vc_type -> str, __FILE__, __LINE__);
 	}else{
 		g_warning("Unknown return value!(%s, %d)", __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 error:
@@ -147,7 +147,7 @@ static gint get_vc_image(QQInfo *info)
 {
 	if(info -> vc_type == NULL || info -> vc_type -> len <=0){
 		g_warning("Need vc_type!!(%s, %d)", __FILE__, __LINE__);
-		return -1;
+		return PARAMETER_ERR;
 	}
 	gint ret = 0;
 	gchar params[500];  
@@ -168,7 +168,7 @@ static gint get_vc_image(QQInfo *info)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		request_del(req);
-		return -1;
+		return NETWORK_ERR;
 	}
 
 	send_request(con, req);
@@ -177,7 +177,7 @@ static gint get_vc_image(QQInfo *info)
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 
@@ -197,7 +197,7 @@ static gint get_vc_image(QQInfo *info)
 				, __FILE__, __LINE__);
 		g_string_free(info -> vc_image_data, TRUE);
 		info -> vc_image_data = NULL;
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 
 	}
@@ -219,7 +219,7 @@ error:
  */
 static gint get_version(QQInfo *info)
 {
-	int ret = 0;
+	int ret = NO_ERR;
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
@@ -233,7 +233,7 @@ static gint get_version(QQInfo *info)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		request_del(req);
-		return -1;
+		return NETWORK_ERR;
 	}
 	send_request(con, req);
 	rcv_response(con, &rps);
@@ -241,7 +241,7 @@ static gint get_version(QQInfo *info)
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 
@@ -253,7 +253,7 @@ static gint get_version(QQInfo *info)
 	lb = g_strstr_len(ms, -1, "(");
 	if(lb == NULL){
 		g_warning("Get version  error!!(%s, %d)", __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 	++lb;
@@ -313,9 +313,9 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
  * return the status returned by the server.
  * If error occured, store the error message in info -> errmsg
  */
-static int get_ptcz_skey(QQInfo *info, const gchar *p)
+static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 {
-	int ret = 0;
+	gint ret = 0;
 	gchar params[300];
 
 	Request *req = request_new();
@@ -472,10 +472,10 @@ static GString *generate_clientid()
  */
 static int get_psessionid(QQInfo *info)
 {
-	int ret = 0;
+	int ret = NO_ERR;
 	if(info -> ptwebqq == NULL || info -> ptwebqq -> len <= 0){
 		g_warning("Need ptwebqq!!(%s, %d)", __FILE__, __LINE__);
-		return -1;
+		return PARAMETER_ERR;
 	}
 	
 	Request *req = request_new();
@@ -527,7 +527,7 @@ static int get_psessionid(QQInfo *info)
 		g_warning("Can NOT connect to server!(%s, %d)"
 				, __FILE__, __LINE__);
 		request_del(req);
-		return -1;
+		return NETWORK_ERR;
 	}
 
 	send_request(con, req);
@@ -537,7 +537,7 @@ static int get_psessionid(QQInfo *info)
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 
@@ -549,7 +549,7 @@ static int get_psessionid(QQInfo *info)
 	default:
 		g_warning("json_parser_document: syntax error. (%s, %d)"
 				, __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 
@@ -558,7 +558,7 @@ static int get_psessionid(QQInfo *info)
 	if(val -> child -> text[0] != '0'){
 		g_warning("Server return code %s(%s, %d)", val -> child -> text
 				, __FILE__, __LINE__);
-		ret = -1;
+		ret = NETWORK_ERR;
 		goto error;
 	}
 	val = json_find_first_label_all(json, "seskey");
@@ -617,13 +617,17 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		        , const gchar *status, GError **err)
 {
 	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
-	if(get_version(info) == -1){
-		return -1;
+    gint retcode = NO_ERR;
+    retcode = get_version(info);
+	if(retcode != NO_ERR){
+        create_error_msg(err, retcode, "Get version error.");
+		return retcode;
 	}
 
     if(info -> verify_code == NULL){
         g_warning("Need verify code!!(%s, %d)", __FILE__, __LINE__);
-        return -1;
+        create_error_msg(err, WRONGVC_ERR, "Need verify code.");
+        return WRONGVC_ERR;
     }
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
@@ -638,36 +642,44 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		{
 		case 1:
 			msg = "System busy! Please try again.";
+            retcode = NETWORK_ERR;
 			break;
 		case 2:
 			msg = "Out of date QQ number.";
+            retcode = WRONGUIN_ERR;
 			break;
 		case 3:
 		case 6:
 			msg = "Wrong password.";
+            retcode = WRONGPWD_ERR;
 			break;
 		case 4:
 			msg = "Wrong verify code.";
+            retcode = WRONGVC_ERR;
 			break;
 		case 5:
 			msg = "Verify failed.";
+            retcode = OTHER_ERR;
 			break;
 		default:
 			msg = "Error occured! Please try again.";
+            retcode = OTHER_ERR;
 			break;
 		}
-        g_debug("ErrMSG: %s (%s, %d)", msg, __FILE__, __LINE__);
-		return -1;
+        create_error_msg(err, retcode, msg);
+		return retcode;
 	}
 	g_string_free(md5, TRUE);
 
 	g_debug("Get psessionid...(%s, %d)", __FILE__, __LINE__);
-	if(get_psessionid(info) == -1){
-		return -1;
+    retcode = get_psessionid(info);
+	if(retcode != NO_ERR){
+        create_error_msg(err, retcode, "Get psessionid error.");
+		return retcode;
 	}
     
 	g_debug("Initial done.");
-	return 0;
+	return NO_ERR;
 }
 
 gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
@@ -675,12 +687,14 @@ gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 {
 	if(info == NULL){
 		g_warning("info == NULL. (%s, %d)", __FILE__, __LINE__);
-		return -1;
+        create_error_msg(err, PARAMETER_ERR, "info == NULL");
+		return PARAMETER_ERR;
 	}
 	if(uin == NULL || passwd == NULL || strlen(uin) == 0){
 		g_warning("uin or passwd == NULL.(%s, %d)"
 				, __FILE__, __LINE__);
-		return -2;
+        create_error_msg(err, PARAMETER_ERR, "uin or passwd  == NULL");
+		return PARAMETER_ERR;
 	}
 
 	if(info -> me -> uin != NULL){

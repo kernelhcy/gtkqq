@@ -156,30 +156,28 @@ static void gqq_config_setter(GObject *object, guint property_id,
 
 #ifdef G_ENABLE_DEBUG
 #define g_marshal_value_peek_string(v)   (char*) g_value_get_string (v)
-#define g_marshal_value_peek_variant(v)  g_value_get_variant (v)
 #else 
 #define g_marshal_value_peek_string(v)   (v)->data[0].v_pointer
-#define g_marshal_value_peek_variant(v)  (v)->data[0].v_pointer
 #endif
 
 //
 // Marshal for signal 
 // The callback type is:
-//      void (*handler)(gpointer instance, const gchar *key, const GVariant *value
+//      void (*handler)(gpointer instance, const gchar *key, const gchar *value
 //                      , gpointer user_data)
 //
-static void g_cclosure_user_marshal_VOID__STRING_VARIANT (GClosure     *closure,
+static void g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
                                               GValue       *return_value G_GNUC_UNUSED,
                                               guint         n_param_values,
                                               const GValue *param_values,
                                               gpointer      invocation_hint G_GNUC_UNUSED,
                                               gpointer      marshal_data)
 {
-  typedef void (*GMarshalFunc_VOID__STRING_VARIANT) (gpointer     data1,
-                                                     gpointer     arg_1,
-                                                     gpointer     arg_2,
-                                                     gpointer     data2);
-  register GMarshalFunc_VOID__STRING_VARIANT callback;
+  typedef void (*GMarshalFunc_VOID__STRING_STRING)(gpointer     data1,
+                                                   gpointer     arg_1,
+                                                   gpointer     arg_2,
+                                                   gpointer     data2);
+  register GMarshalFunc_VOID__STRING_STRING callback;
   register GCClosure *cc = (GCClosure*) closure;
   register gpointer data1, data2;
 
@@ -195,11 +193,11 @@ static void g_cclosure_user_marshal_VOID__STRING_VARIANT (GClosure     *closure,
       data1 = g_value_peek_pointer (param_values + 0);
       data2 = closure->data;
     }
-  callback = (GMarshalFunc_VOID__STRING_VARIANT) (marshal_data ? marshal_data : cc->callback);
+  callback = (GMarshalFunc_VOID__STRING_STRING)(marshal_data ? marshal_data : cc->callback);
 
   callback (data1,
-            g_marshal_value_peek_string (param_values + 1),
-            g_marshal_value_peek_variant (param_values + 2),
+            g_marshal_value_peek_string(param_values + 1),
+            g_marshal_value_peek_string(param_values + 2),
             data2);
 }
 
@@ -227,7 +225,7 @@ static void gqq_config_init(GQQConfig *self)
     //
     priv -> ht = g_hash_table_new_full(g_str_hash, g_str_equal
                                 , (GDestroyNotify)g_free
-                                , (GDestroyNotify)g_variant_unref);
+                                , (GDestroyNotify)g_free);
     priv -> passwd = g_string_new(NULL);
     priv -> lastuser = g_string_new(NULL);
     priv -> uin = g_string_new(NULL);
@@ -249,9 +247,9 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
                 , G_SIGNAL_RUN_LAST     //run after the default handler
                 , G_STRUCT_OFFSET(GQQConfigClass, signal_default_handler)
                 , NULL, NULL            //no used
-                , g_cclosure_user_marshal_VOID__STRING_VARIANT
+                , g_cclosure_user_marshal_VOID__STRING_STRING
                 , G_TYPE_NONE
-                , 2, G_TYPE_STRING, G_TYPE_VARIANT
+                , 2, G_TYPE_STRING, G_TYPE_STRING
                 );
     //install the info property
     GParamSpec *pspec;
@@ -393,7 +391,6 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
     }
     close(fd);
     gchar *key, *value, *eq, *nl;
-    glong tmpl;
     eq = confstr -> str;
     while(TRUE){
         if(confstr -> len <=0){
@@ -412,30 +409,7 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
         value = eq + 1;
         *eq = '\0';
         *nl = '\0';
-        switch(*key)
-        {
-        case 's':
-            gqq_config_set_str(cfg, g_strdup(key + 2), value);
-            break;
-        case 'i':
-            tmpl = strtol(value, NULL, 10);
-            gqq_config_set_int(cfg, g_strdup(key + 2), tmpl);
-            break;
-        case 'b':
-            if(g_strcmp0(value, "true") == 0){
-                gqq_config_set_bool(cfg, g_strdup(key + 2), TRUE);
-            }else if(g_strcmp0(value, "false") == 0){
-                gqq_config_set_bool(cfg, g_strdup(key + 2), FALSE);
-            }else{
-                g_warning("Wrong value!! %s=%s (%s, %d)", key, value
-                                    , __FILE__, __LINE__);
-            }
-            break;
-        default:
-            g_warning("Uknown configurations type!! %s=%s (%s, %d)", key, value
-                                , __FILE__, __LINE__);
-            break;
-        }
+        gqq_config_set_str(cfg, g_strdup(key + 2), g_strdup(value));
         eq = nl + 1; 
     }
     g_debug("Config: read config %s.(%s, %d)", confstr -> str
@@ -495,34 +469,10 @@ static void ht_foreach(gpointer key, gpointer value, gpointer usrdata)
         return;
     }
     const gchar *kstr = (const gchar *)key;
-    GVariant *vv = (GVariant*)value;
+    const gchar *vstr = (const gchar *)value;
     GString *str = (GString*)usrdata;
 
-    //
-    // We add a prefix to the key name.
-    // So, when we read from the configuration file, we know the type
-    // of the value.
-    //
-    // The prefix is the same the its variant type and divided with the 
-    // key name by a `_`
-    //
-    if(g_variant_is_of_type(vv, G_VARIANT_TYPE_STRING)){
-        gsize len; 
-        const gchar *vstr = g_variant_get_string(vv, &len);
-        g_string_append(str, "s_%s="); 
-        g_string_append_len(str, vstr, len);
-    }else if(g_variant_is_of_type(vv, G_VARIANT_TYPE_INT32)){
-        g_string_append_printf(str, "i_%s=%d\n", kstr
-                            , (gint)g_variant_get_int32(vv));
-    }else if(g_variant_is_of_type(vv, G_VARIANT_TYPE_BOOLEAN)){
-        g_string_append_printf(str, "b_%s=%s\n", kstr
-                            , g_variant_get_boolean(vv) ? "true" : "false");
-    }else{
-        g_warning("Unsupported variant type %s (%s, %d)", 
-                        (gchar *)g_variant_get_type(vv), __FILE__, __LINE__);
-        return;
-    }
-
+    g_string_append_printf(str, "%s=%s\n", kstr, vstr); 
     return;
 }
 gint gqq_config_save(GQQConfig *cfg)
@@ -530,11 +480,16 @@ gint gqq_config_save(GQQConfig *cfg)
     if(cfg == NULL){
         return -1;
     }
+
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
     GHashTable *ht = priv -> ht;
     QQInfo *info = priv -> info;
     gchar buf[500];
+
+    if(info -> me == NULL){
+        return 0;
+    }
 
     //write config
     g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, info -> me -> uin -> str);
@@ -648,13 +603,8 @@ gint gqq_config_get_str(GQQConfig *cfg, const gchar *key, const gchar **value)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
         
-    GVariant *v = (GVariant*)g_hash_table_lookup(priv -> ht, key);
-    if(!g_variant_is_of_type(v, G_VARIANT_TYPE_STRING)){
-        g_warning("No key named %s with string value.(%s, %d)"
-                    , key, __FILE__, __LINE__);
-        return -1;
-    }
-    *value = g_variant_get_string(v, NULL);
+    const gchar *v = (const gchar *)g_hash_table_lookup(priv -> ht, key);
+    *value = v;
     return 0;
 }
 gint gqq_config_get_int(GQQConfig *cfg, const gchar *key, gint *value)
@@ -662,18 +612,16 @@ gint gqq_config_get_int(GQQConfig *cfg, const gchar *key, gint *value)
     if(cfg == NULL || key == NULL || value == NULL){
         return -1;
     }
-
-    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
-        
-    GVariant *v = (GVariant*)g_hash_table_lookup(priv -> ht, key);
-    if(!g_variant_is_of_type(v, G_VARIANT_TYPE_INT32)){
-        g_warning("No key named %s with gint value.(%s, %d)"
-                    , key, __FILE__, __LINE__);
+    const gchar *vstr = NULL;
+    if(gqq_config_get_str(cfg, key, &vstr) == -1){
         return -1;
     }
-    gint32 vi = g_variant_get_int32(v);
-    *value = (gint)vi;
+    gchar *end;    
+    glong vint = strtol(vstr, &end, 10);
+    if(vstr == end){
+        return -1;
+    }
+    *value = (gint)vint;
     return 0;
 
 }
@@ -683,16 +631,15 @@ gint gqq_config_get_bool(GQQConfig *cfg, const gchar *key, gboolean *value)
         return -1;
     }
 
-    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
-        
-    GVariant *v = (GVariant*)g_hash_table_lookup(priv -> ht, key);
-    if(!g_variant_is_of_type(v, G_VARIANT_TYPE_BOOLEAN)){
-        g_warning("No key named %s with gboolean value.(%s, %d)"
-                    , key, __FILE__, __LINE__);
+    const gchar *vstr = NULL;
+    if(gqq_config_get_str(cfg, key, &vstr) == -1){
         return -1;
     }
-    *value = g_variant_get_boolean(v);
+    if(g_ascii_strcasecmp(vstr, "true") == 0){
+        *value = TRUE;
+    }else if(g_ascii_strcasecmp(vstr, "false") == 0){
+        *value = FALSE;
+    }
     return 0;
 
 }
@@ -705,9 +652,8 @@ gint gqq_config_set_str(GQQConfig *cfg, const gchar *key, const gchar *value)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
         
-    GVariant *v = g_variant_new_string(value);
-    g_hash_table_replace(priv -> ht, g_strdup(key), v);
-    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, v);
+    g_hash_table_replace(priv -> ht, g_strdup(key), g_strdup(value));
+    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, value);
     return 0;
 }
 gint gqq_config_set_int(GQQConfig *cfg, const gchar *key, gint value)
@@ -715,13 +661,9 @@ gint gqq_config_set_int(GQQConfig *cfg, const gchar *key, gint value)
     if(cfg == NULL || key == NULL){
         return -1;
     }
-    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
-        
-    GVariant *v = g_variant_new_int32((gint32)value);
-    g_hash_table_replace(priv -> ht, g_strdup(key), v);
-    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, v);
-    return 0;
+    gchar buf[100];
+    g_snprintf(buf, 100, "%d", value);
+    return gqq_config_set_str(cfg, key, buf);
 
 }
 gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value)
@@ -729,13 +671,10 @@ gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value)
     if(cfg == NULL || key == NULL){
         return -1;
     }
-
-    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
-        
-    GVariant *v = g_variant_new_boolean(value);
-    g_hash_table_replace(priv -> ht, g_strdup(key), v);
-    g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, v);
-    return 0;
+    if(value){
+        return gqq_config_set_str(cfg, key, "true");
+    }else{
+        return gqq_config_set_str(cfg, key, "false");
+    }
 }
 

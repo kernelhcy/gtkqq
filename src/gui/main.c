@@ -6,6 +6,7 @@
 #include <qq.h>
 #include <log.h>
 #include <gqqconfig.h>
+#include <msgloop.h>
 
 /*
  * Global
@@ -25,10 +26,17 @@ int main(int argc, char **argv)
     cfg = gqq_config_new(info);
     gqq_config_load_last(cfg);
 
+    if(gqq_msgloop_start() == -1){
+        g_error("Start message loop error! (%s, %d)", __FILE__, __LINE__);
+        return -1;
+    }
+
 	GtkWidget *win = qq_mainwindow_new();
 	gtk_widget_show_all(win);
 	
 	gtk_main();
+	qq_logout(info, NULL);
     qq_finalize(info, NULL);
+    gqq_config_save(cfg);
 	return 0;
 }

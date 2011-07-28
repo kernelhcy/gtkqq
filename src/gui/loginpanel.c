@@ -5,6 +5,7 @@
 #include <gqqconfig.h>
 #include <stdlib.h>
 #include <statusbutton.h>
+#include <msgloop.h>
 
 /*
  * The global value
@@ -68,20 +69,227 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c)
     gtkctx = g_main_context_default();
 }
 
+//
+// Run in message loop
+//
+static gint do_login(QQLoginPanel *panel)
+{
+    const gchar *uin = panel -> uin;
+    const gchar *passwd = panel -> passwd;
+    const gchar *status = panel -> status;
+
+    GError *err = NULL;
+    gint ret = qq_login(info, uin, passwd, status, &err);
+    const gchar *msg;
+    switch(ret)
+    {
+    case NO_ERR:
+        // going on
+        return 0;
+    case NETWORK_ERR:
+        msg = "Network error. Please try again.";
+        break;
+    case WRONGPWD_ERR:
+        msg = "Wrong Password.";
+        break;
+    case WRONGUIN_ERR:
+        msg = "Wrong QQ Number.";
+        break;
+    case WRONGVC_ERR:
+        msg = "Wrong Verify Code.";
+        break;
+    default:
+        msg = "Error. Please try again.";
+        break;
+    }
+    g_warning("Login error! %s (%s, %d)", err -> message, __FILE__, __LINE__);
+    g_error_free(err);
+    //show err message
+    gqq_context_attach(gtkctx, gtk_label_set_text, 2, panel -> err_label, msg);
+    return -1;
+}
+
+//login state machine state.
+enum{
+    LOGIN_SM_CHECKVC,
+    LOGIN_SM_LOGIN,
+    LOGIN_SM_GET_MY_INFO,
+    LOGIN_SM_GET_MY_LONGNICK,
+    LOGIN_SM_GET_MY_FRIENDS,
+    LOGIN_SM_GET_ONLINE_BUDDIES,
+    LOGIN_SM_GET_RECENT_CONTACT,
+    LOGIN_SM_GET_GRUOP_LIST,
+    LOGIN_SM_DONE,
+    LOGIN_SM_ERR,
+    LOGIN_SM_NONE
+};
+
+static void read_verifycode(gpointer p);
+static gint state = LOGIN_SM_NONE;
+static void login_state_machine(gpointer data)
+{
+    QQLoginPanel *panel = (QQLoginPanel*)data;
+    while(TRUE){
+        switch(state)
+        {
+        case LOGIN_SM_CHECKVC:
+            if(qq_check_verifycode(info, panel -> uin, NULL) != 0){
+                state = LOGIN_SM_ERR;
+                break;
+            }
+            state = LOGIN_SM_LOGIN;
+            if(info -> need_vcimage){
+                gqq_context_attach(gtkctx, read_verifycode, 1, panel);
+                // Quit the state machine.
+                // The state machine will restart in the read verify code
+                // dialog.
+                return;
+            }
+        case LOGIN_SM_LOGIN:
+            if(do_login(panel) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_GET_MY_INFO;
+            }
+            break;
+        case LOGIN_SM_GET_MY_INFO:
+            if(qq_get_my_info(info, NULL) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_GET_MY_LONGNICK;
+            }
+            break;
+        case LOGIN_SM_GET_MY_LONGNICK:
+            if(qq_get_single_long_nick(info, info -> me, NULL) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_GET_MY_FRIENDS;
+            }
+            break;
+        case LOGIN_SM_GET_MY_FRIENDS:
+            if(qq_get_my_friends(info, NULL) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_GET_ONLINE_BUDDIES;
+            }
+            break;
+        case LOGIN_SM_GET_ONLINE_BUDDIES:
+            if(qq_get_online_buddies(info, NULL) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_GET_RECENT_CONTACT;
+            }
+            break;
+        case LOGIN_SM_GET_RECENT_CONTACT:
+            if(qq_get_recent_contact(info, NULL) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_GET_GRUOP_LIST;
+            }
+            break;
+        case LOGIN_SM_GET_GRUOP_LIST:
+            if(qq_get_group_name_list_mask(info, NULL) != 0){
+                state = LOGIN_SM_ERR;
+            }else{
+                state = LOGIN_SM_NONE;
+            }
+            break;
+        case LOGIN_SM_NONE:
+            gqq_context_attach(gtkctx, qq_mainwindow_show_mainpanel
+                                    , 1, panel -> container);
+            return;
+        case LOGIN_SM_ERR:
+            g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
+            gqq_context_attach(gtkctx, qq_mainwindow_show_loginpanel
+                                    , 1, panel -> container);
+            g_debug("Show login panel.(%s, %d)", __FILE__, __LINE__);
+            return;
+        default:
+            break;
+        }
+    }
+
+    return;
+}
+
+//
+// The login state machine is run in the message loop.
+//
+static void run_login_state_machine(QQLoginPanel *panel)
+{
+    gqq_msgloop_attach(login_state_machine, 1, panel); 
+}
+
+// In libqq/qqutils.c
+extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
+                const gchar *path, const gchar *fname);
+//
+// Show the verify code input dialog
+// run in gtk main event loop.
+//
+static void read_verifycode(gpointer p)
+{
+    QQLoginPanel *panel = (QQLoginPanel*)p;
+    GtkWidget *w = panel -> container;
+    gchar fn[300];
+    if(info -> vc_image_data == NULL || info -> vc_image_type == NULL){
+        g_warning("No vc image data or type!(%s, %d)" , __FILE__, __LINE__);
+        gtk_label_set_text(GTK_LABEL(panel -> err_label)
+                                , "Login failed. Please retry.");
+        qq_mainwindow_show_loginpanel(w);
+        return;
+    }
+    sprintf(fn, CONFIGDIR"verifycode.%s", info -> vc_image_type -> str);
+    save_img_to_file(info -> vc_image_data -> str
+                        , info -> vc_image_data -> len
+                        , info -> vc_image_type -> str
+                        , CONFIGDIR, "verifycode");
+    GtkWidget *dialog = gtk_dialog_new_with_buttons("Information"
+                            , GTK_WINDOW(w), GTK_DIALOG_MODAL
+                            , GTK_STOCK_OK, GTK_RESPONSE_OK
+                            , NULL);
+    GtkWidget *vbox = GTK_DIALOG(dialog) -> vbox;
+    GtkWidget *img = gtk_image_new_from_file(fn);
+    gtk_box_pack_start(GTK_BOX(vbox), gtk_label_new("VerifyCode：")
+                            , FALSE, FALSE, 20);    
+    gtk_box_pack_start(GTK_BOX(vbox), img, FALSE, FALSE, 0); 
+
+    GtkWidget *vc_entry = gtk_entry_new();
+    gtk_widget_set_size_request(vc_entry, 200, -1);
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), vc_entry, TRUE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 10);    
+
+    gtk_widget_set_size_request(dialog, 300, 220);
+    gtk_widget_show_all(dialog);
+    gtk_dialog_run(GTK_DIALOG(dialog));
+    
+    //got the verify code
+    info -> verify_code = g_string_new(
+                gtk_entry_get_text(GTK_ENTRY(vc_entry)));
+    gtk_widget_destroy(dialog); 
+    
+    //restart the state machine
+    run_login_state_machine(panel);
+}
+
 /*
  * Callback of login_btn button
  */
 static void login_btn_cb(GtkButton *btn, gpointer data)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(data);
-    GtkWidget *win = QQ_LOGINPANEL(panel) -> container;
+    GtkWidget *win = panel -> container;
     qq_mainwindow_show_splashpanel(win);
 
     panel -> uin = qq_loginpanel_get_uin(panel);
     panel -> passwd = qq_loginpanel_get_passwd(panel);
     panel -> status = qq_loginpanel_get_status(panel);
 
-    //start the login state mechine
+    // run the login state machine
+    g_debug("Run login state machine...(%s, %d)", __FILE__, __LINE__);
+    state = LOGIN_SM_CHECKVC;
+    run_login_state_machine(panel);
 
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");

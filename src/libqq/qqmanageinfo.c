@@ -118,7 +118,7 @@ static gint do_get_online_buddies(QQInfo *info, GError **err)
         return -1;
     }
 
-    gint ret_code = -1;
+    gint ret_code = 0;
     gchar params[300];
     g_debug("Get online buddies!(%s, %d)", __FILE__, __LINE__);
 
@@ -173,7 +173,7 @@ static gint do_get_online_buddies(QQInfo *info, GError **err)
         goto error;
     }
 
-    g_printf("%s", rps -> msg -> str);
+    g_debug("(%s, %d)%s", __FILE__, __LINE__, rps -> msg -> str);
     json_t *val;
     val = json_find_first_label_all(json, "result");
     if(val != NULL){
@@ -231,7 +231,7 @@ static gint do_get_recent_contact(QQInfo *info, GError **err)
         return -1;
     }
 
-    gint ret_code = -1;
+    gint ret_code = 0;
     gchar params[300];
     g_debug("Get recent contacts!(%s, %d)", __FILE__, __LINE__);
 
@@ -541,7 +541,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
         return -1;
     }
 
-    gint ret_code = -1;
+    gint ret_code = 0;
     gchar params[300];
     g_debug("Get my friends!(%s, %d)", __FILE__, __LINE__);
 

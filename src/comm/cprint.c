@@ -29,46 +29,34 @@ int fcprintf(int fd, FgColor fc, BgColor bc, Ptype t
 int fvcprintf(int fd, FgColor fc, BgColor bc, Ptype t
 		, const char *fmt, va_list ap)
 {
-	char *nfmt = NULL;
-	int fmt_len = strlen(fmt);
-	int nfmt_len = fmt_len + 25;
+	char nfmt[500];
 	int idx = 0;
 	
-	nfmt = malloc(sizeof(char) * nfmt_len);
-	memset(nfmt, '\0', nfmt_len * sizeof(char));
-	
 	if(fc != UNSET_F){
-		idx += sprintf(nfmt + idx, FMTMARK, fc);
+		idx += snprintf(nfmt + idx, 500 - idx, FMTMARK, fc);
 	}
 	
 	if(bc != UNSET_B){
-		idx += sprintf(nfmt + idx, FMTMARK, bc);
+		idx += snprintf(nfmt + idx, 500 -idx, FMTMARK, bc);
 	}
 	
 	if(t != UNSET_T){
-		idx += sprintf(nfmt + idx, FMTMARK, t);
+		idx += snprintf(nfmt + idx, 500 -idx, FMTMARK, t);
 	}
 	
-	idx += sprintf(nfmt + idx, "%s", fmt);
-	sprintf(nfmt + idx, "\e[0m");
+	idx += snprintf(nfmt + idx, 500 - idx, "%s", fmt);
+	snprintf(nfmt + idx, 500 - idx, "\e[0m");
 	
-	//maybe this is enough.
-	int strlen = 40960;
-	char *str = malloc(strlen * sizeof(char));
-	memset(str, '\0', strlen * sizeof(char));
-	
+	char str[5000];
 	/*
 	 * print the new fmt
 	 */
-	vsnprintf(str, strlen, nfmt, ap);
-	free(nfmt);
+	int strlen = vsnprintf(str, 5000, nfmt, ap);
 	
 	int rt = -1;
 	if(-1 == (rt = write(fd, str, strlen))){
-		free(str);
 		return -1;
 	}
-	free(str);
 	
 	return rt;
 }

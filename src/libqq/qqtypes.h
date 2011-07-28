@@ -24,13 +24,14 @@ typedef struct _QQFaceImg       QQFaceImg;
 
 typedef enum  _QQErrorCode      QQErrorCode;
 
-enum _QQErrorCode{
-    PARAMETER_ERR = 0,      // the parameter(s) is(are) not suitable.
-    NETWORK_ERR,            // networking error.
-    WRONGPWD_ERR,           // wrong password
-    WRONGVC_ERR,            // wrong verify code
-    WRONGUIN_ERR,           // wrong uin
-    OTHER_ERR               // others wrong.
+enum _QQReturnCode{
+    NO_ERR          = 0,    // no error
+    PARAMETER_ERR   = -1,   // the parameter(s) is(are) not suitable.
+    NETWORK_ERR     = -2,   // networking error.
+    WRONGPWD_ERR    = -3,   // wrong password
+    WRONGVC_ERR     = -4,   // wrong verify code
+    WRONGUIN_ERR    = -5,   // wrong uin
+    OTHER_ERR       = -100  // others wrong.
 };
 /*
  * Store the face image data and type
@@ -360,4 +361,9 @@ void qq_recentcon_free(QQRecentCon *rc);
 //
 glong get_now_millisecond();
 
+//
+// Create an error message.
+// return form err.
+//
+void create_error_msg(GError **err, gint code, const gchar *fmt, ...);
 #endif
