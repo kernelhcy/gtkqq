@@ -6,6 +6,7 @@
  * Describe the http protocol
  */
 #include <glib.h>
+#include <curl/curl.h>
 
 /*
  * Request
@@ -18,6 +19,7 @@
  */
 typedef struct
 {
+    CURL *curl;
     GString *method;
     GString *uri;
     GString *version;

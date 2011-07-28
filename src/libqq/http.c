@@ -87,6 +87,7 @@ void request_del(Request *r)
     g_string_free(r -> msg, TRUE);
     
     g_slice_free(Request, r);
+
 }
 
 GString* request_tostring(Request *r)

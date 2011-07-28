@@ -252,7 +252,8 @@ static gint get_version(QQInfo *info)
 	gchar *ms = rps -> msg -> str;
 	lb = g_strstr_len(ms, -1, "(");
 	if(lb == NULL){
-		g_warning("Get version  error!!(%s, %d)", __FILE__, __LINE__);
+		g_warning("Get version  error!! %s (%s, %d)",rps -> msg -> str
+                                        , __FILE__, __LINE__);
 		ret = NETWORK_ERR;
 		goto error;
 	}

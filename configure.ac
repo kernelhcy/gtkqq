@@ -57,6 +57,7 @@ AC_ARG_ENABLE(debug,
 #                             [Enable gstreamer support (used to play alert\
 #                  sounds) @<:@default=yes@:>@]),,
 #              enable_gst="yes")
+
 # checks for zlib
 PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
             AC_DEFINE(USE_ZLIB, 1, [Use ZLIB])
@@ -86,12 +87,17 @@ PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
             AC_SUBST(GTHREAD_LIBS)
         ] , )
 
-# checks for libxml2
-#PKG_CHECK_MODULES(LIBXML, [libxml-2.0], [
-#            AC_DEFINE(USE_LIBXML, 1, [Use LIBXML])
-#            AC_SUBST(LIBXML_CFLAGS)
-#            AC_SUBST(LIBXML_LIBS)
+# checks for libcurl
+#PKG_CHECK_MODULES(CURL, [libcurl], [
+#            AC_DEFINE(USE_CURL, 1, [Use CURL])
+#            AC_SUBST(CURL_CFLAGS)
+#            AC_SUBST(CURL_LIBS)
 #        ] , )
+LIBCURL_CHECK_CONFIG([yes], [7.10], [
+                        echo -n ""
+                       ], [
+                        echo "No libcurl find!"
+                       ])
 
 # checks for libsqlite3
 #PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [

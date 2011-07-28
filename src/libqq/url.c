@@ -169,7 +169,7 @@ static int ungzip(GString *in, GString *out)
     g_string_truncate(out, 0);
 
     int ret;
-#define BUFSIZE 500
+#define BUFSIZE 4096
     gchar buf[BUFSIZE];
 
     z_stream strm;
@@ -213,7 +213,6 @@ static int ungzip(GString *in, GString *out)
             g_debug("Unzip done.(%s, %d)", __FILE__, __LINE__);
             break;
         case Z_OK:
-            g_debug("Unzip ok...(%s, %d)", __FILE__, __LINE__);
             break;
         case Z_BUF_ERROR:
             g_debug("Unzip error!(%s, %d)", __FILE__, __LINE__);
@@ -222,7 +221,7 @@ static int ungzip(GString *in, GString *out)
         case Z_DATA_ERROR:
         case Z_MEM_ERROR:
         case Z_STREAM_ERROR:
-            g_warning("Ungzip error! %s(%s, %d)", strm.msg, __FILE__
+            g_warning("Ungzip stream error! %s(%s, %d)", strm.msg, __FILE__
                     , __LINE__);
             g_string_truncate(out, 0);
             return -1;
@@ -253,7 +252,7 @@ gint rcv_response(Connection *con, Response **rp)
     gboolean gotcl = FALSE;             //got content lenght or not
                                         //so, we should do sth
     gboolean ischunked = FALSE;
-    gint chunkbegin = 0, idx = 0;
+    gint chunkbegin = 0;
     gint chunklen = -1;                 //the chunk length
     gint totalchunklen = 0;
 
@@ -276,9 +275,6 @@ gint rcv_response(Connection *con, Response **rp)
         switch(status)
         {
         case G_IO_STATUS_NORMAL:
-            //g_debug("Read %d bytes data. total data len %d(%s, %d)"
-            //        , bytes_read, data -> len
-            //        , __FILE__, __LINE__);
             //read success.
             need_to_read -= bytes_read;
             break;
@@ -314,8 +310,7 @@ gint rcv_response(Connection *con, Response **rp)
         g_string_append_len(data, buf, bytes_read);
         
         if(!gotallheaders && g_strstr_len(data -> str, data -> len
-                            , "\r\n\r\n") 
-                        != NULL){
+                                                    , "\r\n\r\n") != NULL){
             //We have gotten all the headers;
             r = response_new_parse(data);
             g_string_truncate(data, 0);
@@ -341,12 +336,17 @@ gint rcv_response(Connection *con, Response **rp)
                 ischunked = TRUE;
 
                 //copy the message back to data
-                g_string_append_len(data, r -> msg -> str
-                        , r -> msg -> len);
+                g_string_truncate(data , 0);
+                g_string_append_len(data, r -> msg -> str, r -> msg -> len);
                 g_string_truncate(r -> msg, 0);
 
-                idx = 0;
                 chunklen = -1;
+                chunkbegin = 0;
+                /*
+                 * We will read the data according to the
+                 * chunked
+                 */
+                need_to_read = G_MAXSIZE;
             }
 
             gchar *connection = response_get_header_chars(r
@@ -371,35 +371,55 @@ gint rcv_response(Connection *con, Response **rp)
             }
         }
 
-        if(ischunked){
-            gchar *tmp = g_strstr_len(data -> str + idx, -1, "\r\n");
-            if(tmp != NULL){
-                /*
-                 * we got the length
-                 */
-                *tmp = '\0';
-                chunkbegin = tmp - data -> str;
-                chunkbegin += 2;
+        if(gotallheaders && ischunked){
+            while(TRUE){
+                if(chunkbegin + 2 > data -> len){
+                    g_debug("need more data ... (%s, %d)", __FILE__, __LINE__);
+                    break;
+                }
+                gchar *tmp = g_strstr_len(data -> str + chunkbegin
+                                        , data -> len - chunkbegin, "\r\n");
+                if(tmp != NULL){
+                    /*
+                     * we got the length
+                     */
+                    *tmp = '\0';
+                    gchar *end = NULL;
+                    chunklen = strtol(data -> str + chunkbegin, &end, 16);
+                    *tmp = '\r';
+                    if(end != data -> str + chunkbegin && chunklen == 0){
+                        // Get all data
+                        need_to_read = -1;
+                        g_debug("Get all chunks! Totla len %d (%s, %d)"
+                                        , r -> msg -> len, __FILE__, __LINE__);
+                        break;
+                    }
+                }else{
+                    g_debug("More chunks... Begin %d len %d %s(%s, %d)"
+                                        , chunkbegin, data -> len
+                                        , data -> str + chunkbegin
+                                        , __FILE__, __LINE__);
+                    break;
+                }
 
-                chunklen = strtol(data -> str + idx, NULL, 16);
-                g_debug("Chunk length: %d idx %d (%s, %d)"
-                            , chunklen, idx, __FILE__, __LINE__);
-                /*
-                 * We will read the data according to the
-                 * chunked
-                 */
-                need_to_read = G_MAXSIZE;
-            }
+                if(chunklen != -1 && (tmp - data -> str) + 2 + chunklen 
+                                                            <= data -> len){
+                    totalchunklen += chunklen;
+                    chunkbegin = tmp - data -> str;
+                    chunkbegin += 2;
 
-            if(chunklen != -1 && chunkbegin + chunklen <= data -> len){
-                idx += (chunkbegin + chunklen + 2);
-                totalchunklen += chunklen;
-                g_string_append_len(r -> msg, data -> str + chunkbegin
-                            , chunklen);
-                g_debug("Append chunk. lenght : %d(%s, %d)", chunklen
-                            , __FILE__, __LINE__);
+                    g_debug("Append chunk. begin: %d len %d length : %d "
+                                            "+ %d(%s, %d)", chunkbegin
+                                            , data -> len, r -> msg -> len
+                                            , chunklen, __FILE__, __LINE__);
 
-                chunklen = -1;
+                    g_string_append_len(r -> msg, data -> str + chunkbegin
+                                            , chunklen);
+                    chunkbegin += chunklen + 2;
+                    chunklen = -1;
+                }else{
+                    break;
+                }
             }
         }
         if(bytes_read < want_read){
