@@ -87,18 +87,6 @@ PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
             AC_SUBST(GTHREAD_LIBS)
         ] , )
 
-# checks for libcurl
-#PKG_CHECK_MODULES(CURL, [libcurl], [
-#            AC_DEFINE(USE_CURL, 1, [Use CURL])
-#            AC_SUBST(CURL_CFLAGS)
-#            AC_SUBST(CURL_LIBS)
-#        ] , )
-LIBCURL_CHECK_CONFIG([yes], [7.10], [
-                        echo -n ""
-                       ], [
-                        echo "No libcurl find!"
-                       ])
-
 # checks for libsqlite3
 #PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
 #            AC_DEFINE(USE_SQLITE3, 1, [Use sqlite3])
