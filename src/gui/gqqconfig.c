@@ -19,8 +19,10 @@ typedef struct{
     GHashTable *ht;
 
     GString *passwd;    //stored password
-    GString *uin;       //current user's uin
-    GString *lastuser;  //The last user's uin
+    GString *qqnum;     //current user's qq number
+    GString *status;    //current user's status
+
+    GString *lastuser;  //The last user's qq number
 }GQQConfigPriv;
 
 //
@@ -31,6 +33,7 @@ enum{
     GQQ_CONFIG_PROPERTY_INFO,
     GQQ_CONFIG_PROPERTY_PASSWD,
     GQQ_CONFIG_PROPERTY_UIN,
+    GQQ_CONFIG_PROPERTY_STATUS,
     GQQ_CONFIG_PROPERTY_LASTUSER
 };
 
@@ -104,8 +107,11 @@ static void gqq_config_getter(GObject *object, guint property_id,
         case GQQ_CONFIG_PROPERTY_PASSWD:
             g_value_set_static_string(value, priv -> passwd -> str);
             break;
+        case GQQ_CONFIG_PROPERTY_STATUS:
+            g_value_set_static_string(value, priv -> status -> str);
+            break;
         case GQQ_CONFIG_PROPERTY_UIN:
-            g_value_set_static_string(value, priv -> uin -> str);
+            g_value_set_static_string(value, priv -> qqnum -> str);
             break;
         case GQQ_CONFIG_PROPERTY_LASTUSER:
             g_value_set_static_string(value, priv -> lastuser -> str);
@@ -140,9 +146,13 @@ static void gqq_config_setter(GObject *object, guint property_id,
             g_string_truncate(priv -> passwd, 0);
             g_string_append(priv -> passwd, g_value_get_string(value));
             break;
+        case GQQ_CONFIG_PROPERTY_STATUS:
+            g_string_truncate(priv -> status, 0);
+            g_string_append(priv -> status, g_value_get_string(value));
+            break;
         case GQQ_CONFIG_PROPERTY_UIN:
-            g_string_truncate(priv -> uin, 0);
-            g_string_append(priv -> uin, g_value_get_string(value));
+            g_string_truncate(priv -> qqnum , 0);
+            g_string_append(priv -> qqnum , g_value_get_string(value));
             break;
         case GQQ_CONFIG_PROPERTY_LASTUSER:
             g_string_truncate(priv -> lastuser, 0);
@@ -228,7 +238,8 @@ static void gqq_config_init(GQQConfig *self)
                                 , (GDestroyNotify)g_free);
     priv -> passwd = g_string_new(NULL);
     priv -> lastuser = g_string_new(NULL);
-    priv -> uin = g_string_new(NULL);
+    priv -> qqnum = g_string_new(NULL);
+    priv -> status = g_string_new(NULL);
 }
 
 static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
@@ -269,19 +280,28 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_PASSWD, pspec);
 
-    //install the uin property
-    pspec = g_param_spec_string("uin"
-                                , "uin"
-                                , "The uin of current user."
+    //install the qq number property
+    pspec = g_param_spec_string("qqnum"
+                                , "qq number"
+                                , "The qq number of current user."
                                 , ""
                                 , G_PARAM_READABLE | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_UIN, pspec);
 
+    //install the status property
+    pspec = g_param_spec_string("status"
+                                , "status"
+                                , "The status of current user."
+                                , ""
+                                , G_PARAM_READABLE | G_PARAM_WRITABLE);
+    g_object_class_install_property(G_OBJECT_CLASS(klass)
+                                    , GQQ_CONFIG_PROPERTY_STATUS, pspec);
+
     //install the lastuser property
     pspec = g_param_spec_string("lastuser"
-                                , "last user's uin"
-                                , "The uin of the last user who uses this program."
+                                , "last user's qq number "
+                                , "The qq number of the last user who uses this program."
                                 , ""
                                 , G_PARAM_READABLE | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(klass)
@@ -326,16 +346,16 @@ gint gqq_config_load_last(GQQConfig *cfg)
     g_string_append_len(priv -> lastuser, buf, len);
     close(fd);
 
-    g_string_truncate(priv -> uin, 0);
-    g_string_append(priv -> uin, priv -> lastuser -> str);
+    g_string_truncate(priv -> qqnum, 0);
+    g_string_append(priv -> qqnum, priv -> lastuser -> str);
 
-    g_debug("Config: read lastuser. %s (%s, %d)", priv -> uin -> str
+    g_debug("Config: read lastuser. %s (%s, %d)", priv -> qqnum -> str
                                         , __FILE__, __LINE__);
     return gqq_config_load(cfg, priv -> lastuser);
 }
-gint gqq_config_load(GQQConfig *cfg, GString *uin)
+gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
 {
-    if(cfg == NULL || uin == NULL){
+    if(cfg == NULL || qqnum == NULL){
         return -1;
     }
     if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS)){
@@ -351,7 +371,7 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
 
     gchar buf[500];
     gsize len;
-    g_snprintf(buf, 500, "%s/%s", CONFIGDIR, uin -> str);
+    g_snprintf(buf, 500, "%s/%s", CONFIGDIR, qqnum -> str);
     if(!g_file_test(buf, G_FILE_TEST_EXISTS)){
         /*
          * This is the first time that this user uses this program.
@@ -361,7 +381,7 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
                             , buf, __FILE__, __LINE__);
             return -1;
         }
-        g_snprintf(buf, 500, "%s/%s/%s", CONFIGDIR, uin -> str, "faces");
+        g_snprintf(buf, 500, "%s/%s/%s", CONFIGDIR, qqnum -> str, "faces");
         if(-1 == g_mkdir(buf, 0777)){
             g_error("Create dir %s error!(%s, %d)", buf, __FILE__, __LINE__);
             return -1;
@@ -374,7 +394,7 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
     //read config
-    g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, uin -> str);
+    g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, qqnum -> str);
     gint fd = g_open(buf, O_RDONLY);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
@@ -417,7 +437,7 @@ gint gqq_config_load(GQQConfig *cfg, GString *uin)
     g_string_free(confstr, TRUE);
 
     //read .passwd
-    g_snprintf(buf, 500, "%s/%s/.passwd", CONFIGDIR, uin -> str);
+    g_snprintf(buf, 500, "%s/%s/.passwd", CONFIGDIR, qqnum -> str);
     fd = g_open(buf, O_RDONLY);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
@@ -487,7 +507,7 @@ gint gqq_config_save(GQQConfig *cfg)
     QQInfo *info = priv -> info;
     gchar buf[500];
 
-    g_snprintf(buf, 500, "%s/%s", CONFIGDIR, info -> me -> uin -> str);
+    g_snprintf(buf, 500, "%s/%s", CONFIGDIR, info -> me -> qqnumber -> str);
     if(!g_file_test(buf, G_FILE_TEST_EXISTS)){
         /*
          * This is the first time that this user uses this program.
@@ -498,7 +518,7 @@ gint gqq_config_save(GQQConfig *cfg)
             return -1;
         }
         g_snprintf(buf, 500, "%s/%s/%s", CONFIGDIR
-                                , info -> me -> uin  -> str, "faces");
+                                , info -> me -> qqnumber -> str, "faces");
         if(-1 == g_mkdir(buf, 0777)){
             g_error("Create dir %s error!(%s, %d)", buf, __FILE__, __LINE__);
             return -1;
@@ -515,7 +535,7 @@ gint gqq_config_save(GQQConfig *cfg)
     mode_t mode = S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH;
     
     //write config
-    g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, info -> me -> uin -> str);
+    g_snprintf(buf, 500, "%s/%s/config", CONFIGDIR, info -> me -> qqnumber -> str);
     gint fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
@@ -532,7 +552,8 @@ gint gqq_config_save(GQQConfig *cfg)
     close(fd);
 
     //write .passwd 
-    g_snprintf(buf, 500, "%s/%s/.passwd", CONFIGDIR, info -> me -> uin -> str);
+    g_snprintf(buf, 500, "%s/%s/.passwd", CONFIGDIR
+                                    , info -> me -> qqnumber -> str);
     fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
@@ -565,7 +586,8 @@ gint gqq_config_save(GQQConfig *cfg)
     GString *tmp = NULL;
     guint i;
     //write buddies
-    g_snprintf(buf, 500, "%s/%s/buddies", CONFIGDIR, info -> me -> uin -> str);
+    g_snprintf(buf, 500, "%s/%s/buddies", CONFIGDIR
+                            , info -> me -> qqnumber -> str);
     fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
@@ -582,7 +604,8 @@ gint gqq_config_save(GQQConfig *cfg)
     close(fd);
 
     //write groups
-    g_snprintf(buf, 500, "%s/%s/groups", CONFIGDIR, info -> me -> uin -> str);
+    g_snprintf(buf, 500, "%s/%s/groups", CONFIGDIR
+                                        , info -> me -> qqnumber -> str);
     fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
@@ -599,7 +622,8 @@ gint gqq_config_save(GQQConfig *cfg)
     close(fd);
 
     //write categories
-    g_snprintf(buf, 500, "%s/%s/categories", CONFIGDIR, info -> me -> uin -> str);
+    g_snprintf(buf, 500, "%s/%s/categories", CONFIGDIR
+                                , info -> me -> qqnumber -> str);
     fd = g_open(buf, O_WRONLY | O_CREAT | O_TRUNC, mode);
     if(fd == -1){
         g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)

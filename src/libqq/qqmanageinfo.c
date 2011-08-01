@@ -25,6 +25,86 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 
+gint qq_get_qq_number(QQInfo *info, const gchar *uin, GError **err)
+{
+    if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+        g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+        return -1;
+    }
+
+    gint ret_code = 0;
+    gchar params[300];
+    g_debug("Get qq number.(%s, %d)", __FILE__, __LINE__);
+
+    Request *req = request_new();
+    Response *rps = NULL;
+    request_set_method(req, "GET");
+    request_set_version(req, "HTTP/1.1");
+    g_sprintf(params, GETQQNUM"?tuin=%s&verifysession=&type=1&code="
+                        "&vfwebqq=%s&t=%ld", uin
+                        , info -> vfwebqq -> str, get_now_millisecond());
+    request_set_uri(req, params);
+    request_set_default_headers(req);
+    request_add_header(req, "Host", SWQQHOST);
+    request_add_header(req, "Cookie", info -> cookie -> str);
+    request_add_header(req, "Content-Type", "utf-8");
+    request_add_header(req, "Referer"
+            , "http://s.web2.qq.com/proxy.html?v=20101025002");
+
+
+    Connection *con = connect_to_host(SWQQHOST, 80);
+    if(con == NULL){
+        g_warning("Can NOT connect to server!(%s, %d)"
+                , __FILE__, __LINE__);
+        request_del(req);
+        return -1;
+    }
+
+    send_request(con, req);
+    response_del(rps);
+    rcv_response(con, &rps);
+    close_con(con);
+    connection_free(con);
+
+    gchar *retstatus = rps -> status -> str;
+    if(g_strstr_len(retstatus, -1, "200") == NULL){
+        /*
+         * Maybe some error occured.
+         */
+        g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
+                , retstatus, __FILE__, __LINE__);
+        ret_code = -1;
+        goto error;
+    }
+
+    json_t *json = NULL;
+    switch(json_parse_document(&json, rps -> msg -> str))
+    {
+    case JSON_OK:
+        break;
+    default:
+        g_warning("json_parser_document: syntax error. (%s, %d)"
+                , __FILE__, __LINE__);
+        ret_code = -1;
+        goto error;
+    }
+    json_t *val = json_find_first_label_all(json, "account");
+    if(val != NULL){
+        QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+        qq_buddy_set(bdy, "qqnumber", val -> child -> text);
+        g_debug("qq number: %s (%s, %d)", val -> child -> text
+                                                , __FILE__, __LINE__);
+    }else{
+        g_warning("%s (%s, %d)", rps -> msg -> str, __FILE__, __LINE__);
+    }
+
+error:
+    json_free_value(&json);
+    request_del(req);
+    response_del(rps);
+    return ret_code;
+}
+
 static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
@@ -332,7 +412,7 @@ error:
 }
 
 
-static gint do_get_my_info(QQInfo *info, GError **err)
+static gint do_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
@@ -341,16 +421,15 @@ static gint do_get_my_info(QQInfo *info, GError **err)
 
     gint ret_code = 0;
     gchar params[500];
-    g_debug("Get my information!(%s, %d)", __FILE__, __LINE__);
+    g_debug("Get %s information!(%s, %d)", uin,  __FILE__, __LINE__);
 
     Request *req = request_new();
     Response *rps = NULL;
     request_set_method(req, "GET");
     request_set_version(req, "HTTP/1.1");
 
-    g_sprintf(params, GETMYINFO"?tuin=%s&verifysession=&code=&"
-            "vfwebqq=%s&t=%ld"
-            , info -> me -> uin -> str
+    g_sprintf(params, GETINFO"?tuin=%s&verifysession=&code=&"
+            "vfwebqq=%s&t=%ld", uin
             , info -> vfwebqq -> str, get_now_millisecond());
     request_set_uri(req, params);
     request_set_default_headers(req);
@@ -399,15 +478,23 @@ static gint do_get_my_info(QQInfo *info, GError **err)
     json_t *val;
     GString *vs;
 
+    QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+    if(bdy == NULL){
+        g_warning("Can NOT lookup %s's buddy!(%s, %d)", uin
+                                , __FILE__, __LINE__);
+        return OTHER_ERR;
+    }
+
 #define  SET_STR_VALUE(x)   \
     val = json_find_first_label_all(json, x);\
     if(val != NULL){\
         vs = g_string_new(NULL);\
         ucs4toutf8(vs, val -> child -> text);\
-        qq_buddy_set(info -> me, x, vs -> str);\
+        qq_buddy_set(bdy, x, vs -> str);\
         g_debug(x": %s (%s, %d)", vs -> str, __FILE__, __LINE__);\
      }
     SET_STR_VALUE("nick");
+    SET_STR_VALUE("uin");
     SET_STR_VALUE("country");
     SET_STR_VALUE("province");
     SET_STR_VALUE("city");
@@ -453,11 +540,11 @@ static gint do_get_my_info(QQInfo *info, GError **err)
             d = 1;
         }
 
-        qq_buddy_set(info -> me, "birthday", y, m, d);
+        qq_buddy_set(bdy, "birthday", y, m, d);
 
-        g_debug("Birthday:%d/%d/%d (%s, %d)", info -> me -> birthday.year
-                , info -> me -> birthday.month
-                , info -> me -> birthday.day
+        g_debug("Birthday:%d/%d/%d (%s, %d)", bdy -> birthday.year
+                , bdy -> birthday.month
+                , bdy -> birthday.day
                 , __FILE__, __LINE__);
     }
 
@@ -470,7 +557,7 @@ static gint do_get_my_info(QQInfo *info, GError **err)
             g_warning("strtol error. input: %s (%s, %d)"
                     , val -> child -> text, __FILE__, __LINE__);
         }else{
-            qq_buddy_set(info -> me, "blood", tmpi);
+            qq_buddy_set(bdy, "blood", tmpi);
             g_debug("blood: %d (%s, %d)", tmpi, __FILE__, __LINE__);
         }
     }
@@ -483,7 +570,7 @@ static gint do_get_my_info(QQInfo *info, GError **err)
             g_warning("strtol error. input: %s (%s, %d)"
                     , val -> child -> text, __FILE__, __LINE__);
         }else{
-            qq_buddy_set(info -> me, "shengxiao", tmpi);
+            qq_buddy_set(bdy, "shengxiao", tmpi);
             g_debug("shengxiao: %d (%s, %d)", tmpi, __FILE__, __LINE__);
         }
     }
@@ -496,7 +583,7 @@ static gint do_get_my_info(QQInfo *info, GError **err)
             g_warning("strtol error. input: %s (%s, %d)"
                     , val -> child -> text, __FILE__, __LINE__);
         }else{
-            qq_buddy_set(info -> me, "constel", tmpi);
+            qq_buddy_set(bdy, "constel", tmpi);
             g_debug("constel: %d (%s, %d)", tmpi, __FILE__, __LINE__);
         }
     }
@@ -509,13 +596,11 @@ static gint do_get_my_info(QQInfo *info, GError **err)
             g_warning("strtol error. input: %s (%s, %d)"
                     , val -> child -> text, __FILE__, __LINE__);
         }else{
-            qq_buddy_set(info -> me, "allow", tmpi);
+            qq_buddy_set(bdy, "allow", tmpi);
             g_debug("allow: %d (%s, %d)", tmpi, __FILE__, __LINE__);
         }
     }
     
-    g_hash_table_insert(info -> buddies_ht
-                                , info -> me -> uin -> str, info -> me);
     /*
      * Just to check error.
      */
@@ -524,7 +609,8 @@ static gint do_get_my_info(QQInfo *info, GError **err)
         g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
     }
 
-    ret_code = do_get_single_long_nick(info, info -> me, err);
+    ret_code = do_get_single_long_nick(info, bdy, err);
+    ret_code = qq_get_qq_number(info, bdy -> uin -> str, err);
 
 error:
     json_free_value(&json);
@@ -963,13 +1049,13 @@ error:
     return ret_code;
 }
 
-gint qq_get_my_info(QQInfo *info, GError **err)
+gint qq_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
 {
     if(info == NULL){
         return -1;
     }
 
-    return do_get_my_info(info, err);
+    return do_get_buddy_info(info, uin, err);
 }
 
 gint qq_get_my_friends(QQInfo *info, GError **err)

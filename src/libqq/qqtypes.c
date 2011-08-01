@@ -13,6 +13,8 @@ QQInfo* qq_info_new()
     
     info -> me = qq_buddy_new();
     info -> buddies = g_ptr_array_new();
+    g_ptr_array_add(info -> buddies, info -> me);
+
     info -> groups = g_ptr_array_new();
     info -> recentcons = g_ptr_array_new();
     info -> categories = g_ptr_array_new();
@@ -37,8 +39,6 @@ void qq_info_free(QQInfo *info)
         return;
     }
     
-    qq_buddy_free(info -> me);
-
 #define FREE_STR(x) if(info -> x != NULL){g_string_free(info -> x, TRUE);}
     FREE_STR(vc_type);
     FREE_STR(vc_image_data);
@@ -91,7 +91,19 @@ void qq_info_free(QQInfo *info)
 
 QQBuddy* qq_info_lookup_buddy(QQInfo *info, const gchar *uin)
 {
-    return (QQBuddy*)g_hash_table_lookup(info -> buddies_ht, uin);
+    QQBuddy *bdy = (QQBuddy*)g_hash_table_lookup(info -> buddies_ht, uin);
+    if(bdy == NULL){
+        gint i;
+        for(i = 0; i < info -> buddies -> len; ++i){
+            bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
+            if(g_strcmp0(uin, bdy -> uin -> str) == 0){
+                g_hash_table_insert(info -> buddies_ht, (gpointer)uin, bdy);
+                break;
+            }
+        }
+    }
+
+    return bdy;
 }
 QQGroup* qq_info_lookup_group(QQInfo *info, const gchar *gid)
 {
@@ -456,6 +468,7 @@ QQBuddy* qq_buddy_new()
     bd -> vip_info = -1;
 #define NEW_STR(x) bd -> x = g_string_new("")
     NEW_STR(uin);
+    NEW_STR(qqnumber);
     NEW_STR(status);
     NEW_STR(nick);
     NEW_STR(markname);
@@ -486,6 +499,7 @@ void qq_buddy_free(QQBuddy *bd)
 
 #define FREE_STR(x) g_string_free(bd -> x, TRUE)
     FREE_STR(uin);
+    FREE_STR(qqnumber);
     FREE_STR(status);
     FREE_STR(nick);
     FREE_STR(markname);
@@ -527,6 +541,8 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         SET_STR(uin);
     }else if(g_strcmp0(name, "status") == 0){
         SET_STR(status);
+    }else if(g_strcmp0(name, "qqnumber") == 0){
+        SET_STR(qqnumber);
     }else if(g_strcmp0(name, "nick") == 0){
         SET_STR(nick);
     }else if(g_strcmp0(name, "markname") == 0){
@@ -614,6 +630,7 @@ QQBuddy* qq_buddy_new_from_string(gchar *str)
     }
 
     SET_VALUE_STR(uin);
+    SET_VALUE_STR(qqnumber);
     SET_VALUE_STR(status);
     SET_VALUE_STR(nick);
     SET_VALUE_STR(markname);
@@ -703,6 +720,7 @@ GString* qq_buddy_tostring(QQBuddy *bdy)
     g_string_append(str, "\n")\
 
     APP_STR(uin);
+    APP_STR(qqnumber);
     APP_STR(status);
     APP_STR(nick);
     APP_STR(markname);

@@ -216,7 +216,8 @@ void qq_recvmsg_free(QQRecvMsg *);
  * The inforamtion of the buddies and myself.
  */
 struct _QQBuddy{
-    GString *uin;
+    GString *uin;               //the uin. Change every login
+    GString *qqnumber;          //the qq number
     GString *status;
     gint vip_info;
     GString *nick;              //

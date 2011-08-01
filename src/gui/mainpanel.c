@@ -259,11 +259,11 @@ static void update_my_face_widget(QQMainPanel *panel)
     GError *err = NULL;
     gchar buf[500];
     g_snprintf(buf, 500, CONFIGDIR"/%s/faces/%s", info -> me -> uin -> str
-                                                , info -> me -> uin -> str);
+                                            , info -> me -> qqnumber -> str);
     GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, 48, 48, &err);
     if(pb == NULL){
         g_warning("Load %s's face image error. %s (%s, %d)"
-                                    , info -> me -> uin -> str
+                                    , info -> me -> qqnumber -> str
                                     , err -> message, __FILE__, __LINE__);
         g_error_free(err);
         err = NULL;
@@ -467,8 +467,9 @@ static void update_image_widget(QQMainPanel *panel, const gchar *uin, const gcha
         gtk_tree_model_get_iter(model, &iter, path);
         gtk_tree_store_set(GTK_TREE_STORE(model), &iter, TV_IMAGE, pb, -1);
     }else{
-        g_warning("Update face image widget error!!%s (%s, %d)"
-                        , err -> message, __FILE__, __LINE__);
+        g_warning("Update face image widget error!! %s : %s (%s, %d)"
+                        , err -> message, file, __FILE__, __LINE__);
+        g_error_free(err);
     }
 }
 
@@ -479,16 +480,26 @@ static void update_image_widget(QQMainPanel *panel, const gchar *uin, const gcha
 static void get_and_update_face_image(QQMainPanel *panel, QQInfo *info
                                                     , const gchar *uin)
 {
-    // Get the face image and save it in buddy -> faceimg
-    qq_get_face_img(info, uin, NULL);
-    gchar buf[500];
+    qq_get_qq_number(info, uin, NULL);
+
+    gchar path[500];
     QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
     if(bdy == NULL){
         return;
     }
+    // test if we have the image file;
+    g_snprintf(path, 500, CONFIGDIR"/%s/faces/%s", info -> me -> uin -> str
+                                                , bdy -> qqnumber -> str);
+    if(g_file_test(path, G_FILE_TEST_IS_REGULAR)){
+        goto update_widget;
+    }
 
-    g_snprintf(buf, 500, CONFIGDIR"/%s/faces/", info -> me -> uin -> str);
-    qq_save_face_img(bdy, buf, NULL);
+    // Get the face image and save it in buddy -> faceimg
+    qq_get_face_img(info, uin, NULL);
+    g_snprintf(path, 500, CONFIGDIR"/%s/faces/", info -> me -> uin -> str);
+
+update_widget:
+    qq_buddy_set(bdy, "faceimgfile", path);
     //
     // Update the widget
     // NOTE:
@@ -507,11 +518,15 @@ static void update_face_image(QQMainPanel *panel, const gchar *uin)
 {
     gboolean need_get_img = FALSE;
 
+    QQBuddy *bdy = qq_info_lookup_buddy(info , uin);
+    if(bdy == NULL){
+        return;
+    }
     gchar path[500];
     // test if we have the image file;
     g_snprintf(path, 500, CONFIGDIR"/%s/faces/%s", info -> me -> uin -> str
-                                                    , uin);
-    if(!g_file_test(path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)){
+                                                , bdy -> qqnumber -> str);
+    if(!g_file_test(path, G_FILE_TEST_IS_REGULAR)){
         need_get_img = TRUE;
         g_debug("We need get face image for %s (%s, %d)", uin
                                         , __FILE__, __LINE__);

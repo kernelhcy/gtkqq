@@ -58,9 +58,9 @@ struct __GQQConfigClass{
 GQQConfig* gqq_config_new(QQInfo *info);
 GType gqq_config_get_type();
 //
-// Load the configuration of uin
+// Load the configuration of qq number  
 //
-gint gqq_config_load(GQQConfig *cfg, GString *uin);
+gint gqq_config_load(GQQConfig *cfg, GString *qqnum);
 //
 // Load the configuration fo the last user.
 //

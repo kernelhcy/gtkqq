@@ -52,16 +52,20 @@ gint qq_sendmsg(QQSendMsg *msg, GError **err);
 GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
 
 //
-// Get information of myself
+// Get information of uin 
 // If success, return 0. or error code and set *err.
 //
-gint qq_get_my_info(QQInfo *info, GError **err);
+gint qq_get_buddy_info(QQInfo *info, const gchar *uin, GError **err);
 //
 // Get all my friends' information.
 // Just simple information.
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_my_friends(QQInfo *info, GError **err);
+//
+// Get the qq number of uin
+//
+gint qq_get_qq_number(QQInfo *info, const gchar *uin, GError **err);
 //
 // Get the group name list mask.
 // If success, return 0. or error code and set *err.

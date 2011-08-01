@@ -33,7 +33,7 @@ int main(int argc, char **argv)
     qq_start_poll(info, NULL, NULL, NULL);
 
     g_message("get my information...");
-    qq_get_my_info(info, NULL);
+    qq_get_buddy_info(info, info -> me -> qqnumber -> str,  NULL);
     g_message("get my friends...");
     qq_get_my_friends(info, NULL);
     g_message("get group name list mask...");

@@ -156,7 +156,8 @@ static void login_state_machine(gpointer data)
             }
             break;
         case LOGIN_SM_GET_MY_INFO:
-            if(qq_get_my_info(info, NULL) != 0){
+            if(qq_get_buddy_info(info, info -> me -> qqnumber -> str
+                                            , NULL) != 0){
                 state = LOGIN_SM_ERR;
             }else{
                 state = LOGIN_SM_GET_MY_FRIENDS;
@@ -291,6 +292,9 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     state = LOGIN_SM_CHECKVC;
     run_login_state_machine(panel);
 
+    g_object_set(cfg, "lastuser", panel -> uin, NULL);
+    g_object_set(cfg, "passwd", panel -> passwd, NULL);
+    g_object_set(cfg, "status", panel -> status, NULL);
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
 }
@@ -301,7 +305,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     obj -> uin_entry = gtk_combo_box_entry_new_text();
 
     gchar *tmp;
-    g_object_get(cfg, "uin", &tmp, NULL);
+    g_object_get(cfg, "qqnum", &tmp, NULL);
     gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry), tmp);
     gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> uin_entry), 0);
 

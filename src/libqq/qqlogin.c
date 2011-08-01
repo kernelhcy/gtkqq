@@ -683,7 +683,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 	return NO_ERR;
 }
 
-gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
+gint qq_login(QQInfo *info, const gchar *qqnum, const gchar *passwd
 		        , const gchar *status, GError **err)
 {
 	if(info == NULL){
@@ -691,18 +691,18 @@ gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
         create_error_msg(err, PARAMETER_ERR, "info == NULL");
 		return PARAMETER_ERR;
 	}
-	if(uin == NULL || passwd == NULL || strlen(uin) == 0){
-		g_warning("uin or passwd == NULL.(%s, %d)"
+	if(qqnum == NULL || passwd == NULL || strlen(qqnum) == 0){
+		g_warning("qqnumber or passwd == NULL.(%s, %d)"
 				, __FILE__, __LINE__);
-        create_error_msg(err, PARAMETER_ERR, "uin or passwd  == NULL");
+        create_error_msg(err, PARAMETER_ERR, "qqnum or passwd  == NULL");
 		return PARAMETER_ERR;
 	}
 
-	if(info -> me -> uin != NULL){
-		g_string_free(info -> me -> uin, TRUE);
-	}
-	info -> me -> uin = g_string_new(uin);
-
+    //
+    // The user's uin and qq number are the same.
+    //
+    qq_buddy_set(info -> me, "qqnumber", qqnum);
+    qq_buddy_set(info -> me, "uin", qqnum);
 
 	if(info -> me -> status!= NULL){
 		g_string_free(info -> me -> status, TRUE);
@@ -713,7 +713,7 @@ gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		info -> me -> status = g_string_new(NULL);
 	}
 
-    return do_login(info, uin, passwd, status, err);
+    return do_login(info, qqnum, passwd, status, err);
 }
 
 static gint do_logout(QQInfo *info, GError **err)
