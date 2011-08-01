@@ -120,7 +120,7 @@ gint qq_send_message(QQInfo *info, QQSendMsg *msg, GError **err);
 //
 gint qq_get_face_img(QQInfo *info, const gchar *uin, GError **err);
 //
-// Save face image to file path/uin.type
+// Save face image to file path
 //
 gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err);
 //

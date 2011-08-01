@@ -56,7 +56,6 @@ struct _QQInfo{
     QQBuddy *me;                    //myself
 
     GPtrArray *buddies;             //all friends;
-    GHashTable *buddies_image_ht;   //face image file name 
     GHashTable *buddies_ht;         //buddies hash table by uin
     GPtrArray *groups;              //all groups;
     GHashTable *groups_ht;          //goups hash table by gid

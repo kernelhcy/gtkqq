@@ -35,7 +35,13 @@ static GString* get_image_type(const gchar *ct)
  */
 static gint do_get_face_img(QQInfo *info, const gchar *uin, GError **err)
 {
-    gint ret_code = -1;
+    QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+    if(bdy == NULL){
+        g_warning("Can Not find buddy of %s. (%s, %d)"
+                                    , uin, __FILE__, __LINE__);
+        return PARAMETER_ERR;
+    }
+    gint ret_code = NO_ERR;
     gchar params[300];
     g_debug("Get face image of %s!(%s, %d)", uin, __FILE__, __LINE__);
 
@@ -56,7 +62,7 @@ static gint do_get_face_img(QQInfo *info, const gchar *uin, GError **err)
         g_warning("Can NOT connect to server!(%s, %d)"
                 , __FILE__, __LINE__);
         request_del(req);
-        return -1;
+        return NETWORK_ERR;
     }
 
     send_request(con, req);
@@ -71,22 +77,16 @@ static gint do_get_face_img(QQInfo *info, const gchar *uin, GError **err)
          */
         g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
                 , retstatus, __FILE__, __LINE__);
-        ret_code = -1;
+        ret_code = NETWORK_ERR;
         goto error;
     }
 
     QQFaceImg *img = qq_faceimg_new();
     img -> uin = g_string_new(uin);
-    img -> data = g_string_new_len(rps -> msg -> str
-                    , rps -> msg -> len);
-    img -> type = get_image_type(response_get_header_chars(rps
-                    , "Content-Type"));
-
-    //store the image file name into the hashtable
-    gchar *name = g_malloc(sizeof(gchar) * 50);
-    g_sprintf(name, "%s.%s", img -> uin -> str, img -> type -> str);
-    g_hash_table_insert(info -> buddies_image_ht, img -> uin -> str, name);
-
+    img -> data = g_string_new_len(rps -> msg -> str, rps -> msg -> len);
+    img -> type = get_image_type(
+                        response_get_header_chars(rps, "Content-Type"));
+    qq_buddy_set(bdy, "faceimg", img);        
 error:
     request_del(req);
     response_del(rps);
@@ -109,7 +109,7 @@ extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext,
                 const gchar *path, const gchar *fname);
 //
 //save the face image to file
-//the file name is uin.type
+//the file name is uin
 //
 gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err)
 {
@@ -119,25 +119,15 @@ gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err)
         return -1;
     }
     QQFaceImg *fimg = bdy -> faceimg;
-    bdy -> faceimgfile = g_string_new(path);
+    qq_buddy_set(bdy, "faceimgfile", path);
     g_string_append(bdy -> faceimgfile, "/");
     g_string_append(bdy -> faceimgfile, fimg -> uin -> str);
-    g_string_append(bdy -> faceimgfile, ".");
-    g_string_append(bdy -> faceimgfile, fimg -> type -> str);
+
+    g_debug("Save %s's face image in %s (%s, %d)", bdy -> uin -> str
+                                    , bdy -> faceimgfile -> str
+                                    , __FILE__, __LINE__);
 
     return save_img_to_file(fimg -> data -> str, fimg -> data -> len
-                , fimg -> type -> str
-                , path, fimg -> uin -> str);        
+                                        , NULL, path, fimg -> uin -> str);        
 }
 
-const gchar* qq_lookup_image_name(QQInfo *info, const gchar *uin, GError **err)
-{
-    if(info == NULL || uin == NULL){
-        g_warning("info == NULL || uin == NULL (%s, %d)"
-                , __FILE__, __LINE__);
-        return NULL;
-    }
-
-    return (const gchar *)g_hash_table_lookup(info -> buddies_image_ht
-                                , uin);
-}

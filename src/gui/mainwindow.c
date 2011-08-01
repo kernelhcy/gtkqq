@@ -9,7 +9,6 @@
 /*
  * The main event loop context of Gtk.
  */
-static GMainContext *gtkctx;
 extern QQInfo *info;
 extern GQQConfig *cfg;
 
@@ -28,111 +27,104 @@ static void destroy_handler(GtkWidget *widget, gpointer  data)
 
 GType qq_mainwindow_get_type()
 {
-	static GType t = 0;
-	if(!t){
-		const GTypeInfo info =
-		{
-			sizeof(QQMainWindowClass),
-			NULL,	/* base_init */
-			NULL,	/* base_finalize */
-			(GClassInitFunc)qq_mainwindowclass_init,
-			NULL,	/* class finalize*/
-			NULL,	/* class data */
-			sizeof(QQMainWindow),
-			0,	/* n pre allocs */
-			(GInstanceInitFunc)qq_mainwindow_init,
-			0
-		};
+    static GType t = 0;
+    if(!t){
+        const GTypeInfo info =
+        {
+            sizeof(QQMainWindowClass),
+            NULL,    /* base_init */
+            NULL,    /* base_finalize */
+            (GClassInitFunc)qq_mainwindowclass_init,
+            NULL,    /* class finalize*/
+            NULL,    /* class data */
+            sizeof(QQMainWindow),
+            0,    /* n pre allocs */
+            (GInstanceInitFunc)qq_mainwindow_init,
+            0
+        };
 
-		t = g_type_register_static(GTK_TYPE_WINDOW, "QQMainWindow"
-					, &info, 0);
-	}
-	return t;
+        t = g_type_register_static(GTK_TYPE_WINDOW, "QQMainWindow"
+                    , &info, 0);
+    }
+    return t;
 }
 
 GtkWidget* qq_mainwindow_new()
 {
-	return GTK_WIDGET(g_object_new(qq_mainwindow_get_type()
-						, "type", GTK_WINDOW_TOPLEVEL, NULL));
+    return GTK_WIDGET(g_object_new(qq_mainwindow_get_type()
+                        , "type", GTK_WINDOW_TOPLEVEL, NULL));
 }
 
 
 static void qq_mainwindow_init(QQMainWindow *win)
 {
-	GtkWidget *w = GTK_WIDGET(win);
-	gtk_widget_set_size_request(w, 250, 500);
-	gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
-	g_signal_connect(G_OBJECT(w), "destroy",
-			                 G_CALLBACK(destroy_handler), NULL);
-	
-	win -> login_panel = qq_loginpanel_new(w);
-	win -> splash_panel = qq_splashpanel_new();
-	win -> main_panel = qq_mainpanel_new(w);
+    GtkWidget *w = GTK_WIDGET(win);
+    gtk_widget_set_size_request(w, 250, 500);
+    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+    g_signal_connect(G_OBJECT(w), "destroy",
+                             G_CALLBACK(destroy_handler), NULL);
+    
+    win -> login_panel = qq_loginpanel_new(w);
+    win -> splash_panel = qq_splashpanel_new();
+    win -> main_panel = qq_mainpanel_new(w);
 
-	win -> notebook = gtk_notebook_new();
-	gtk_notebook_set_show_tabs(GTK_NOTEBOOK(win -> notebook), FALSE);
-	gtk_notebook_set_show_border(GTK_NOTEBOOK(win -> notebook), FALSE);
+    win -> notebook = gtk_notebook_new();
+    gtk_notebook_set_show_tabs(GTK_NOTEBOOK(win -> notebook), FALSE);
+    gtk_notebook_set_show_border(GTK_NOTEBOOK(win -> notebook), FALSE);
 
-	gtk_widget_show_all(win -> login_panel);
-	gtk_widget_show_all(win -> splash_panel);
-	gtk_widget_show_all(win -> main_panel);
-	
-	gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
-				, win -> login_panel, NULL);
-	gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
-				, win -> splash_panel, NULL);
-	gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
-				, win -> main_panel, NULL);
+    gtk_widget_show_all(win -> login_panel);
+    gtk_widget_show_all(win -> splash_panel);
+    gtk_widget_show_all(win -> main_panel);
+    
+    gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
+                                , win -> login_panel, NULL);
+    gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
+                                , win -> splash_panel, NULL);
+    gtk_notebook_append_page(GTK_NOTEBOOK(win -> notebook)
+                                , win -> main_panel, NULL);
 
-	gtk_container_add(GTK_CONTAINER(win), win -> notebook);
+    gtk_container_add(GTK_CONTAINER(win), win -> notebook);
 
-	GtkWidget *img = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
-	gtk_window_set_icon(GTK_WINDOW(win)
-			, gtk_image_get_pixbuf(GTK_IMAGE(img)));
-	gtk_window_set_title(GTK_WINDOW(win), "GtkQQ");
+    GtkWidget *img = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
+    gtk_window_set_icon(GTK_WINDOW(win), gtk_image_get_pixbuf(GTK_IMAGE(img)));
+    gtk_window_set_title(GTK_WINDOW(win), "GtkQQ");
 
-	/*
-	 * Test
-	 */
-//	gtk_notebook_set_current_page(GTK_NOTEBOOK(win -> notebook), 2);
-//	qq_mainpanel_update(QQ_MAINPANEL(win -> main_panel));
+    /*
+     * Test
+     */
+//    gtk_notebook_set_current_page(GTK_NOTEBOOK(win -> notebook), 2);
+//    qq_mainpanel_update(QQ_MAINPANEL(win -> main_panel));
 
 }
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)
 {
-	/*
-	 * get the default main evet loop context.
-	 * 
-	 * I think this will work...
-	 */
-	gtkctx = g_main_context_default();
 }
 
 void qq_mainwindow_show_loginpanel(GtkWidget *win)
 {
-	if(!QQ_IS_MAINWINDOW(win)){
-		g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
-		return;
-	}
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(
-				QQ_MAINWINDOW(win) -> notebook), 0);
+    if(!QQ_IS_MAINWINDOW(win)){
+        g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
+        return;
+    }
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(
+                QQ_MAINWINDOW(win) -> notebook), 0);
 }
 void qq_mainwindow_show_splashpanel(GtkWidget *win)
 {
-	if(!QQ_IS_MAINWINDOW(win)){
-		g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
-		return;
-	}
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(
-				QQ_MAINWINDOW(win) -> notebook), 1);
+    if(!QQ_IS_MAINWINDOW(win)){
+        g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
+        return;
+    }
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(
+                QQ_MAINWINDOW(win) -> notebook), 1);
 }
 void qq_mainwindow_show_mainpanel(GtkWidget *win)
 {
-	if(!QQ_IS_MAINWINDOW(win)){
-		g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
-		return;
-	}
-	gtk_notebook_set_current_page(GTK_NOTEBOOK(
-				QQ_MAINWINDOW(win) -> notebook), 2);
+    if(!QQ_IS_MAINWINDOW(win)){
+        g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
+        return;
+    }
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(
+                QQ_MAINWINDOW(win) -> notebook), 2);
 }
 

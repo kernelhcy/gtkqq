@@ -173,7 +173,6 @@ static gint do_get_online_buddies(QQInfo *info, GError **err)
         goto error;
     }
 
-    g_debug("(%s, %d)%s", __FILE__, __LINE__, rps -> msg -> str);
     json_t *val;
     val = json_find_first_label_all(json, "result");
     if(val != NULL){
@@ -292,7 +291,6 @@ static gint do_get_recent_contact(QQInfo *info, GError **err)
         goto error;
     }
 
-    g_printf("%s", rps -> msg -> str);
     json_t *val;
     val = json_find_first_label_all(json, "contents");
     if(val != NULL){
@@ -406,7 +404,6 @@ static gint do_get_my_info(QQInfo *info, GError **err)
     if(val != NULL){\
         vs = g_string_new(NULL);\
         ucs4toutf8(vs, val -> child -> text);\
-        info -> me -> nick = vs;\
         qq_buddy_set(info -> me, x, vs -> str);\
         g_debug(x": %s (%s, %d)", vs -> str, __FILE__, __LINE__);\
      }
@@ -516,6 +513,9 @@ static gint do_get_my_info(QQInfo *info, GError **err)
             g_debug("allow: %d (%s, %d)", tmpi, __FILE__, __LINE__);
         }
     }
+    
+    g_hash_table_insert(info -> buddies_ht
+                                , info -> me -> uin -> str, info -> me);
     /*
      * Just to check error.
      */
@@ -579,7 +579,6 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
     close_con(con);
     connection_free(con);
 
-//    g_printf("(%s, %d)%s\n", __FILE__, __LINE__, rps -> msg -> str);
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -590,6 +589,8 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
         ret_code = -1;
         goto error;
     }
+
+//    g_printf("(%s, %d) %s \n", __FILE__, __LINE__, rps -> msg -> str);
 
     json_t *json = NULL;
     switch(json_parse_document(&json, rps -> msg -> str))
@@ -604,8 +605,15 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
     }
     
     json_t *val;
-    val = json_find_first_label_all(json, "categories");
+    val = json_find_first_label_all(json, "result");
     if(val != NULL){
+        val = val -> child -> child;
+        while(val -> next != NULL){
+            if(g_strcmp0("categories", val -> text) == 0){
+                break;
+            }
+            val = val -> next;
+        }
         val = val -> child;    //point to the array.[]    
         json_t *cur, *index, *name;
         GString *sn;
@@ -613,8 +621,10 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
         gchar *endptr;
         QQCategory *cate;
         for(cur = val -> child; cur != NULL; cur = cur -> next){
-            index = cur -> child -> child;
-            name = cur -> child -> next -> child;
+            index = json_find_first_label_all(cur, "index");
+            name = json_find_first_label_all(cur, "name");
+            index = index -> child;
+            name = name -> child;
             sn = g_string_new(NULL);
             ucs4toutf8(sn, name -> text);
             ii = strtol(index -> text, &endptr, 10);
@@ -627,8 +637,8 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
             cate -> name = sn;
             cate -> index = ii;
             g_ptr_array_add(info -> categories, (gpointer)cate);
-//            g_debug("category: %d %s (%s, %d)", ii, sn -> str
-//                    , __FILE__, __LINE__);
+            g_debug("category: %d %s (%s, %d)", ii, sn -> str
+                                                , __FILE__, __LINE__);
         }
         
         //add the default category
@@ -666,9 +676,9 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
             }
             ns = g_string_new(NULL);
             ucs4toutf8(ns, nick);
-//            g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
-//                    , uin, ns -> str, face, flag
-//                    , __FILE__, __LINE__);
+            g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
+                                    , uin, ns -> str, face, flag
+                                    , __FILE__, __LINE__);
             QQBuddy *buddy = qq_buddy_new();
             qq_buddy_set(buddy, "uin", uin);
             qq_buddy_set(buddy, "nick", ns -> str);
@@ -705,9 +715,9 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
                  */
                 g_string_truncate(tmpb -> markname, 0);
                 ucs4toutf8(tmpb -> markname, markname);
-//                g_debug("uin:%s markname:%s (%s, %d)"
-//                    , uin, tmpb -> markname -> str
-//                    , __FILE__, __LINE__);
+                g_debug("uin:%s markname:%s (%s, %d)"
+                            , uin, tmpb -> markname -> str
+                            , __FILE__, __LINE__);
             }
         }
     }
@@ -743,8 +753,8 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
                     qc = info -> categories -> pdata[i];
                     if(qc != NULL && qc -> index == idx){
                         //find the category
-//                        g_debug("Buddy %s in category %d(%s, %d)", uin
-//                                    , idx, __FILE__, __LINE__);
+                        g_debug("Buddy %s in category %d(%s, %d)", uin
+                                            , idx, __FILE__, __LINE__);
                         g_ptr_array_add(qc -> members, bdy);
                         qq_buddy_set(bdy, "cate", qc);
                         break;
@@ -809,7 +819,6 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
     close_con(con);
     connection_free(con);
 
-    g_printf("(%s, %d)%s\n", __FILE__, __LINE__, rps -> msg -> str);
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -901,7 +910,7 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
                 if(g_strstr_len(tmpg -> gid -> str, -1, gid)
                         != NULL){
                     g_debug("Find group %s for mask %s(%s, %d)", gid, mask
-                            , __FILE__, __LINE__);
+                                            , __FILE__, __LINE__);
                     qq_group_set(tmpg, "mask", mask);
                 }
             }

@@ -27,11 +27,16 @@ glong get_now_millisecond()
 gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
                 const gchar *path, const gchar *fname)
 {
-    if(data == NULL || ext == NULL){
+    if(data == NULL){
         return -1;
     }
-    gchar fn[100];
-    g_sprintf(fn, "%s/%s.%s", path, fname, ext);
+    gchar fn[500];
+    if(ext == NULL || strlen(ext) == 0){
+        g_sprintf(fn, "%s/%s", path, fname);
+    }else{
+        g_sprintf(fn, "%s/%s.%s", path, fname, ext);
+    }
+
 
     g_debug("Create image file : %s (%s, %d)", fn, __FILE__, __LINE__);
     gint fd = creat(fn, S_IRUSR | S_IWUSR);

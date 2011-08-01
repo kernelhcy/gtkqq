@@ -13,30 +13,47 @@
  */
 QQInfo *info = NULL;
 GQQConfig *cfg = NULL;
+//
+// The main loop used to get information from the server.
+// Such as face images, buddy information.
+//
+GQQMessageLoop *get_info_loop = NULL;
+//
+// The main loop used to send messages.
+// Such as group messages and buddy messages.
+//
+GQQMessageLoop *send_loop = NULL;
 
 int main(int argc, char **argv)
 {
-	gtk_init(&argc, &argv);
+    gtk_init(&argc, &argv);
 
-	log_init();
-	info = qq_init(NULL);
-	if(info == NULL){
-		return -1;
-	}
+    log_init();
+    info = qq_init(NULL);
+    if(info == NULL){
+        return -1;
+    }
     cfg = gqq_config_new(info);
     gqq_config_load_last(cfg);
 
-    if(gqq_msgloop_start() == -1){
-        g_error("Start message loop error! (%s, %d)", __FILE__, __LINE__);
+    send_loop = gqq_msgloop_start("Send");
+    if(send_loop == NULL){
+        return -1;
+    }
+    get_info_loop = gqq_msgloop_start("Get informain");
+    if(get_info_loop == NULL){
         return -1;
     }
 
-	GtkWidget *win = qq_mainwindow_new();
-	gtk_widget_show_all(win);
-	
-	gtk_main();
-	qq_logout(info, NULL);
+    GtkWidget *win = qq_mainwindow_new();
+    gtk_widget_show_all(win);
+    
+    gtk_main();
+
+    qq_logout(info, NULL);
+    gqq_msgloop_stop(get_info_loop);
+    gqq_msgloop_stop(send_loop);
     gqq_config_save(cfg);
     qq_finalize(info, NULL);
-	return 0;
+    return 0;
 }

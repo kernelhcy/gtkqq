@@ -1,12 +1,20 @@
 #include <mainpanel.h>
 #include <statusbutton.h>
+#include <msgloop.h>
 #include <qq.h>
 
 /*
  * The main event loop context of Gtk.
  */
-static GMainContext *gtkctx;
 extern QQInfo *info;
+
+extern GQQMessageLoop *get_info_loop;
+extern GQQMessageLoop *send_loop;
+/*
+ * The main event loop context of Gtk.
+ */
+static GQQMessageLoop gtkloop;
+
 static QQMainPanelClass *this_class = NULL;
 
 static void qq_mainpanel_init(QQMainPanel *panel);
@@ -21,6 +29,8 @@ static gboolean lnick_leave_cb(GtkWidget *w, GdkEvent *event, gpointer data);
 static void btn_group_release_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
 static void btn_group_enter_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
 static void btn_group_leave_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
+
+static void update_face_image(QQMainPanel *panel, const gchar *uin);
 
 //
 // The map between the QQBuddy uin and the tree row.
@@ -230,46 +240,92 @@ static void qq_mainpanelclass_init(QQMainPanelClass *c)
     gtk_widget_show(c -> recent_img[1]);
 
     c -> hand = gdk_cursor_new(GDK_HAND1);
-    gtkctx = g_main_context_default();
+
+    gtkloop.ctx = g_main_context_default();
+    gtkloop.name = "MainPanel Gtk";
 }
 
-//
-// Update the information of all the widgets.
-//
-void qq_mainpanel_update(QQMainPanel *panel)
+
+static void update_my_face_widget(QQMainPanel *panel)
 {
     GtkBin *faceimgframe = GTK_BIN(panel -> faceimgframe);
 
     //free the old image.
     GtkWidget *faceimg = gtk_bin_get_child(faceimgframe);
     if(faceimg != NULL){
-        gtk_container_remove(GTK_CONTAINER(faceimgframe)
-                        , faceimg);
+        gtk_container_remove(GTK_CONTAINER(faceimgframe), faceimg);
     }
-
-    GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_scale(
-                    info -> me -> faceimgfile -> str
-                    , 48, 48, TRUE, NULL);
-    if(pb != NULL){
-        GtkWidget *img = gtk_image_new_from_pixbuf(pb);
-        //we MUST show it!
-        gtk_widget_show(img);
-        gtk_container_add(GTK_CONTAINER(faceimgframe), img);
-    }else{
-        g_warning("Create face image for %s error!(%s, %d)"
-                , info -> me -> faceimgfile -> str
-                , __FILE__, __LINE__ );
+    
+    GError *err = NULL;
+    gchar buf[500];
+    g_snprintf(buf, 500, CONFIGDIR"/%s/faces/%s", info -> me -> uin -> str
+                                                , info -> me -> uin -> str);
+    GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, 48, 48, &err);
+    if(pb == NULL){
+        g_warning("Load %s's face image error. %s (%s, %d)"
+                                    , info -> me -> uin -> str
+                                    , err -> message, __FILE__, __LINE__);
+        g_error_free(err);
+        err = NULL;
+        pb = gdk_pixbuf_new_from_file_at_size(
+                                    IMGDIR"/avatar.gif", 48, 48, &err);
+        if(pb == NULL){
+            g_warning("Load default face image error. %s (%s, %d)"
+                                    , err -> message, __FILE__, __LINE__);
+            g_error_free(err);
+        }
     }
+    GtkWidget *img = gtk_image_new_from_pixbuf(pb);
+    //we MUST show it!
+    gtk_widget_show(img);
+    gtk_container_add(GTK_CONTAINER(faceimgframe), img);
+}
 
-    GString *nick, *lnick;
-    nick = g_string_new(info -> me -> nick -> str);
-    lnick = g_string_new(info -> me -> lnick -> str);
-    gtk_label_set_text(GTK_LABEL(panel -> nick), nick -> str);
-    gtk_label_set_text(GTK_LABEL(panel -> longnick), lnick -> str);
+//
+// Get and update my face image.
+// Run in get-info-loop
+//
+static void get_and_update_my_face_image(QQMainPanel *panel, QQInfo *info)
+{
+    // Get the face image and save it in buddy -> faceimg
+    qq_get_face_img(info, info -> me -> uin -> str, NULL);
+    gchar buf[500];
+
+    g_snprintf(buf, 500, CONFIGDIR"/%s/faces/", info -> me -> uin -> str);
+    qq_save_face_img(info -> me, buf, NULL);
+    //
+    // Update the widget
+    //
+    gqq_mainloop_attach(&gtkloop, update_my_face_widget, 1, panel);
+}
+//
+// Update the information of all the widgets.
+//
+void qq_mainpanel_update(QQMainPanel *panel)
+{
+    update_my_face_widget(panel);
+
+    gtk_label_set_text(GTK_LABEL(panel -> nick)
+                            , info -> me -> nick -> str);
+    gtk_label_set_text(GTK_LABEL(panel -> longnick)
+                            , info -> me -> lnick -> str);
 
     //update the contact tree
     gtk_tree_view_set_model(GTK_TREE_VIEW(panel -> contact_tree)
                             , create_contact_model(panel));
+    //update the face images
+    gint i;
+    QQBuddy *bdy;
+    for(i = 0; i < info -> buddies -> len; ++i){
+        bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
+        if(bdy == NULL){
+            continue;
+        }
+        update_face_image(panel, bdy -> uin -> str);
+    }
+
+    gqq_mainloop_attach(get_info_loop, get_and_update_my_face_image
+                                    , 2, panel, info);
 }
 
 //
@@ -388,13 +444,20 @@ static gboolean lnick_leave_cb(GtkWidget *w, GdkEvent *event, gpointer data)
                         , GTK_STATE_NORMAL, NULL);
     return TRUE;
 }
-#if 0
 //
-// Update the image widget of map -> row_ref to file
+// Update the image widget of uin to file
 //
-static void update_image_widget(GtkTreeModel *model, QQTreeMap *map
-                                , const gchar *file)
+static void update_image_widget(QQMainPanel *panel, const gchar *uin, const gchar *file)
 {
+    GtkTreeModel *model;
+    QQTreeMap *map;
+    model = gtk_tree_view_get_model(GTK_TREE_VIEW(panel -> contact_tree));
+    map = (QQTreeMap*)g_hash_table_lookup(panel -> tree_maps, uin);
+    if(map == NULL){
+        g_warning("No TreeMap for %s(%s, %d)", uin, __FILE__, __LINE__);
+        return;
+    }
+
     GError *err = NULL;
     GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(file, 20, 20, &err);
     if(pb != NULL){
@@ -408,58 +471,62 @@ static void update_image_widget(GtkTreeModel *model, QQTreeMap *map
                         , err -> message, __FILE__, __LINE__);
     }
 }
-#endif
-typedef struct{
-    QQBuddy *bdy;
-    QQMainPanel *panel;
-}GetFaceIdlePar;
 
-#if 0
 //
-// Update the face images
+// Get and update the face image.
+// Run in get-info-loop
 //
-static void update_face_image(QQMainPanel *panel)
+static void get_and_update_face_image(QQMainPanel *panel, QQInfo *info
+                                                    , const gchar *uin)
 {
-    gchar path[100];
-    GtkTreeModel *model;
-    QQTreeMap *map;
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(panel -> contact_tree));
+    // Get the face image and save it in buddy -> faceimg
+    qq_get_face_img(info, uin, NULL);
+    gchar buf[500];
+    QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+    if(bdy == NULL){
+        return;
+    }
 
-    gint i;
+    g_snprintf(buf, 500, CONFIGDIR"/%s/faces/", info -> me -> uin -> str);
+    qq_save_face_img(bdy, buf, NULL);
+    //
+    // Update the widget
+    // NOTE:
+    //      We SHOULD use uin as the parameter!
+    //
+    gqq_mainloop_attach(&gtkloop, update_image_widget, 3, panel
+                                            , bdy -> uin -> str
+                                            , bdy -> faceimgfile -> str);
+}
+
+//
+// Update the face image of uin
+// This function will called out the gtk main event loop.
+//
+static void update_face_image(QQMainPanel *panel, const gchar *uin)
+{
     gboolean need_get_img = FALSE;
-    QQBuddy *bdy;
 
-    for( i = 0; i < info -> buddies -> len; ++i ){
-        bdy = (QQBuddy*)info -> buddies -> pdata[i];
-        map = (QQTreeMap*)g_hash_table_lookup(panel -> tree_maps
-                                    , bdy -> uin -> str);
-        if(map == NULL){
-            g_warning("Lookup buddy return NULL.%s (%s, %d)", bdy -> uin -> str
-                                    , __FILE__, __LINE__);
-            continue;
-        }
-        // test if we have the image file;
-        if(bdy -> faceimg != NULL && bdy -> faceimg -> uin != NULL){
-            g_snprintf(path, 100, CONFIGDIR"/%s/%s.%s", info -> me -> uin -> str
-                                    , bdy -> faceimg -> uin -> str
-                                    , bdy -> faceimg -> type -> str);
-            if(!g_file_test(path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)){
-                need_get_img = FALSE;
-            }
-        }else{
-            need_get_img = TRUE;
-        }
+    gchar path[500];
+    // test if we have the image file;
+    g_snprintf(path, 500, CONFIGDIR"/%s/faces/%s", info -> me -> uin -> str
+                                                    , uin);
+    if(!g_file_test(path, G_FILE_TEST_EXISTS | G_FILE_TEST_IS_REGULAR)){
+        need_get_img = TRUE;
+        g_debug("We need get face image for %s (%s, %d)", uin
+                                        , __FILE__, __LINE__);
+    }else{
+        need_get_img = FALSE;
+    }
 
-        if(need_get_img){
-            need_get_img = FALSE;
-            // we need get image from the server.
-        }else{
-            //update the image widget
-            update_image_widget(model, map, path);
-        }
+    if(need_get_img){
+        gqq_mainloop_attach(get_info_loop, get_and_update_face_image
+                                            , 3, panel, info, uin);
+    }else{
+        update_image_widget(panel, uin, path);
     }
 }
-#endif
+
 //
 // Create the model of the contact tree
 //
@@ -507,7 +574,7 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
                 g_snprintf(buf, 500, "%s  (%s)", bdy -> markname -> str
                                         , bdy -> nick -> str);
             }
-            pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"
+            pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.png"
                                         , 20, 20, NULL);
             gtk_tree_store_set(store, &child, TV_IMAGE, pb, TV_NAME, buf, -1);
 
@@ -520,9 +587,7 @@ static GtkTreeModel* create_contact_model(QQMainPanel *panel)
             map = g_slice_new0(QQTreeMap);
             map -> uin = bdy -> uin;
             map -> row_ref = ref;
-            g_hash_table_insert(panel -> tree_maps, bdy -> uin -> str
-                                    , map);
-
+            g_hash_table_insert(panel -> tree_maps, bdy -> uin -> str, map);
         }
     }
 

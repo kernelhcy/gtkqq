@@ -1,62 +1,76 @@
 #include <msgloop.h>
+//The Invoker type
+typedef void (*Invoker)(gpointer method, gpointer *pars);
 
-static GThread *tid = NULL;
+//
+// GQQClosure
+// Contain all the information to invoke a method whoes 
+// parameters are all gpointer type.
+//
+typedef struct{
+    Invoker invoker;
+    gpointer method;
+    gpointer pars[10];  // I think that no method's parameters' 
+                        // number will greater ten...
+}GQQClosure;
 
-static GMutex *lock = NULL;
-static gboolean run = FALSE;
-
-// Task queue
-static GAsyncQueue *queue = NULL;
-
-static gpointer loop_func(gpointer data)
+static gpointer thread_main(gpointer data)
 {
-    GQQClosure *c;
-    while(TRUE){
-        g_mutex_lock(lock);
-        if(!run){
-            g_mutex_unlock(lock);
-            break;
-        }
-        g_mutex_unlock(lock);
+    gchar *name;
+    GQQMessageLoop *ml= (GQQMessageLoop*)data;
 
-        c = (GQQClosure*)g_async_queue_pop(queue);
-        // invoke the method.
-        c -> invoker(c -> method, c -> pars);
-        // free the GQQClosure.
-        g_slice_free(GQQClosure, c);
+    ml -> ctx = g_main_context_new();
+    if(ml -> ctx == NULL){
+        g_error("Create context for %s loop failed... (%s, %d)",ml -> name
+                                                        , __FILE__, __LINE__);
+        return NULL;
     }
+    GMainLoop *loop = g_main_loop_new(ml -> ctx, TRUE);
+    if(loop == NULL){
+        g_error("Create %s main loop failed...(%s, %d)", ml -> name
+                                                        , __FILE__, __LINE__);
+        return NULL;
+    }
+    ml -> loop = loop;
 
-    // Free the mutex
-    g_mutex_free(lock);
-    // Free the task queue
-    g_async_queue_unref(queue);
+    g_debug("Start %s main loop...(%s, %d)", ml -> name, __FILE__, __LINE__);
+    name = g_strdup(ml -> name);
+    g_main_loop_run(ml -> loop);
+    g_debug("%s main loop quit.(%s, %d)", name, __FILE__, __LINE__);
+    g_free(name); 
     return NULL;
 }
 
-gint gqq_msgloop_start()
+GQQMessageLoop* gqq_msgloop_start(const gchar *name)
 {
-    GError *err = NULL;
-    queue = g_async_queue_new();
-    lock = g_mutex_new();
-    run = TRUE;
-
-    tid = g_thread_create(loop_func, NULL, FALSE, &err);
-    if(tid == NULL){
-        g_error("Create message loop thread error! %s (%s, %d)"
-                        , err -> message, __FILE__, __LINE__);
-        g_error_free(err);
-        g_mutex_free(lock);
-        g_async_queue_unref(queue);
-        return -1;
+    if(name == NULL){
+        name = "";
     }
-    return 0;
+
+    GQQMessageLoop *ml = g_slice_new0(GQQMessageLoop);
+    ml -> name = g_strdup(name);
+
+    GError *err = NULL;
+    if(g_thread_create(thread_main, ml, FALSE, &err) == NULL){
+        g_warning("Create main loop thread failed... %s (%s, %d)"
+                                , err -> message, __FILE__, __LINE__);
+        g_error_free(err);
+        g_free(ml -> name);
+        g_slice_free(GQQMessageLoop, ml);
+        return NULL;
+    }
+    return ml;
 }
-gint gqq_msgloop_stop()
+void gqq_msgloop_stop(GQQMessageLoop *loop)
 {
-    g_mutex_lock(lock); 
-    run = FALSE;
-    g_mutex_unlock(lock);
-    return 0;
+    if(loop == NULL){
+        return;
+    }
+    g_main_context_unref(loop -> ctx);
+    g_main_loop_quit(loop -> loop);
+    g_free(loop -> name);
+    g_slice_free(GQQMessageLoop, loop);
+    return;
 }
 
 void gqq_method_invoker_1(gpointer method, gpointer *pars)
@@ -102,26 +116,9 @@ static Invoker invokers[] = {
     NULL
 };
 
-gint gqq_msgloop_attach(gpointer method, gint par_num, ...)
-{
-    va_list par;
-    va_start(par, par_num);
-    GQQClosure *c = g_slice_new0(GQQClosure);
-    c -> method = method;
-    c -> invoker = invokers[par_num];
-    gpointer p;
-    gint i;
-    for(i = 0; i < par_num; ++i){
-        p = va_arg(par, gpointer);
-        c -> pars[i] = p;
-    }
-
-    // push into the task queue.
-    g_async_queue_push(queue, c);
-    va_end(par);
-    return 0;
-}
-
+//
+// The callback called in the main loop.
+//
 static gboolean gqq_ctx_callback(gpointer data)
 {
     GQQClosure *c = (GQQClosure*)data;
@@ -132,7 +129,7 @@ static gboolean gqq_ctx_callback(gpointer data)
     return FALSE;
 }
 
-gint gqq_context_attach(GMainContext *ctx, gpointer method, gint par_num, ...)
+gint gqq_mainloop_attach(GQQMessageLoop *loop, gpointer method, gint par_num, ...)
 {
     va_list par;
     va_start(par, par_num);
@@ -149,7 +146,7 @@ gint gqq_context_attach(GMainContext *ctx, gpointer method, gint par_num, ...)
     
     GSource *src = g_idle_source_new();
     g_source_set_callback(src, gqq_ctx_callback, c, NULL);
-    g_source_attach(src, ctx);
+    g_source_attach(src, loop -> ctx);
     g_source_unref(src);
     return 0;
 }

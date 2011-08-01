@@ -14,6 +14,9 @@
 extern QQInfo *info;
 extern GQQConfig *cfg;
 
+extern GQQMessageLoop *get_info_loop;
+extern GQQMessageLoop *send_loop;
+
 static void qq_loginpanelclass_init(QQLoginPanelClass *c);
 static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
@@ -21,7 +24,7 @@ static void qq_loginpanel_destroy(GtkObject *obj);
 /*
  * The main event loop context of Gtk.
  */
-static GMainContext *gtkctx;
+static GQQMessageLoop gtkloop;
 
 GtkType qq_loginpanel_get_type()
 {
@@ -66,7 +69,8 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c)
      * 
      * I think this will work...
      */
-    gtkctx = g_main_context_default();
+    gtkloop.ctx = g_main_context_default();
+    gtkloop.name = "LoginPanel Gtk";
 }
 
 //
@@ -105,7 +109,7 @@ static gint do_login(QQLoginPanel *panel)
     g_warning("Login error! %s (%s, %d)", err -> message, __FILE__, __LINE__);
     g_error_free(err);
     //show err message
-    gqq_context_attach(gtkctx, gtk_label_set_text, 2, panel -> err_label, msg);
+    gqq_mainloop_attach(&gtkloop, gtk_label_set_text, 2, panel -> err_label, msg);
     return -1;
 }
 
@@ -114,7 +118,6 @@ enum{
     LOGIN_SM_CHECKVC,
     LOGIN_SM_LOGIN,
     LOGIN_SM_GET_MY_INFO,
-    LOGIN_SM_GET_MY_LONGNICK,
     LOGIN_SM_GET_MY_FRIENDS,
     LOGIN_SM_GET_ONLINE_BUDDIES,
     LOGIN_SM_GET_RECENT_CONTACT,
@@ -139,7 +142,7 @@ static void login_state_machine(gpointer data)
             }
             state = LOGIN_SM_LOGIN;
             if(info -> need_vcimage){
-                gqq_context_attach(gtkctx, read_verifycode, 1, panel);
+                gqq_mainloop_attach(&gtkloop, read_verifycode, 1, panel);
                 // Quit the state machine.
                 // The state machine will restart in the read verify code
                 // dialog.
@@ -154,13 +157,6 @@ static void login_state_machine(gpointer data)
             break;
         case LOGIN_SM_GET_MY_INFO:
             if(qq_get_my_info(info, NULL) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_GET_MY_LONGNICK;
-            }
-            break;
-        case LOGIN_SM_GET_MY_LONGNICK:
-            if(qq_get_single_long_nick(info, info -> me, NULL) != 0){
                 state = LOGIN_SM_ERR;
             }else{
                 state = LOGIN_SM_GET_MY_FRIENDS;
@@ -195,12 +191,17 @@ static void login_state_machine(gpointer data)
             }
             break;
         case LOGIN_SM_NONE:
-            gqq_context_attach(gtkctx, qq_mainwindow_show_mainpanel
+            // update main panel
+            gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
+                                    , 1, QQ_MAINWINDOW(panel -> container) 
+                                                    -> main_panel);
+            // show main panel
+            gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
                                     , 1, panel -> container);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
-            gqq_context_attach(gtkctx, qq_mainwindow_show_loginpanel
+            gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_loginpanel
                                     , 1, panel -> container);
             g_debug("Show login panel.(%s, %d)", __FILE__, __LINE__);
             return;
@@ -208,7 +209,6 @@ static void login_state_machine(gpointer data)
             break;
         }
     }
-
     return;
 }
 
@@ -217,7 +217,7 @@ static void login_state_machine(gpointer data)
 //
 static void run_login_state_machine(QQLoginPanel *panel)
 {
-    gqq_msgloop_attach(login_state_machine, 1, panel); 
+    gqq_mainloop_attach(get_info_loop, login_state_machine, 1, panel); 
 }
 
 // In libqq/qqutils.c

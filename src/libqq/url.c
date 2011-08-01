@@ -186,7 +186,7 @@ static int ungzip(GString *in, GString *out)
     switch(ret)
     {
     case Z_OK:
-        g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
+        //g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
         break;
     case Z_MEM_ERROR:
     case Z_VERSION_ERROR:
@@ -210,12 +210,11 @@ static int ungzip(GString *in, GString *out)
         {
         case Z_STREAM_END:
             done = TRUE;
-            g_debug("Unzip done.(%s, %d)", __FILE__, __LINE__);
             break;
         case Z_OK:
             break;
         case Z_BUF_ERROR:
-            g_debug("Unzip error!(%s, %d)", __FILE__, __LINE__);
+            g_error("Unzip error!(%s, %d)", __FILE__, __LINE__);
             done = TRUE;
             break;
         case Z_DATA_ERROR:
@@ -229,12 +228,7 @@ static int ungzip(GString *in, GString *out)
         g_string_append_len(out, buf, BUFSIZE - strm.avail_out);
     }
 #undef BUFSIZE
-    
-    g_debug("Before %d bytes, after %d bytes (%s, %d)", in -> len, out -> len
-                                        , __FILE__, __LINE__);
-    g_printf("UNZIP: %s\n", out -> str);
     return 1;
-
 }
 
 gint rcv_response(Connection *con, Response **rp)
@@ -374,7 +368,6 @@ gint rcv_response(Connection *con, Response **rp)
         if(gotallheaders && ischunked){
             while(TRUE){
                 if(chunkbegin + 2 > data -> len){
-                    g_debug("need more data ... (%s, %d)", __FILE__, __LINE__);
                     break;
                 }
                 gchar *tmp = g_strstr_len(data -> str + chunkbegin
@@ -390,8 +383,6 @@ gint rcv_response(Connection *con, Response **rp)
                     if(end != data -> str + chunkbegin && chunklen == 0){
                         // Get all data
                         need_to_read = -1;
-                        g_debug("Get all chunks! Totla len %d (%s, %d)"
-                                        , r -> msg -> len, __FILE__, __LINE__);
                         break;
                     }
                 }else{
@@ -407,11 +398,6 @@ gint rcv_response(Connection *con, Response **rp)
                     totalchunklen += chunklen;
                     chunkbegin = tmp - data -> str;
                     chunkbegin += 2;
-
-                    g_debug("Append chunk. begin: %d len %d length : %d "
-                                            "+ %d(%s, %d)", chunkbegin
-                                            , data -> len, r -> msg -> len
-                                            , chunklen, __FILE__, __LINE__);
 
                     g_string_append_len(r -> msg, data -> str + chunkbegin
                                             , chunklen);

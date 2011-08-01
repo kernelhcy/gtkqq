@@ -19,6 +19,7 @@ img_DATA=\
 	MainPanel_Support_NormalBackground.bmp\
 	webqq_icon.png\
 	avatar.gif\
+	avatar.png\
 	ContactMainTabButton1.png ContactMainTabButton2.png\
 	GroupMainTabButton1.png GroupMainTabButton2.png\
 	RecentMainTabButton1.png RecentMainTabButton2.png
