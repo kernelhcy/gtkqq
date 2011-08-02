@@ -369,6 +369,9 @@ gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
         }
     }
 
+    gchar *begin, *end;
+    gchar *key, *value, *eq, *nl;
+
     gchar buf[500];
     gsize len;
     g_snprintf(buf, 500, "%s/%s", CONFIGDIR, qqnum -> str);
@@ -410,7 +413,6 @@ gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
         g_string_append_len(confstr, buf, len);
     }
     close(fd);
-    gchar *key, *value, *eq, *nl;
     eq = confstr -> str;
     while(TRUE){
         if(confstr -> len <=0){
@@ -453,10 +455,98 @@ gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
     close(fd);
 
     //read buddies
+    g_snprintf(buf, 500, "%s/%s/buddies", CONFIGDIR, qqnum -> str);
+    fd = g_open(buf, O_RDONLY);
+    if(fd == -1){
+        g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
+                                                , __FILE__, __LINE__);
+        return -1;
+    }
+    GString *tmpstr = g_string_new(NULL);
+    while(TRUE){
+        len = read(fd, buf, 500);
+        if(len <= 0){
+            break;
+        }
+        g_string_append_len(tmpstr, buf, len);
+    }
+    close(fd);
+    begin = tmpstr -> str;
+    QQBuddy *bdy = NULL;
+    while(TRUE){
+        end = g_strstr_len(begin, -1, "\n\r");
+        if(end == NULL){
+            break;
+        }
+        *end = '\0';
+        bdy = qq_buddy_new_from_string(begin);
+        g_ptr_array_add(priv -> info -> buddies, bdy);
+        begin = end + 2;
+    }
+    g_string_free(tmpstr, TRUE);
     
     //read groups
+    g_snprintf(buf, 500, "%s/%s/groups", CONFIGDIR, qqnum -> str);
+    fd = g_open(buf, O_RDONLY);
+    if(fd == -1){
+        g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
+                                                , __FILE__, __LINE__);
+        return -1;
+    }
+    tmpstr = g_string_new(NULL);
+    while(TRUE){
+        len = read(fd, buf, 500);
+        if(len <= 0){
+            break;
+        }
+        g_string_append_len(tmpstr, buf, len);
+    }
+    close(fd);
+    begin = tmpstr -> str;
+    QQGroup *grp = NULL;
+    while(TRUE){
+        end = g_strstr_len(begin, -1, "\n\r}\n\r");
+        if(end == NULL){
+            break;
+        }
+        *end = '\0';
+        grp = qq_group_new_from_string(begin);
+        g_ptr_array_add(priv -> info -> groups, grp);
+        begin = end + 5;
+    }
+    g_string_free(tmpstr, TRUE);
     
     //read categories
+    g_snprintf(buf, 500, "%s/%s/categories", CONFIGDIR, qqnum -> str);
+    fd = g_open(buf, O_RDONLY);
+    if(fd == -1){
+        g_error("Open file %s error! %s (%s, %d)", buf, strerror(errno)
+                                                , __FILE__, __LINE__);
+        return -1;
+    }
+    tmpstr = g_string_new(NULL);
+    while(TRUE){
+        len = read(fd, buf, 500);
+        if(len <= 0){
+            break;
+        }
+        g_string_append_len(tmpstr, buf, len);
+    }
+    close(fd);
+    begin = tmpstr -> str;
+    QQCategory *cate = NULL;
+    while(TRUE){
+        end = g_strstr_len(begin, -1, "\n\r}\n\r");
+        if(end == NULL){
+            break;
+        }
+        *end = '\0';
+        cate = qq_category_new_from_string(priv -> info, begin);
+        g_ptr_array_add(priv -> info -> categories, cate);
+        begin = end + 5;
+    }
+    g_string_free(tmpstr, TRUE);
+
     return 0;
 }
 
@@ -500,12 +590,17 @@ gint gqq_config_save(GQQConfig *cfg)
     if(cfg == NULL){
         return -1;
     }
-
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
     GHashTable *ht = priv -> ht;
     QQInfo *info = priv -> info;
     gchar buf[500];
+
+    if(info -> me -> qqnumber -> len <= 0){
+        // Save nothing.
+        return 0; 
+    }
+
 
     g_snprintf(buf, 500, "%s/%s", CONFIGDIR, info -> me -> qqnumber -> str);
     if(!g_file_test(buf, G_FILE_TEST_EXISTS)){
