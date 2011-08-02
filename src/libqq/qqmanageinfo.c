@@ -548,9 +548,9 @@ static gint do_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
         qq_buddy_set(bdy, "birthday", y, m, d);
 
         g_debug("Birthday:%d/%d/%d (%s, %d)", bdy -> birthday.year
-                , bdy -> birthday.month
-                , bdy -> birthday.day
-                , __FILE__, __LINE__);
+                    , bdy -> birthday.month
+                    , bdy -> birthday.day
+                    , __FILE__, __LINE__);
     }
 
     val = json_find_first_label_all(json, "blood");
@@ -821,6 +821,8 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
             tmp = json_find_first_label(cur, "categories");
             if(tmp != NULL){
                 cate = tmp -> child -> text;
+                g_debug("uin %s Category %s(%s, %d)", uin, cate
+                                    , __FILE__, __LINE__);
             }
 
             QQCategory *qc = NULL;

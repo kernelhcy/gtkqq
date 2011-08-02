@@ -291,7 +291,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     state = LOGIN_SM_CHECKVC;
     run_login_state_machine(panel);
 
-    g_object_set(cfg, "lastuser", panel -> uin, NULL);
+    g_object_set(cfg, "qqnum", panel -> uin, NULL);
     g_object_set(cfg, "passwd", panel -> passwd, NULL);
     g_object_set(cfg, "status", panel -> status, NULL);
     //clear the error message.

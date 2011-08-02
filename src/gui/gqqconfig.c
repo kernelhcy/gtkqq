@@ -30,8 +30,6 @@ typedef struct{
     GString *qqnum;     //current user's qq number
     GString *status;    //current user's status
 
-    GString *lastuser;  //The last user's qq number
-
     sqlite3 *db_con;    //database connection
 }GQQConfigPriv;
 
@@ -44,7 +42,6 @@ enum{
     GQQ_CONFIG_PROPERTY_PASSWD,
     GQQ_CONFIG_PROPERTY_UIN,
     GQQ_CONFIG_PROPERTY_STATUS,
-    GQQ_CONFIG_PROPERTY_LASTUSER
 };
 
 static void gqq_config_init(GQQConfig *self);
@@ -126,9 +123,6 @@ static void gqq_config_getter(GObject *object, guint property_id,
         case GQQ_CONFIG_PROPERTY_UIN:
             g_value_set_static_string(value, priv -> qqnum -> str);
             break;
-        case GQQ_CONFIG_PROPERTY_LASTUSER:
-            g_value_set_static_string(value, priv -> lastuser -> str);
-            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
             break;
@@ -165,10 +159,6 @@ static void gqq_config_setter(GObject *object, guint property_id,
         case GQQ_CONFIG_PROPERTY_UIN:
             g_string_truncate(priv -> qqnum , 0);
             g_string_append(priv -> qqnum , g_value_get_string(value));
-            break;
-        case GQQ_CONFIG_PROPERTY_LASTUSER:
-            g_string_truncate(priv -> lastuser, 0);
-            g_string_append(priv -> lastuser, g_value_get_string(value));
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -249,7 +239,6 @@ static void gqq_config_init(GQQConfig *self)
                                 , (GDestroyNotify)g_free
                                 , (GDestroyNotify)g_free);
     priv -> passwd = g_string_new(NULL);
-    priv -> lastuser = g_string_new(NULL);
     priv -> qqnum = g_string_new(NULL);
     priv -> status = g_string_new(NULL);
     priv -> db_con = db_open();
@@ -315,14 +304,6 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_STATUS, pspec);
 
-    //install the lastuser property
-    pspec = g_param_spec_string("lastuser"
-                                , "last user's qq number "
-                                , "The qq number of the last user who uses this program."
-                                , ""
-                                , G_PARAM_READABLE | G_PARAM_WRITABLE);
-    g_object_class_install_property(G_OBJECT_CLASS(klass)
-                                    , GQQ_CONFIG_PROPERTY_LASTUSER, pspec);
 }
 
 //
@@ -365,6 +346,44 @@ gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
 
 gint gqq_config_save(GQQConfig *cfg)
 {
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+    QQInfo *info = priv -> info;
+    db_qquser_save(priv -> db_con, priv -> qqnum -> str, priv -> passwd -> str
+                                    , priv -> status -> str, 1); 
+    
+    gint i;
+
+    db_clear_table(priv -> db_con, "buddies", "owner", priv -> qqnum -> str);
+    QQBuddy *bdy;
+    for(i = 0; i < info -> buddies -> len; ++i){
+        bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
+        if(bdy == NULL){
+            continue;
+        }
+        db_buddy_save(priv -> db_con, priv -> qqnum -> str, bdy);
+    }
+
+    db_clear_table(priv -> db_con, "groups", "owner", priv -> qqnum -> str);
+    QQGroup *grp;
+    for(i = 0; i < info -> groups -> len; ++i){
+        grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
+        if(grp == NULL){
+            continue;
+        }
+        db_group_save(priv -> db_con, priv -> qqnum -> str, grp);
+    }
+
+    db_clear_table(priv -> db_con, "categories", "owner", priv -> qqnum -> str);
+    QQCategory *cate;
+    for(i = 0; i < info -> categories -> len; ++i){
+        cate = (QQCategory*)g_ptr_array_index(info -> categories, i);
+        if(cate == NULL){
+            continue;
+        }
+        db_category_save(priv -> db_con, priv -> qqnum -> str, cate);
+    }
+
     return 0;
 }
 gint gqq_config_get_str(GQQConfig *cfg, const gchar *key, const gchar **value)

@@ -13,7 +13,6 @@ QQInfo* qq_info_new()
     
     info -> me = qq_buddy_new();
     info -> buddies = g_ptr_array_new();
-    g_ptr_array_add(info -> buddies, info -> me);
 
     info -> groups = g_ptr_array_new();
     info -> recentcons = g_ptr_array_new();
@@ -39,6 +38,7 @@ void qq_info_free(QQInfo *info)
         return;
     }
     
+    qq_buddy_free(info -> me);
 #define FREE_STR(x) if(info -> x != NULL){g_string_free(info -> x, TRUE);}
     FREE_STR(vc_type);
     FREE_STR(vc_image_data);
