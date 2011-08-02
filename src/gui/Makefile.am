@@ -4,14 +4,16 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
       -I$(srcdir)/../comm/\
       -I$(srcdir)/.\
       $(GTK_CFLAGS)\
+      $(SQLITE3_CFLAGS)\
       -DIMGDIR=\"$(pkgdatadir)/misc/\"\
       -DCONFIGDIR=\"$(HOME)/.gtkqq/\"\
       -Wall -Werror
 
 bin_PROGRAMS=gtkqq
-gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la
+gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la $(SQLITE3_LIBS)
 gtkqq_SOURCES=main.c \
           msgloop.c msgpoll.h\
+          dao.c dao.h\
           loginpanel.c loginpanel.h \
           mainpanel.h mainpanel.c\
           mainwindow.h mainwindow.c \

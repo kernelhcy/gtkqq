@@ -50,6 +50,4 @@ void log_init()
 	g_log_set_handler(NULL, G_LOG_LEVEL_MESSAGE, log_handler, NULL);
 	g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_handler, NULL);
 	g_log_set_handler(NULL, G_LOG_LEVEL_WARNING, log_handler, NULL);
-	//g_log_set_handler(NULL, G_LOG_LEVEL_ERROR  | G_LOG_FLAG_FATAL
-        //             | G_LOG_FLAG_RECURSION, log_handler, NULL);
 }

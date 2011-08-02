@@ -25,7 +25,7 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 
-gint qq_get_qq_number(QQInfo *info, const gchar *uin, GError **err)
+static gint get_qq_number(QQInfo *info, const gchar *uin, gchar **num, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
@@ -90,8 +90,9 @@ gint qq_get_qq_number(QQInfo *info, const gchar *uin, GError **err)
     }
     json_t *val = json_find_first_label_all(json, "account");
     if(val != NULL){
-        QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
-        qq_buddy_set(bdy, "qqnumber", val -> child -> text);
+        if(num != NULL){
+            *num = g_strdup(val -> child -> text);
+        }
         g_debug("qq number: %s (%s, %d)", val -> child -> text
                                                 , __FILE__, __LINE__);
     }else{
@@ -105,6 +106,21 @@ error:
     return ret_code;
 }
 
+gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err)
+{
+    if(info == NULL || bdy == NULL){
+        return PARAMETER_ERR;
+    }
+    
+    gchar *num = NULL;
+    gint retcode = get_qq_number(info, bdy -> uin -> str, &num, err);
+    if(retcode != NO_ERR){
+        return retcode;
+    }
+    qq_buddy_set(bdy, "qqnumber", num);
+    g_free(num);
+    return NO_ERR;
+}
 static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
@@ -412,16 +428,12 @@ error:
 }
 
 
-static gint do_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
+static gint do_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
 {
-    if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
-        g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
-        return -1;
-    }
-
     gint ret_code = 0;
     gchar params[500];
-    g_debug("Get %s information!(%s, %d)", uin,  __FILE__, __LINE__);
+    g_debug("Get %s information!(%s, %d)", bdy -> uin -> str
+                            ,  __FILE__, __LINE__);
 
     Request *req = request_new();
     Response *rps = NULL;
@@ -429,8 +441,8 @@ static gint do_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
     request_set_version(req, "HTTP/1.1");
 
     g_sprintf(params, GETINFO"?tuin=%s&verifysession=&code=&"
-            "vfwebqq=%s&t=%ld", uin
-            , info -> vfwebqq -> str, get_now_millisecond());
+                "vfwebqq=%s&t=%ld", bdy -> uin -> str
+                , info -> vfwebqq -> str, get_now_millisecond());
     request_set_uri(req, params);
     request_set_default_headers(req);
     request_add_header(req, "Host", SWQQHOST);
@@ -477,13 +489,6 @@ static gint do_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
 
     json_t *val;
     GString *vs;
-
-    QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
-    if(bdy == NULL){
-        g_warning("Can NOT lookup %s's buddy!(%s, %d)", uin
-                                , __FILE__, __LINE__);
-        return OTHER_ERR;
-    }
 
 #define  SET_STR_VALUE(x)   \
     val = json_find_first_label_all(json, x);\
@@ -601,16 +606,9 @@ static gint do_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
         }
     }
     
-    /*
-     * Just to check error.
-     */
-    val = json_find_first_label_all(json, "uin");
-    if(val == NULL){
-        g_debug("(%s, %d) %s", __FILE__, __LINE__, rps -> msg -> str);
-    }
 
     ret_code = do_get_single_long_nick(info, bdy, err);
-    ret_code = qq_get_qq_number(info, bdy -> uin -> str, err);
+    ret_code = qq_get_qq_number(info, bdy, err);
 
 error:
     json_free_value(&json);
@@ -1049,13 +1047,20 @@ error:
     return ret_code;
 }
 
-gint qq_get_buddy_info(QQInfo *info, const gchar *uin, GError **err)
+gint qq_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
 {
     if(info == NULL){
         return -1;
     }
+    if(bdy == NULL){
+        return NO_ERR;
+    }
+    if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+        g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+        return -1;
+    }
 
-    return do_get_buddy_info(info, uin, err);
+    return do_get_buddy_info(info, bdy, err);
 }
 
 gint qq_get_my_friends(QQInfo *info, GError **err)
@@ -1108,3 +1113,246 @@ gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 }
 
 
+gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
+{
+    if(grp == NULL){
+        return NO_ERR;
+    }
+    if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
+        g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
+        return -1;
+    }
+    gchar *grpnum;
+    if(get_qq_number(info, grp -> code -> str, &grpnum, NULL) == NO_ERR){
+        qq_group_set(grp, "gnumber", grpnum);
+        g_free(grpnum);
+    }else{
+        g_warning("Get group number failed... (%s, %d)", __FILE__, __LINE__);
+    }
+    
+
+    gint ret_code = NO_ERR;
+    gchar params[300];
+    g_debug("Get group information.(%s, %d)", __FILE__, __LINE__);
+
+    Request *req = request_new();
+    Response *rps = NULL;
+    request_set_method(req, "GET");
+    request_set_version(req, "HTTP/1.1");
+    g_sprintf(params, GETGRPINFO"?gcode=%s&vfwebqq=%s&t=%ld"
+                        , grp -> code -> str 
+                        , info -> vfwebqq -> str, get_now_millisecond());
+    request_set_uri(req, params);
+    request_set_default_headers(req);
+    request_add_header(req, "Host", SWQQHOST);
+    request_add_header(req, "Cookie", info -> cookie -> str);
+    request_add_header(req, "Content-Type", "utf-8");
+    request_add_header(req, "Referer"
+            , "http://s.web2.qq.com/proxy.html?v=20101025002");
+
+
+    Connection *con = connect_to_host(SWQQHOST, 80);
+    if(con == NULL){
+        g_warning("Can NOT connect to server!(%s, %d)"
+                , __FILE__, __LINE__);
+        request_del(req);
+        return NETWORK_ERR;
+    }
+
+    send_request(con, req);
+    response_del(rps);
+    rcv_response(con, &rps);
+    close_con(con);
+    connection_free(con);
+
+    gchar *retstatus = rps -> status -> str;
+    if(g_strstr_len(retstatus, -1, "200") == NULL){
+        /*
+         * Maybe some error occured.
+         */
+        g_warning("Resoponse status is NOT 200, but %s (%s, %d)"
+                , retstatus, __FILE__, __LINE__);
+        ret_code = NETWORK_ERR;
+        goto error;
+    }
+
+    json_t *json = NULL;
+    switch(json_parse_document(&json, rps -> msg -> str))
+    {
+    case JSON_OK:
+        break;
+    default:
+        g_warning("json_parser_document: syntax error. (%s, %d)"
+                , __FILE__, __LINE__);
+        ret_code = NETWORK_ERR;
+        goto error;
+    }
+
+    GString *utf8 = g_string_new(NULL);
+
+    json_t *val = json_find_first_label_all(json, "ginfo");
+    json_t *tmp;
+    if(val != NULL){
+        val = val -> child;
+#define SET_VAL(x) \
+        tmp = json_find_first_label_all(val, x);\
+        if(tmp != NULL){\
+            tmp = tmp -> child;\
+            g_string_truncate(utf8, 0);\
+            ucs4toutf8(utf8, tmp -> text);\
+            qq_group_set(grp, x, utf8 -> str);\
+            g_debug(x": %s(%s, %d)", utf8 -> str, __FILE__, __LINE__);\
+        }
+    
+        SET_VAL("gid");
+        SET_VAL("flag");
+        SET_VAL("owner");
+        SET_VAL("code");
+        SET_VAL("option");
+        SET_VAL("createtime");
+        SET_VAL("class");
+        SET_VAL("name");
+        SET_VAL("level");
+        SET_VAL("face");
+        SET_VAL("memo");
+        SET_VAL("fingermemo");
+#undef SET_VAL
+    }else{
+        g_warning("No ginfo found. %s (%s, %d)", rps -> msg -> str
+                                                , __FILE__, __LINE__);
+    }
+
+#define FIND_VAL(x,y,z)\
+    tmp = json_find_first_label_all(x, y);\
+    if(tmp != NULL){\
+        z = tmp -> child -> text;\
+    }else{\
+        z = "";\
+    }\
+
+    val = json_find_first_label_all(json, "members");
+    if(val != NULL){
+        val = val -> child -> child;
+        gchar *uin, *flag, *num;
+        QQGMember *gmem;
+        for(;val != NULL; val = val -> next){
+            FIND_VAL(val, "muin", uin);
+            FIND_VAL(val, "mflag", flag);
+            // get qq number
+            get_qq_number(info, uin, &num, NULL);
+            gmem = qq_gmember_new();
+            qq_gmember_set(gmem, "uin", uin);
+            qq_gmember_set(gmem, "flag", flag);
+            qq_gmember_set(gmem, "qqnumber", num);
+            g_ptr_array_add(grp -> members, gmem);
+            g_debug("Group memeber. uin %s, flag %s , num %s(%s, %d)"
+                            , uin, flag, num, __FILE__, __LINE__);
+            g_free(num);
+        }
+    }else{
+        g_warning("No group member found. %s (%s, %d)", rps -> msg -> str
+                                                , __FILE__, __LINE__);
+    }
+
+    val = json_find_first_label_all(json, "minfo");
+    if(val != NULL){
+        val = val -> child -> child;
+        gchar *uin, *nick;
+        QQGMember *gmem = NULL;
+        gint i;
+        for(;val != NULL; val = val -> next){
+            FIND_VAL(val, "uin", uin);
+            FIND_VAL(val, "nick", nick);
+            g_string_truncate(utf8, 0);
+            ucs4toutf8(utf8, nick);
+            for(i = 0; i < grp -> members -> len; ++i){
+                gmem = (QQGMember*)g_ptr_array_index(grp -> members, i);
+                if(gmem == NULL){
+                    continue;
+                }
+                if(g_strcmp0(gmem -> uin -> str, uin) == 0){
+                    break;
+                }
+            }
+            if(gmem != NULL){
+                qq_gmember_set(gmem, "nick", utf8 -> str);
+                g_debug("Group memeber. uin %s, nick %s (%s, %d)"
+                            , uin, nick, __FILE__, __LINE__);
+            }
+        } 
+    }else{
+        g_warning("No minfo found. %s (%s, %d)", rps -> msg -> str
+                                                , __FILE__, __LINE__);
+    }
+
+    val = json_find_first_label_all(json, "stats");
+    if(val != NULL){
+        val = val -> child -> child;
+        gchar *uin, *status, *client_type;
+        QQGMember *gmem = NULL;
+        gint i;
+        for(;val != NULL; val = val -> next){
+            FIND_VAL(val, "uin", uin);
+            FIND_VAL(val, "stat", status);
+            FIND_VAL(val, "client_type", client_type);
+            for(i = 0; i < grp -> members -> len; ++i){
+                gmem = (QQGMember*)g_ptr_array_index(grp -> members, i);
+                if(gmem == NULL){
+                    continue;
+                }
+                if(g_strcmp0(gmem -> uin -> str, uin) == 0){
+                    break;
+                }
+            }
+            if(gmem != NULL){
+                qq_gmember_set(gmem, "status", status);
+                qq_gmember_set(gmem, "client_type", client_type);
+                g_debug("Group memeber. uin %s, status %s (%s, %d)"
+                            , uin, status, __FILE__, __LINE__);
+            }
+        } 
+
+    }else{
+        g_warning("No stats found. %s (%s, %d)", rps -> msg -> str
+                                                , __FILE__, __LINE__);
+    }
+
+    val = json_find_first_label_all(json, "cards");
+    if(val != NULL){
+        val = val -> child -> child;
+        gchar *uin, *card;
+        QQGMember *gmem = NULL;
+        gint i;
+        for(;val != NULL; val = val -> next){
+            FIND_VAL(val, "uin", uin);
+            FIND_VAL(val, "card", card);
+            g_string_truncate(utf8, 0);
+            ucs4toutf8(utf8, card);
+            for(i = 0; i < grp -> members -> len; ++i){
+                gmem = (QQGMember*)g_ptr_array_index(grp -> members, i);
+                if(gmem == NULL){
+                    continue;
+                }
+                if(g_strcmp0(gmem -> uin -> str, uin) == 0){
+                    break;
+                }
+            }
+            if(gmem != NULL){
+                qq_gmember_set(gmem, "card", utf8 -> str);
+                g_debug("Group memeber. uin %s, card %s (%s, %d)"
+                            , uin, card, __FILE__, __LINE__);
+            }
+        } 
+    }else{
+        g_warning("No cards found. %s (%s, %d)", rps -> msg -> str
+                                                , __FILE__, __LINE__);
+    }
+#undef FIND_VAL
+    g_string_free(utf8, TRUE);
+
+error:
+    json_free_value(&json);
+    request_del(req);
+    response_del(rps);
+    return ret_code;
+}

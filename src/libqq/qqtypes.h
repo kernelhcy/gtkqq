@@ -262,14 +262,7 @@ struct _QQBuddy{
 
 };
 QQBuddy* qq_buddy_new();
-//Create a new buddy instance from the string
-//NOTE:
-//  The parameter will be changed!
-QQBuddy* qq_buddy_new_from_string(gchar *);
-
 void qq_buddy_free(QQBuddy *);
-//Store the buddy information in string format
-GString* qq_buddy_tostring(QQBuddy *);
 //Set the value of the member named `name`
 void qq_buddy_set(QQBuddy *, const gchar *name, ...);
 
@@ -279,32 +272,32 @@ void qq_buddy_set(QQBuddy *, const gchar *name, ...);
  */
 struct _QQGMember{
     GString *uin;
+    GString *qqnumber;
     GString *nick;
     GString *flag;
     GString *status;
     GString *card;
+    GString *client_type;
     QQFaceImg *faceimg;             //the face image data
 };
 QQGMember* qq_gmember_new();
 void qq_gmember_free(QQGMember *m);
-
 void qq_gmember_set(QQGMember *m, const gchar *name, ...);
 
-QQGMember* qq_gmember_new_from_string(gchar *str);
-GString* qq_gmember_tostring(QQGMember *mb);
 /*
  * QQ group
  */
 struct _QQGroup{
     GString *name;
     GString *gid;
+    GString *gnumber;
     GString *code;
     GString *flag;
     GString *owner;
     GString *mark;
     GString *mask;
     gint option;
-    glong createTime;
+    GString *createtime;
     gint gclass;
     gint level;
     gint face;
@@ -316,9 +309,6 @@ struct _QQGroup{
 };
 QQGroup* qq_group_new();
 void qq_group_free(QQGroup *);
-
-QQGroup* qq_group_new_from_string(gchar *str);
-GString* qq_group_tostring(QQGroup *grp);
 void qq_group_set(QQGroup *grp, const gchar *name, ...);
 //
 // Add group member
@@ -337,9 +327,6 @@ struct _QQCategory{
 };
 QQCategory* qq_category_new();
 void qq_category_free(QQCategory *);
-
-QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str);
-GString* qq_category_tostring(QQCategory *cate);
 
 //
 // QQRecentCon

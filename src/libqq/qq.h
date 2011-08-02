@@ -55,7 +55,7 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
 // Get information of uin 
 // If success, return 0. or error code and set *err.
 //
-gint qq_get_buddy_info(QQInfo *info, const gchar *uin, GError **err);
+gint qq_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err);
 //
 // Get all my friends' information.
 // Just simple information.
@@ -65,12 +65,17 @@ gint qq_get_my_friends(QQInfo *info, GError **err);
 //
 // Get the qq number of uin
 //
-gint qq_get_qq_number(QQInfo *info, const gchar *uin, GError **err);
+gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err);
 //
 // Get the group name list mask.
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_group_name_list_mask(QQInfo *info, GError **err);
+//
+// Get the group information 
+// If success, return 0. or error code and set *err.
+//
+gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err);
 
 //
 // Get the online buddies
@@ -122,14 +127,9 @@ gint qq_send_message(QQInfo *info, QQSendMsg *msg, GError **err);
 // The redata of the cb function is QQFaceImg struct which contains
 // the information of the face image.
 //
-gint qq_get_face_img(QQInfo *info, const gchar *uin, GError **err);
+gint qq_get_face_img(QQInfo *info, QQBuddy *bdy, GError **err);
 //
 // Save face image to file path
 //
 gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err);
-//
-// Lookup the face image file name.
-//
-const gchar* qq_lookup_image_name(QQInfo *info, const gchar *uin 
-                    , GError **err);
 #endif

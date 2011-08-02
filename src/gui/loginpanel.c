@@ -156,8 +156,7 @@ static void login_state_machine(gpointer data)
             }
             break;
         case LOGIN_SM_GET_MY_INFO:
-            if(qq_get_buddy_info(info, info -> me -> qqnumber -> str
-                                            , NULL) != 0){
+            if(qq_get_buddy_info(info, info -> me, NULL) != 0){
                 state = LOGIN_SM_ERR;
             }else{
                 state = LOGIN_SM_GET_MY_FRIENDS;

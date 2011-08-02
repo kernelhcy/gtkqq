@@ -33,7 +33,8 @@ static GString* get_image_type(const gchar *ct)
 /*
  * Do get the face image from the server.
  */
-static gint do_get_face_img(QQInfo *info, const gchar *uin, GError **err)
+static gint do_get_face_img(QQInfo *info, const gchar *uin, QQFaceImg **fimg
+                                        ,GError **err)
 {
     QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
     if(bdy == NULL){
@@ -86,20 +87,27 @@ static gint do_get_face_img(QQInfo *info, const gchar *uin, GError **err)
     img -> data = g_string_new_len(rps -> msg -> str, rps -> msg -> len);
     img -> type = get_image_type(
                         response_get_header_chars(rps, "Content-Type"));
-    qq_buddy_set(bdy, "faceimg", img);        
+    *fimg = img;
 error:
     request_del(req);
     response_del(rps);
     return ret_code;
 }
 
-gint qq_get_face_img(QQInfo *info, const gchar *uin, GError **err)
+gint qq_get_face_img(QQInfo *info, QQBuddy *bdy, GError **err)
 {
     if(info == NULL){
         return -1;
     }
+    QQFaceImg *img = NULL;
 
-    return do_get_face_img(info, uin, err);
+    gint retcode = do_get_face_img(info, bdy -> uin -> str, &img, err);
+    if(retcode == NO_ERR){
+        qq_buddy_set(bdy, "faceimg", img);        
+    }else{
+        return retcode;
+    }
+    return NO_ERR;
 }
 
 /*

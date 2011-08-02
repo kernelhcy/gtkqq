@@ -38,6 +38,7 @@
 #define LNICKPATH           "/api/get_single_long_nick2"
 #define FRIENDSPATH         "/api/get_user_friends2"
 #define GNAMEPATH           "/api/get_group_name_list_mask2"
+#define GETGRPINFO          "/api/get_group_info_ext2"
 
 #define ONLINEHOST          PSIDHOST
 #define ONLINEPATH          "/channel/get_online_buddies2"

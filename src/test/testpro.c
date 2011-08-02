@@ -33,23 +33,17 @@ int main(int argc, char **argv)
     qq_start_poll(info, NULL, NULL, NULL);
 
     g_message("get my information...");
-    qq_get_buddy_info(info, info -> me -> qqnumber -> str,  NULL);
+    qq_get_buddy_info(info, info -> me,  NULL);
     g_message("get my friends...");
     qq_get_my_friends(info, NULL);
     g_message("get group name list mask...");
     qq_get_group_name_list_mask(info, NULL);
+    g_message("get group info...");
+    qq_get_group_info(info, (QQGroup*)g_ptr_array_index(info -> groups, 0), NULL);
     g_message("get online buddies...");
     qq_get_online_buddies(info, NULL);
     g_message("get recent contact...");
     qq_get_recent_contact(info, NULL);
-
-    printf("\n\n%s\n", qq_buddy_tostring(info -> me) -> str);
-    printf("\n%s\n", qq_buddy_tostring(
-                        qq_buddy_new_from_string(
-                            qq_buddy_tostring(info -> me) -> str
-                        )
-                 ) -> str);
-
 
     gchar buf[500];
     while(1){
@@ -71,10 +65,6 @@ int main(int argc, char **argv)
         qq_send_message(info, msg, NULL);
         qq_sendmsg_free(msg);
     }
-
-    qq_get_face_img(info, "65359140", NULL);
-    qq_get_face_img(info, "1421032531", NULL);
-
 
     g_message("Will logout...");
     qq_logout(info, NULL);

@@ -288,7 +288,7 @@ static void update_my_face_widget(QQMainPanel *panel)
 static void get_and_update_my_face_image(QQMainPanel *panel, QQInfo *info)
 {
     // Get the face image and save it in buddy -> faceimg
-    qq_get_face_img(info, info -> me -> uin -> str, NULL);
+    qq_get_face_img(info, info -> me, NULL);
     gchar buf[500];
 
     g_snprintf(buf, 500, CONFIGDIR"/%s/faces/", info -> me -> uin -> str);
@@ -480,13 +480,13 @@ static void update_image_widget(QQMainPanel *panel, const gchar *uin, const gcha
 static void get_and_update_face_image(QQMainPanel *panel, QQInfo *info
                                                     , const gchar *uin)
 {
-    qq_get_qq_number(info, uin, NULL);
-
     gchar path[500];
     QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
     if(bdy == NULL){
         return;
     }
+    qq_get_qq_number(info, bdy, NULL);
+
     // test if we have the image file;
     g_snprintf(path, 500, CONFIGDIR"/%s/faces/%s", info -> me -> uin -> str
                                                 , bdy -> qqnumber -> str);
@@ -495,7 +495,7 @@ static void get_and_update_face_image(QQMainPanel *panel, QQInfo *info
     }
 
     // Get the face image and save it in buddy -> faceimg
-    qq_get_face_img(info, uin, NULL);
+    qq_get_face_img(info, bdy, NULL);
     g_snprintf(path, 500, CONFIGDIR"/%s/faces/", info -> me -> uin -> str);
 
 update_widget:

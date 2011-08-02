@@ -88,19 +88,17 @@ PKG_CHECK_MODULES(GTHREAD, [gthread-2.0], [
         ] , )
 
 # checks for libsqlite3
-#PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
-#            AC_DEFINE(USE_SQLITE3, 1, [Use sqlite3])
-#            AC_SUBST(SQLITE3_CFLAGS)
-#            AC_SUBST(SQLITE3_LIBS)
-#        ] , [
-#            echo ""
-#            echo "configure: error: "
-#            echo "libsqlite3 development headers not found."
-#            echo "If you're using debian or ubuntu,install it by"
-#            echo "\"sudo apt-get install libsqlite3-dev\""
-#            echo ""
-#            exit -1
-#             ])
+PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
+            AC_DEFINE(USE_SQLITE3, 1, [Use sqlite3])
+            AC_SUBST(SQLITE3_CFLAGS)
+            AC_SUBST(SQLITE3_LIBS)
+        ] , [
+            echo ""
+            echo "configure: error: "
+            echo "libsqlite3 development headers not found."
+            echo ""
+            exit -1
+             ])
 
 # checks for libnotify
 #if test "x$enable_libnotify" = "xyes"; then

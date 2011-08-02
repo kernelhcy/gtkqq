@@ -607,160 +607,6 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
     va_end(ap);
 }
 
-QQBuddy* qq_buddy_new_from_string(gchar *str)
-{
-    gssize len = strlen(str);
-    if(str == NULL || len <=0){
-        return qq_buddy_new();
-    }
-    QQBuddy *bdy = g_slice_new0(QQBuddy);
-    gchar *colon, *nl;
-    gchar *name, *value;
-#define SET_VALUE_STR(x) \
-    name = g_strstr_len(str, len, #x);\
-    if(name != NULL){\
-        colon = name;\
-        while(*colon != '\0' && *colon != ':') ++colon;\
-        value = colon + 1;\
-        nl = value;\
-        while(*nl != '\n' && *nl != '\n') ++nl;\
-        *nl = '\0';\
-        bdy -> x = g_string_new(value);\
-        *nl = '\n';\
-    }
-
-    SET_VALUE_STR(uin);
-    SET_VALUE_STR(qqnumber);
-    SET_VALUE_STR(status);
-    SET_VALUE_STR(nick);
-    SET_VALUE_STR(markname);
-    SET_VALUE_STR(country);
-    SET_VALUE_STR(province);
-    SET_VALUE_STR(city);
-    SET_VALUE_STR(gender);
-    SET_VALUE_STR(face);
-    SET_VALUE_STR(flag);
-    SET_VALUE_STR(phone);
-    SET_VALUE_STR(mobile);
-    SET_VALUE_STR(email);
-    SET_VALUE_STR(occupation);
-    SET_VALUE_STR(college);
-    SET_VALUE_STR(homepage);
-    SET_VALUE_STR(personal);
-    SET_VALUE_STR(lnick);
-#undef SET_VALUE_STR
-    
-    gint tmpi;
-#define SET_VALUE_INT(x) \
-    name = g_strstr_len(str, len, #x);\
-    if(name != NULL){\
-        colon = name;\
-        while(*colon != '\0' && *colon != ':') ++colon;\
-        value = colon + 1;\
-        nl = value;\
-        while(*nl != '\n' && *nl != '\n') ++nl;\
-        *nl = '\0';\
-        tmpi = (gint)strtol(value, NULL, 10);\
-        bdy -> x = tmpi;\
-        *nl = '\n';\
-    }
-    
-    SET_VALUE_INT(vip_info);
-    SET_VALUE_INT(blood);
-    SET_VALUE_INT(shengxiao);
-    SET_VALUE_INT(constel);
-    SET_VALUE_INT(allow);
-    SET_VALUE_INT(client_type);
-#undef SET_VALUE_INT
-
-    //birthday
-    gint y, m, d;
-    gchar *ys, *ms, *ds;
-    name = g_strstr_len(str, len, "birthday");
-    if(name != NULL){
-        colon = name;
-        while(*colon != '\0' && *colon != ':') ++colon;
-        value = colon + 1;
-        nl = value;
-        //year
-        while(*nl > '9' || *nl < '0') ++nl;
-        ys = nl; 
-        while(*nl <= '9' && *nl >= '0') ++nl;
-        *nl = '\0';
-        //month
-        while(*nl > '9' || *nl < '0') ++nl;
-        ms = nl;
-        while(*nl <= '9' && *nl >= '0') ++nl;
-        *nl = '\0';
-        //day
-        while(*nl > '9' || *nl < '0') ++nl;
-        ds = nl;
-        while(*nl <= '9' && *nl >= '0') ++nl;
-        *nl = '\0';
-
-        y = (gint)strtol(ys, NULL, 10);
-        m = (gint)strtol(ms, NULL, 10);
-        d = (gint)strtol(ds, NULL, 10);
-        bdy -> birthday.year = y;
-        bdy -> birthday.month = m;
-        bdy -> birthday.day = d;
-    }
-    return bdy;
-}
-
-GString* qq_buddy_tostring(QQBuddy *bdy)
-{
-    if(bdy == NULL){
-        g_string_new("");
-    }
-    GString *str = g_string_new("");
-#define APP_STR(x) \
-    g_string_append(str, #x":");\
-    g_string_append(str, bdy -> x -> str);\
-    g_string_append(str, "\n")\
-
-    APP_STR(uin);
-    APP_STR(qqnumber);
-    APP_STR(status);
-    APP_STR(nick);
-    APP_STR(markname);
-    APP_STR(country);
-    APP_STR(province);
-    APP_STR(city);
-    APP_STR(gender);
-    APP_STR(face);
-    APP_STR(flag);
-    APP_STR(phone);
-    APP_STR(mobile);
-    APP_STR(email);
-    APP_STR(occupation);
-    APP_STR(college);
-    APP_STR(homepage);
-    APP_STR(personal);
-    APP_STR(lnick);
-#undef APP_STR
-
-#define APP_STR_INT(x) \
-    g_string_append(str, #x":");\
-    g_string_append_printf(str, "%d", bdy -> x);\
-    g_string_append(str, "\n")
-
-    APP_STR_INT(vip_info);
-    APP_STR_INT(blood);
-    APP_STR_INT(shengxiao);
-    APP_STR_INT(constel);
-    APP_STR_INT(allow);
-    APP_STR_INT(client_type);
-#undef APP_STR_INT
-
-    g_string_append(str, "birthday:");
-    g_string_append_printf(str, "%d ", bdy -> birthday.year);
-    g_string_append_printf(str, "%d ", bdy -> birthday.month);
-    g_string_append_printf(str, "%d", bdy -> birthday.day);
-    g_string_append(str, "\n\r");
-    return str;
-}
-
 //
 // QQGMeber
 //
@@ -774,10 +620,12 @@ QQGMember* qq_gmember_new()
     }
 
     m -> uin = g_string_new("");
+    m -> qqnumber = g_string_new("");
     m -> nick = g_string_new("");
     m -> flag = g_string_new("");
-    m -> status = g_string_new("");
+    m -> status = g_string_new("0");
     m -> card = g_string_new("");
+    m -> client_type = g_string_new("0");
     return m;
 }
 void qq_gmember_free(QQGMember *m)
@@ -787,14 +635,17 @@ void qq_gmember_free(QQGMember *m)
     }
 
     g_string_free(m -> uin, TRUE);
+    g_string_free(m -> qqnumber, TRUE);
     g_string_free(m -> nick, TRUE);
     g_string_free(m -> flag, TRUE);
     g_string_free(m -> status, TRUE);
     g_string_free(m -> card, TRUE);
+    g_string_free(m -> client_type, TRUE);
 
     qq_faceimg_free(m -> faceimg);
     g_slice_free(QQGMember, m);
 }
+
 void qq_gmember_set(QQGMember *m, const gchar *name, ...)
 {
     if(m == NULL || name == NULL){
@@ -811,6 +662,8 @@ void qq_gmember_set(QQGMember *m, const gchar *name, ...)
     
     if(g_strcmp0("uin", name) == 0){
         SET_VALUE_STR(uin);
+    }else if(g_strcmp0("qqnumber", name) == 0){
+        SET_VALUE_STR(qqnumber);
     }else if(g_strcmp0("nick", name) == 0){
         SET_VALUE_STR(nick);
     }else if(g_strcmp0("flag", name) == 0){
@@ -819,6 +672,8 @@ void qq_gmember_set(QQGMember *m, const gchar *name, ...)
         SET_VALUE_STR(status);
     }else if(g_strcmp0("card", name) == 0){
         SET_VALUE_STR(card);
+    }else if(g_strcmp0("client_type", name) == 0){
+        SET_VALUE_STR(client_type);
     }else if(g_strcmp0("faceimg", name) == 0){
         QQFaceImg *img = va_arg(ap, QQFaceImg*);
         m -> faceimg = img;
@@ -829,67 +684,6 @@ void qq_gmember_set(QQGMember *m, const gchar *name, ...)
 #undef SET_VALUE_STR
     va_end(ap);
     return ;
-}
-
-QQGMember* qq_gmember_new_from_string(gchar *str)
-{
-    if(str == NULL){
-        return qq_gmember_new();
-    }
-
-    QQGMember *m = g_slice_new0(QQGMember);
-    gsize len = strlen(str);
-    
-    if(m == NULL){
-        g_warning("OOM...(%s, %d)", __FILE__, __LINE__);
-        return NULL;
-    }
-    gchar *colon, *nl;
-    gchar *name, *value;
-#define SET_VALUE_STR(x) \
-    name = g_strstr_len(str, len, #x);\
-    if(name != NULL){\
-        colon = name;\
-        while(*colon != '\0' && *colon != ':') ++colon;\
-        value = colon + 1;\
-        nl = value;\
-        while(*nl != '\n' && *nl != '\n') ++nl;\
-        *nl = '\0';\
-        m -> x = g_string_new(value);\
-        *nl = '\n';\
-    }
-
-    SET_VALUE_STR(uin);
-    SET_VALUE_STR(nick);
-    SET_VALUE_STR(card);
-#undef SET_VALUE_STR
-
-    //We don't know the status of the members.
-    //Just set to offline
-    m -> status = g_string_new("offline");
-    m -> faceimg = NULL;
-    return m;
-}
-GString* qq_gmember_tostring(QQGMember *mb)
-{
-    if(mb == NULL){
-        return g_string_new("");
-    }
-
-    GString *str = g_string_new("");
-
-    g_string_append(str, "uin:");
-    g_string_append(str, mb -> uin -> str);
-    g_string_append(str, "\n");
-
-    g_string_append(str, "nick:");
-    g_string_append(str, mb -> nick -> str);
-    g_string_append(str, "\n");
-
-    g_string_append(str, "card:");
-    g_string_append(str, mb -> card-> str);
-    g_string_append(str, "\n\r");
-    return str;
 }
 
 //
@@ -903,6 +697,8 @@ QQGroup* qq_group_new()
 #define NEW_STR(x) grp -> x = g_string_new("")
     NEW_STR(name);
     NEW_STR(gid);
+    NEW_STR(gnumber);
+    NEW_STR(createtime);
     NEW_STR(code);
     NEW_STR(flag);
     NEW_STR(owner);
@@ -922,6 +718,8 @@ void qq_group_free(QQGroup *grp)
 #define FREE_STR(x)    g_string_free(grp -> x, TRUE)
     FREE_STR(name);
     FREE_STR(gid);
+    FREE_STR(gnumber);
+    FREE_STR(createtime);
     FREE_STR(code);
     FREE_STR(flag);
     FREE_STR(owner);
@@ -956,6 +754,8 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
         SET_STR(name);
     }else if(g_strcmp0("gid", name) == 0){
         SET_STR(gid);
+    }else if(g_strcmp0("gnumber", name) == 0){
+        SET_STR(gnumber);
     }else if(g_strcmp0("code", name) == 0){
         SET_STR(code);
     }else if(g_strcmp0("flag", name) == 0){
@@ -968,6 +768,8 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
         SET_STR(mask);
     }else if(g_strcmp0("memo", name) == 0){
         SET_STR(memo);
+    }else if(g_strcmp0("createtime", name) == 0){
+        SET_STR(createtime);
     }else if(g_strcmp0("fingermemo", name) == 0){
         SET_STR(fingermemo);
     }else if(g_strcmp0("option", name) == 0){
@@ -978,144 +780,10 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
         grp -> level = va_arg(ap, gint);
     }else if(g_strcmp0("face", name) == 0){
         grp -> face = va_arg(ap, gint);
-    }else if(g_strcmp0("createTime", name) == 0){
-        grp -> createTime = va_arg(ap, glong);
     }
 #undef SET_STR
     va_end(ap);
     return;
-}
-
-QQGroup* qq_group_new_from_string(gchar *str)
-{
-    if(str == NULL){
-        return qq_group_new();
-    }
-
-    gssize len = strlen(str);
-    gchar *members = g_strstr_len(str, len, "\n\r{\n\r");
-    if(members == NULL){
-        g_warning("Error format!!(%s, %d)", __FILE__, __LINE__);
-        return qq_group_new();
-    }
-    *(members + 2) = '\0'; // change '{' to '\0'
-    members += 5;
-
-    QQGroup *grp = g_slice_new0(QQGroup);
-    grp -> members = g_ptr_array_new();
-
-    gchar *colon, *nl;
-    gchar *name, *value;
-#define SET_VALUE_STR(x) \
-    name = g_strstr_len(str, len, #x);\
-    if(name != NULL){\
-        colon = name;\
-        while(*colon != '\0' && *colon != ':') ++colon;\
-        value = colon + 1;\
-        nl = value;\
-        while(*nl != '\n' && *nl != '\n') ++nl;\
-        *nl = '\0';\
-        grp -> x = g_string_new(value);\
-        *nl = '\n';\
-    }
-
-    SET_VALUE_STR(name);
-    SET_VALUE_STR(gid);
-    SET_VALUE_STR(code);
-    SET_VALUE_STR(flag);
-    SET_VALUE_STR(owner);
-    SET_VALUE_STR(mark);
-    SET_VALUE_STR(mask);
-    SET_VALUE_STR(memo);
-    SET_VALUE_STR(fingermemo);
-#undef SET_VALUE_STR
-
-    gint tmpi;
-#define SET_VALUE_INT(x) \
-    name = g_strstr_len(str, len, #x);\
-    if(name != NULL){\
-        colon = name;\
-        while(*colon != '\0' && *colon != ':') ++colon;\
-        value = colon + 1;\
-        nl = value;\
-        while(*nl != '\n' && *nl != '\n') ++nl;\
-        *nl = '\0';\
-        tmpi = (gint)strtol(value, NULL, 10);\
-        grp -> x = tmpi;\
-        *nl = '\n';\
-    }
-
-    SET_VALUE_INT(option);
-    SET_VALUE_INT(gclass);
-    SET_VALUE_INT(level);
-    SET_VALUE_INT(face);
-    SET_VALUE_INT(createTime);
-#undef SET_VALUE_INT
-
-    //read members
-    QQGMember *m = NULL;
-    gchar *end;
-    do{
-        end = g_strstr_len(members, strlen(members), "\n\r");
-        if(end == NULL || *(end + 2) == '}'){
-            break;
-        }
-        *end = '\0';
-        m = qq_gmember_new_from_string(members);
-        qq_group_add(grp, m);
-        members = end + 2;
-    }while(end != NULL);
-    return grp;
-}
-
-GString* qq_group_tostring(QQGroup *grp)
-{
-    GString *str = g_string_new("");
-
-    if(grp == NULL){
-        return str;
-    }
-
-#define APP_STR(x) \
-    g_string_append(str, #x":");\
-    g_string_append(str, grp -> x -> str);\
-    g_string_append(str, "\n")\
-
-    APP_STR(name);
-    APP_STR(gid);
-    APP_STR(code);
-    APP_STR(flag);
-    APP_STR(owner);
-    APP_STR(mark);
-    APP_STR(mask);
-    APP_STR(memo);
-    APP_STR(fingermemo);
-#undef APP_STR     
-#define APP_STR_INT(x) \
-    g_string_append(str, #x":");\
-    g_string_append_printf(str, "%d", grp -> x);\
-    g_string_append(str, "\n")
-
-    APP_STR_INT(option);
-    APP_STR_INT(gclass);
-    APP_STR_INT(level);
-    APP_STR_INT(face);
-#undef APP_STR_INT
-    //Create time
-    g_string_append(str, "createTime:");\
-    g_string_append_printf(str, "%ld", grp -> createTime);\
-    g_string_append(str, "\n\r{\n\r");
-
-    gint i;
-    GString *tmp;
-    for(i = 0; i < grp -> members -> len; ++i){
-        tmp = qq_gmember_tostring((QQGMember*)(grp -> members -> pdata[i]));
-        g_string_append(str, tmp -> str);
-        g_string_free(tmp, TRUE);
-    }
-    //The end
-    g_string_append(str, "\n\r}\n\r");
-    return str;
 }
 
 gint qq_group_add(QQGroup *grp, QQGMember *m)
@@ -1142,95 +810,6 @@ void qq_category_free(QQCategory *cty)
     }
     g_ptr_array_free(cty -> members, TRUE);
     g_slice_free(QQCategory, cty);
-}
-
-QQCategory* qq_category_new_from_string(QQInfo *info, gchar *str)
-{
-    if(str == NULL){
-        return qq_category_new();
-    }
-
-    gssize len = strlen(str);
-    gchar *members = g_strstr_len(str, len, "\n\r{\n\r");
-    if(members == NULL){
-        g_warning("Error format!!(%s, %d)", __FILE__, __LINE__);
-        return qq_category_new();
-    }
-    *(members + 2) = '\0'; // change '{' to '\0'
-    members += 5;
-    
-    QQCategory *cate = g_slice_new0(QQCategory);
-    cate -> members = g_ptr_array_new();
-    gchar *colon, *nl;
-    gchar *name, *value;
-    name = g_strstr_len(str, len, "name");
-    if(name != NULL){
-        colon = name;
-        while(*colon != '\0' && *colon != ':') ++colon;
-        value = colon + 1;
-        nl = value;
-        while(*nl != '\n' && *nl != '\n') ++nl;
-        *nl = '\0';
-        cate -> name = g_string_new(value);
-        *nl = '\n';
-    }
-
-    name = g_strstr_len(str, len, "index");
-    if(name != NULL){
-        colon = name;
-        while(*colon != '\0' && *colon != ':') ++colon;
-        value = colon + 1;
-        nl = value;
-        while(*nl != '\n' && *nl != '\n') ++nl;
-        *nl = '\0';
-        cate -> index = (gint)strtol(value, NULL, 10);
-        *nl = '\n';
-    }
-    
-    gchar *uin, *end;
-    uin = members;
-    QQBuddy *bdy;
-    while(TRUE){
-        end = uin;
-        while(*end != ' ' && *end !='\n') ++end;
-        if(*end == '\n'){
-            break;
-        }
-        *end = '\0';
-        bdy = qq_info_lookup_buddy(info, uin);
-        if(bdy == NULL){
-            g_warning("Unknown buddy %s (%s, %d)", uin , __FILE__, __LINE__);
-        }
-        g_ptr_array_add(cate -> members, bdy);
-        ++end;
-        uin = end;
-    }
-
-    return cate;
-}
-GString* qq_category_tostring(QQCategory *cate)
-{
-    GString *str = g_string_new("");
-    if(cate == NULL){
-        return str;
-    }
-
-    g_string_append(str, "name:");
-    g_string_append(str, cate -> name -> str);
-    g_string_append(str, "\n");
-
-    g_string_append(str, "index:");
-    g_string_append_printf(str, "%d", cate -> index);
-    g_string_append(str, "\n\r{\n\r");
-    gint i;
-    QQBuddy *bdy;
-    for(i = 0; i < cate -> members -> len; ++i){
-        bdy = (QQBuddy *)g_ptr_array_index(cate -> members, i);
-        g_string_append(str, bdy -> uin -> str);
-        g_string_append(str, " ");
-    }
-    g_string_append(str, "\n\r}\n\r");
-    return str;
 }
 
 //
@@ -1271,3 +850,4 @@ void qq_faceimg_free(QQFaceImg *img)
 
     g_slice_free(QQFaceImg, img);
 }
+
