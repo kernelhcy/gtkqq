@@ -161,7 +161,7 @@ static gboolean expose_event_cb(GtkWidget *widget
 	return TRUE;
 }
 
-const gchar* qq_statusbutton_get_status_string(QQStatusButton *btn)
+const gchar* qq_statusbutton_get_status_string(GtkWidget *btn)
 {
 	if(btn == NULL){
 		return NULL;
@@ -171,7 +171,7 @@ const gchar* qq_statusbutton_get_status_string(QQStatusButton *btn)
 	return status_label[idx];
 }
 
-QQStatusButtonStatus qq_statusbutton_get_status(QQStatusButton *btn)
+QQStatusButtonStatus qq_statusbutton_get_status(GtkWidget *btn)
 {
 	if(btn == NULL){
 		return STATUS_UNKNOWN;
@@ -181,6 +181,32 @@ QQStatusButtonStatus qq_statusbutton_get_status(QQStatusButton *btn)
 	return idx;
 }
 
+void qq_statusbutton_set_status_string(GtkWidget *btn
+                                        , const gchar *status)
+{
+    if(btn == NULL || status == NULL){
+        return;
+    }
+    gint i;
+    for(i = 0; i < STATUS_UNKNOWN; ++i){
+        if(g_strcmp0(status_label[i], status) == 0){
+            break;
+        }
+    }
+    if(i < STATUS_UNKNOWN){
+        gtk_combo_box_set_active(GTK_COMBO_BOX(btn), i);
+    }
+}
+
+void qq_statusbutton_set_status(GtkWidget *btn
+                                        , QQStatusButtonStatus status)
+{
+    if(btn == NULL || status >= STATUS_UNKNOWN || status < 0){
+        return;
+    }
+
+    gtk_combo_box_set_active(GTK_COMBO_BOX(btn), status);
+}
 /*
  * `changed` signal handler
  * Change the shown image 
@@ -219,3 +245,4 @@ static gboolean leave_event_cb(GtkWidget *w, GdkEvent *event, gpointer data)
 	}
 	return FALSE;
 }
+

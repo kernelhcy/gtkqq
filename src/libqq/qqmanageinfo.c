@@ -121,6 +121,7 @@ gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err)
     g_free(num);
     return NO_ERR;
 }
+
 static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
@@ -618,7 +619,7 @@ error:
 }
 
 
-static gint do_get_my_friends(QQInfo *info, GError **err)
+gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
@@ -627,7 +628,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
 
     gint ret_code = 0;
     gchar params[300];
-    g_debug("Get my friends!(%s, %d)", __FILE__, __LINE__);
+    g_debug("Get all buddies.(%s, %d)", __FILE__, __LINE__);
 
     Request *req = request_new();
     Response *rps = NULL;
@@ -733,7 +734,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
     }
 
     /*
-     * qq friends' info
+     * qq buddies' info
      */
     val = json_find_first_label_all(json, "info");
     if(val != NULL){
@@ -763,19 +764,25 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
             g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
                                     , uin, ns -> str, face, flag
                                     , __FILE__, __LINE__);
-            QQBuddy *buddy = qq_buddy_new();
+
+            QQBuddy *buddy = NULL;
+            buddy = qq_info_lookup_buddy_by_uin(info, uin);
+            if(buddy == NULL){
+                buddy = qq_buddy_new();    
+                g_ptr_array_add(info -> buddies, buddy);
+            }
             qq_buddy_set(buddy, "uin", uin);
             qq_buddy_set(buddy, "nick", ns -> str);
             qq_buddy_set(buddy, "face", face);
             qq_buddy_set(buddy, "flag", flag);
-            g_ptr_array_add(info -> buddies, buddy);
-            g_hash_table_insert(info -> buddies_ht
-                                , buddy -> uin -> str, buddy);
             g_string_free(ns, TRUE);
+
+            //Get buddy's details..
+            qq_get_buddy_info(info, buddy, err);
         }
     }
     /*
-     * qq friends' marknames
+     * qq buddies' marknames
      */
     val = json_find_first_label_all(json, "marknames");
     if(val != NULL){
@@ -792,7 +799,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
                 markname = tmp -> child -> text;
             }
             QQBuddy *tmpb;
-            tmpb = qq_info_lookup_buddy(info, uin);
+            tmpb = qq_info_lookup_buddy_by_uin(info, uin);
             if(tmpb != NULL){
                 /*
                  * Find the buddy
@@ -806,7 +813,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
         }
     }
     /*
-     * qq friends' categories
+     * qq buddies' categories
      */
     val = json_find_first_label_all(json, "friends");
     if(val != NULL){
@@ -828,7 +835,7 @@ static gint do_get_my_friends(QQInfo *info, GError **err)
             QQCategory *qc = NULL;
             gint idx = 0, i = 0;
             char *endptr = NULL;
-            QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+            QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
             if(bdy != NULL){
                 idx = strtol(cate, &endptr, 10);
                 if(endptr == cate){
@@ -860,7 +867,7 @@ error:
     return ret_code;
 }
 
-static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
+gint qq_get_groups(QQInfo *info, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
@@ -869,7 +876,7 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
 
     gint ret_code = 0;
     gchar params[300];
-    g_debug("Get my group name list mask!(%s, %d)", __FILE__, __LINE__);
+    g_debug("Get my groups!(%s, %d)", __FILE__, __LINE__);
 
     Request *req = request_new();
     Response *rps = NULL;
@@ -966,7 +973,6 @@ static gint do_get_group_name_list_mask(QQInfo *info, GError **err)
             qq_group_set(grp, "name", tmps -> str);
             g_string_free(tmps, TRUE);
             g_ptr_array_add(info -> groups, grp);
-            g_hash_table_insert(info -> groups_ht, grp -> gid, grp);
         }
     }else{
         g_warning("No gnamelist find. (%s, %d)", __FILE__, __LINE__);
@@ -1063,24 +1069,6 @@ gint qq_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
     }
 
     return do_get_buddy_info(info, bdy, err);
-}
-
-gint qq_get_my_friends(QQInfo *info, GError **err)
-{
-    if(info == NULL){
-        return -1;
-    }
-
-    return do_get_my_friends(info, err);
-}
-
-gint qq_get_group_name_list_mask(QQInfo *info, GError **err)
-{
-    if(info == NULL){
-        return -1;
-    }
-
-    return do_get_group_name_list_mask(info, err);
 }
 
 gint qq_get_online_buddies(QQInfo *info, GError **err)

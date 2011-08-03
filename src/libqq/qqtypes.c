@@ -18,8 +18,14 @@ QQInfo* qq_info_new()
     info -> recentcons = g_ptr_array_new();
     info -> categories = g_ptr_array_new();
 
-    info -> buddies_ht = g_hash_table_new(g_str_hash, g_str_equal);
-    info -> groups_ht = g_hash_table_new(g_str_hash, g_str_equal);
+    info -> buddies_ht = g_hash_table_new_full(g_str_hash, g_str_equal
+                                                , g_free, NULL);
+    info -> buddies_number_ht = g_hash_table_new_full(g_str_hash, g_str_equal
+                                                , g_free, NULL);
+    info -> groups_ht = g_hash_table_new_full(g_str_hash, g_str_equal
+                                                , g_free, NULL);
+    info -> groups_number_ht = g_hash_table_new_full(g_str_hash, g_str_equal
+                                                , g_free, NULL);
 
     info -> lock = g_mutex_new();
 
@@ -84,12 +90,14 @@ void qq_info_free(QQInfo *info)
 
     g_hash_table_unref(info -> buddies_ht);
     g_hash_table_unref(info -> groups_ht);
+    g_hash_table_unref(info -> buddies_number_ht);
+    g_hash_table_unref(info -> groups_number_ht);
 
     g_mutex_free(info -> lock);
     g_slice_free(QQInfo, info);
 }
 
-QQBuddy* qq_info_lookup_buddy(QQInfo *info, const gchar *uin)
+QQBuddy* qq_info_lookup_buddy_by_uin(QQInfo *info, const gchar *uin)
 {
     QQBuddy *bdy = (QQBuddy*)g_hash_table_lookup(info -> buddies_ht, uin);
     if(bdy == NULL){
@@ -105,9 +113,55 @@ QQBuddy* qq_info_lookup_buddy(QQInfo *info, const gchar *uin)
 
     return bdy;
 }
-QQGroup* qq_info_lookup_group(QQInfo *info, const gchar *gid)
+QQBuddy* qq_info_lookup_buddy_by_number(QQInfo *info, const gchar *number)
 {
-    return (QQGroup*)g_hash_table_lookup(info -> buddies_ht, gid);
+    QQBuddy *bdy = (QQBuddy*)g_hash_table_lookup(info -> buddies_number_ht
+                                                            , number);
+    if(bdy == NULL){
+        gint i;
+        for(i = 0; i < info -> buddies -> len; ++i){
+            bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
+            if(g_strcmp0(number, bdy -> qqnumber -> str) == 0){
+                g_hash_table_insert(info -> buddies_number_ht
+                                    , (gpointer)number, bdy);
+                break;
+            }
+        }
+    }
+
+    return bdy;
+}
+
+QQGroup* qq_info_lookup_group_by_code(QQInfo *info, const gchar *code)
+{
+    QQGroup *grp = (QQGroup*)g_hash_table_lookup(info -> groups_ht, code);
+    if(grp == NULL){
+        gint i;
+        for(i = 0; i < info -> groups -> len; ++i){
+            grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
+            if(g_strcmp0(code, grp -> code -> str) == 0){
+                g_hash_table_insert(info -> groups_ht, (gpointer)code, grp);
+                break;
+            }
+        }
+    }
+    return grp;
+}
+QQGroup* qq_info_lookup_group_by_number(QQInfo *info, const gchar *number)
+{
+    QQGroup *grp = (QQGroup*)g_hash_table_lookup(info -> groups_ht, number);
+    if(grp == NULL){
+        gint i;
+        for(i = 0; i < info -> groups -> len; ++i){
+            grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
+            if(g_strcmp0(number, grp -> gnumber -> str) == 0){
+                g_hash_table_insert(info -> groups_number_ht
+                                            , (gpointer)number, grp);
+                break;
+            }
+        }
+    }
+    return grp;
 }
 
 //
@@ -592,7 +646,6 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         bdy -> allow = va_arg(ap, gint);
     }else if(g_strcmp0(name, "client_type") == 0){
         bdy -> client_type = va_arg(ap, gint);
-    }else if(g_strcmp0(name, "category") == 0){
     }else if(g_strcmp0(name, "birthday") == 0){
         bdy -> birthday.year = va_arg(ap, gint);
         bdy -> birthday.month = va_arg(ap, gint);
@@ -606,7 +659,46 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
 #undef SET_STR
     va_end(ap);
 }
-
+void qq_buddy_copy(QQBuddy *from, QQBuddy *to)
+{
+    if(from == NULL || to == NULL){
+        return;
+    }
+#define COPY_STR(x) qq_buddy_set(to, #x, from -> x -> str)
+    COPY_STR(uin);
+    COPY_STR(qqnumber);
+    COPY_STR(status);
+    COPY_STR(nick);
+    COPY_STR(markname);
+    COPY_STR(country);
+    COPY_STR(city);
+    COPY_STR(province);
+    COPY_STR(gender);
+    COPY_STR(face);
+    COPY_STR(flag);
+    COPY_STR(phone);
+    COPY_STR(mobile);
+    COPY_STR(email);
+    COPY_STR(college);
+    COPY_STR(occupation);
+    COPY_STR(personal);
+    COPY_STR(homepage);
+    COPY_STR(lnick);
+    COPY_STR(faceimgfile);
+#undef COPY_STR
+#define COPY_INT(x) to -> x = from -> x
+    COPY_INT(vip_info);
+    COPY_INT(blood);
+    COPY_INT(shengxiao);
+    COPY_INT(constel);
+    COPY_INT(allow);
+    COPY_INT(client_type);
+    COPY_INT(birthday.year);
+    COPY_INT(birthday.month);
+    COPY_INT(birthday.day);
+    COPY_INT(cate);
+#undef COPY_INT 
+}
 //
 // QQGMeber
 //
@@ -801,17 +893,40 @@ QQCategory* qq_category_new()
 {
     QQCategory *c = g_slice_new0(QQCategory);
     c -> members = g_ptr_array_new();
+    c -> name = g_string_new(NULL);
     return c;
 }
-void qq_category_free(QQCategory *cty)
+void qq_category_free(QQCategory *cate)
 {
-    if(cty == NULL){
+    if(cate == NULL){
         return;
     }
-    g_ptr_array_free(cty -> members, TRUE);
-    g_slice_free(QQCategory, cty);
+    g_ptr_array_free(cate -> members, TRUE);
+    g_string_free(cate -> name, TRUE);
+    g_slice_free(QQCategory, cate);
 }
 
+void qq_category_set(QQCategory *cate, const gchar *key, ...)
+{
+    if(cate == NULL || key == NULL){
+        return;
+    }
+
+    va_list ap;
+    va_start(ap, key);
+
+    if(g_strcmp0(key, "name") == 0){
+        g_string_truncate(cate -> name, 0);
+        const gchar *v = va_arg(ap, const gchar *);
+        g_string_append(cate -> name, v);
+    }else if(g_strcmp0(key, "index") == 0){
+        cate -> index = va_arg(ap, gint);
+    }else{
+        g_warning("No member named %s in QQCategory. (%s, %d)", key
+                                , __FILE__, __LINE__);
+    }
+    va_end(ap);
+}
 //
 // QQRecentCon
 //
@@ -836,6 +951,9 @@ void qq_recentcon_free(QQRecentCon *rc)
 QQFaceImg* qq_faceimg_new()
 {
     QQFaceImg *img = g_slice_new0(QQFaceImg);
+    img -> data = g_string_new(NULL);
+    img -> type = g_string_new(NULL);
+    img -> uin = g_string_new(NULL);
     return img;
 }
 void qq_faceimg_free(QQFaceImg *img)
@@ -851,3 +969,34 @@ void qq_faceimg_free(QQFaceImg *img)
     g_slice_free(QQFaceImg, img);
 }
 
+void qq_faceimg_set(QQFaceImg *img, const gchar *key, GString *val)
+{
+    if(img == NULL || key == NULL || val == NULL){
+        return;
+    }
+
+    if(g_strcmp0("data", key) == 0){
+        g_string_truncate(img -> data, 0);
+        g_string_append_len(img -> data, val -> str, val -> len);
+    }else if(g_strcmp0("type", key) == 0){
+        g_string_truncate(img -> type, 0);
+        g_string_append_len(img -> type, val -> str, val -> len);
+    }else if(g_strcmp0("uin", key) == 0){
+        g_string_truncate(img -> uin, 0);
+        g_string_append_len(img -> uin, val -> str, val -> len);
+    }else{
+        g_warning("QQFaceImg has no member named %s. (%s, %d)"
+                                , key, __FILE__, __LINE__);
+    }
+}
+
+void qq_faceimg_copy(QQFaceImg *from, QQFaceImg *to)
+{
+    if(from == NULL || to == NULL){
+        return;
+    }
+
+    qq_faceimg_set(to, "data", from -> data);
+    qq_faceimg_set(to, "type", from -> type);
+    qq_faceimg_set(to, "uin", from -> uin);
+}

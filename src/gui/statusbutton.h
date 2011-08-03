@@ -50,11 +50,18 @@ struct _QQStatusButtonClass{
 GType qq_statusbutton_get_type();
 GtkWidget* qq_statusbutton_new();
 
-/*
- * Get the status
- * string or int
- */
-const gchar* qq_statusbutton_get_status_string(QQStatusButton *btn);
-QQStatusButtonStatus qq_statusbutton_get_status(QQStatusButton *btn);
+//
+// Get the status
+// string or int
+//
+const gchar* qq_statusbutton_get_status_string(GtkWidget *btn);
+QQStatusButtonStatus qq_statusbutton_get_status(GtkWidget *btn);
 
+//
+// Set the status
+//
+void qq_statusbutton_set_status_string(GtkWidget *btn
+                                        , const gchar *status);
+void qq_statusbutton_set_status(GtkWidget *btn
+                                        , QQStatusButtonStatus status);
 #endif

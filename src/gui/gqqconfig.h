@@ -7,18 +7,15 @@
 //
 // Configuration
 // The configuration directory is $HOME/.gtkqq.
+// See doc/table.sql for details
 // 
-// In the config dir, there is one directory for each user. The name
-// of these dirs are the uins of the users.
-// The user config dir contains:
-//      config      --- a file which contains the configuration of this user.
-//      faces       --- a dir which contains all the face images of this user.
-//      .passwd     --- a file which contains the password of this user. The
-//                      password is encrypted.
-//      buddies     --- a file contains the information of all buddies
-//      groups      --- a file contains the information of all groups.
-//      categories  --- a file contains the information of all categories.
-//
+
+typedef struct __GQQLoginUser{
+    gchar qqnumber[100];
+    gchar passwd[100];
+    gchar status[100];
+    gint last;
+}GQQLoginUser;
 
 #define GQQ_TYPE_CONFIG             (gqq_config_get_type())
 #define GQQ_CONFIG(obj)             (G_TYPE_CHECK_INSTANCE_CAST((obj)\
@@ -62,10 +59,6 @@ GType gqq_config_get_type();
 //
 gint gqq_config_load(GQQConfig *cfg, GString *qqnum);
 //
-// Load the configuration fo the last user.
-//
-gint gqq_config_load_last(GQQConfig *cfg);
-//
 // Save all the configuration into the configuration files.
 // Contains:
 //      QQGroup
@@ -76,10 +69,16 @@ gint gqq_config_load_last(GQQConfig *cfg);
 gint gqq_config_save(GQQConfig *cfg);
 
 //
-// Get and set configurations.
-// All these configurations will be stored in the 
-//  $HOME/.gtkqq/`user_uin`/config
+// Get all the users who has logined.
 //
+GPtrArray* gqq_config_get_all_login_user(GQQConfig *cfg);
+//
+// Save the last login user
+//
+gint gqq_config_save_last_login_user(GQQConfig *cfg);
+
+//
+// Get and set configurations.
 // For getter, if no key found, return -1, else return 0.
 // 
 

@@ -52,25 +52,21 @@ gint qq_sendmsg(QQSendMsg *msg, GError **err);
 GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
 
 //
-// Get information of uin 
+// Get all the buddies and categories
+// If success, return 0. or error code and set *err.
+//
+gint qq_get_buddies_and_categories(QQInfo *info, GError **err);
+//
+// Get all groups.
+// If success, return 0. or error code and set *err.
+//
+gint qq_get_groups(QQInfo *info, GError **err);
+
+//
+// Get buddy information 
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err);
-//
-// Get all my friends' information.
-// Just simple information.
-// If success, return 0. or error code and set *err.
-//
-gint qq_get_my_friends(QQInfo *info, GError **err);
-//
-// Get the qq number of uin
-//
-gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err);
-//
-// Get the group name list mask.
-// If success, return 0. or error code and set *err.
-//
-gint qq_get_group_name_list_mask(QQInfo *info, GError **err);
 //
 // Get the group information 
 // If success, return 0. or error code and set *err.
@@ -87,12 +83,15 @@ gint qq_get_online_buddies(QQInfo *info, GError **err);
 // If success, the callback's redata is "GET_RECENT_CONTACT"
 //
 gint qq_get_recent_contact(QQInfo *info, GError **err);
-
 //
 // Get the long nick of bdy.
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
+//
+// Get the qq number of uin
+//
+gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err);
 
 //
 // The callback of the poll fuction.

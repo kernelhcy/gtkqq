@@ -481,7 +481,7 @@ static void get_and_update_face_image(QQMainPanel *panel, QQInfo *info
                                                     , const gchar *uin)
 {
     gchar path[500];
-    QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
     if(bdy == NULL){
         return;
     }
@@ -518,7 +518,7 @@ static void update_face_image(QQMainPanel *panel, const gchar *uin)
 {
     gboolean need_get_img = FALSE;
 
-    QQBuddy *bdy = qq_info_lookup_buddy(info , uin);
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info , uin);
     if(bdy == NULL){
         return;
     }

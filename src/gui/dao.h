@@ -23,6 +23,16 @@ sqlite3* db_open();
 void db_close(sqlite3 *db);
 
 //
+// Set the all the row's value of col to value.
+//
+gint db_update_all(sqlite3 *db, const gchar *table
+                        , const gchar *col, const gchar *value);
+//
+// Get all the users in qquser
+// The result array must be free when no use.
+//
+gint db_get_all_users(sqlite3 *db, GPtrArray **result);
+//
 // Delete all the data in all tables.
 // NOT delete the tables.
 //
@@ -59,11 +69,10 @@ gint db_config_get(sqlite3 *db, const gchar *owner
                             , const gchar *key, gchar **value);
 //
 // Get all the buddies, groups and categories.
-// The result is stored in a array and returned from the third parmeter.
-// The array must be free.
+// Result is stored in info
 //
-gint db_buddy_get(sqlite3 *db, const gchar *owner, GPtrArray **buddies);
-gint db_group_get(sqlite3 *db, const gchar *owner, GPtrArray **groups);
-gint db_category_get(sqlite3 *db, const gchar *owner, GPtrArray **cates);
+gint db_buddy_get(sqlite3 *db, const gchar *owner, QQInfo *info);
+gint db_group_get(sqlite3 *db, const gchar *owner, QQInfo *info);
+gint db_category_get(sqlite3 *db, const gchar *owner, QQInfo *info);
 
 #endif

@@ -34,7 +34,6 @@ int main(int argc, char **argv)
         return -1;
     }
     cfg = gqq_config_new(info);
-    gqq_config_load_last(cfg);
 
     send_loop = gqq_msgloop_start("Send");
     if(send_loop == NULL){
@@ -53,6 +52,8 @@ int main(int argc, char **argv)
     qq_logout(info, NULL);
     gqq_msgloop_stop(get_info_loop);
     gqq_msgloop_stop(send_loop);
+
+    //Save config
     gqq_config_save(cfg);
     qq_finalize(info, NULL);
     return 0;

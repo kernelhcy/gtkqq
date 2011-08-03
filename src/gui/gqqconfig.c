@@ -335,13 +335,18 @@ static void gqq_config_finalize(GObject *obj)
     db_close(priv -> db_con);
 }
 
-gint gqq_config_load_last(GQQConfig *cfg)
-{
-    return 0;
-}
 gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
 {
     return 0;
+}
+
+static void save_ht(gpointer key, gpointer value, gpointer usr_data)
+{
+    gchar *k = (gchar *)key;
+    gchar *v = (gchar *)value;
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    usr_data, gqq_config_get_type(), GQQConfigPriv);
+    db_config_save(priv -> db_con, priv -> qqnum -> str, k, v);
 }
 
 gint gqq_config_save(GQQConfig *cfg)
@@ -349,12 +354,8 @@ gint gqq_config_save(GQQConfig *cfg)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     cfg, gqq_config_get_type(), GQQConfigPriv);
     QQInfo *info = priv -> info;
-    db_qquser_save(priv -> db_con, priv -> qqnum -> str, priv -> passwd -> str
-                                    , priv -> status -> str, 1); 
-    
     gint i;
 
-    db_clear_table(priv -> db_con, "buddies", "owner", priv -> qqnum -> str);
     QQBuddy *bdy;
     for(i = 0; i < info -> buddies -> len; ++i){
         bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
@@ -364,7 +365,6 @@ gint gqq_config_save(GQQConfig *cfg)
         db_buddy_save(priv -> db_con, priv -> qqnum -> str, bdy);
     }
 
-    db_clear_table(priv -> db_con, "groups", "owner", priv -> qqnum -> str);
     QQGroup *grp;
     for(i = 0; i < info -> groups -> len; ++i){
         grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
@@ -374,7 +374,6 @@ gint gqq_config_save(GQQConfig *cfg)
         db_group_save(priv -> db_con, priv -> qqnum -> str, grp);
     }
 
-    db_clear_table(priv -> db_con, "categories", "owner", priv -> qqnum -> str);
     QQCategory *cate;
     for(i = 0; i < info -> categories -> len; ++i){
         cate = (QQCategory*)g_ptr_array_index(info -> categories, i);
@@ -383,9 +382,25 @@ gint gqq_config_save(GQQConfig *cfg)
         }
         db_category_save(priv -> db_con, priv -> qqnum -> str, cate);
     }
-
+    
+    //Save configuration items
+    g_hash_table_foreach(priv -> ht, save_ht, cfg);
     return 0;
 }
+
+gint gqq_config_save_last_login_user(GQQConfig *cfg)
+{
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+    //Save the last login user.
+    if(priv -> qqnum -> len > 0){
+        db_update_all(priv -> db_con, "qquser", "last", "0");
+        db_qquser_save(priv -> db_con, priv -> qqnum -> str, priv -> passwd -> str
+                                    , priv -> status -> str, 1); 
+    }
+    return 0;
+}
+
 gint gqq_config_get_str(GQQConfig *cfg, const gchar *key, const gchar **value)
 {
     if(cfg == NULL || key == NULL || value == NULL){
@@ -470,3 +485,19 @@ gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value)
     }
 }
 
+GPtrArray* gqq_config_get_all_login_user(GQQConfig *cfg)
+{
+    if(cfg == NULL){
+        return NULL;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        
+    GPtrArray *result = NULL;
+    gint recode = db_get_all_users(priv -> db_con, &result);
+    if(recode != SQLITE_OK){
+        return NULL;
+    }
+    return result;
+}

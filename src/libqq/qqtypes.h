@@ -43,6 +43,8 @@ struct _QQFaceImg{
 };
 QQFaceImg* qq_faceimg_new();
 void qq_faceimg_free(QQFaceImg *img);
+void qq_faceimg_copy(QQFaceImg *from, QQFaceImg *to);
+void qq_faceimg_set(QQFaceImg *img, const gchar *key, GString *val);
 
 /*
  * The main information
@@ -57,8 +59,12 @@ struct _QQInfo{
 
     GPtrArray *buddies;             //all friends;
     GHashTable *buddies_ht;         //buddies hash table by uin
+    GHashTable *buddies_number_ht;  //buddies hash table by qq number
+
     GPtrArray *groups;              //all groups;
-    GHashTable *groups_ht;          //goups hash table by gid
+    GHashTable *groups_ht;          //goups hash table by code
+    GHashTable *groups_number_ht;   //goups hash table by group number 
+
     GPtrArray *recentcons;          //the recenet contacts
     GPtrArray *categories;          //all categories
 
@@ -101,13 +107,15 @@ QQInfo* qq_info_new();
 void qq_info_free(QQInfo *);
 void qq_append_cookie(QQInfo *, const gchar *);
 //
-// Look up the buddy by the uin
+// Look up the buddy by the uin and qq number
 //
-QQBuddy* qq_info_lookup_buddy(QQInfo *, const gchar *uin);
+QQBuddy* qq_info_lookup_buddy_by_uin(QQInfo *, const gchar *uin);
+QQBuddy* qq_info_lookup_buddy_by_number(QQInfo *, const gchar *number);
 //
-// Look up the group by the gid
+// Look up the group by the code and group number
 //
-QQGroup* qq_info_lookup_group(QQInfo *, const gchar *gid);
+QQGroup* qq_info_lookup_group_by_code(QQInfo *, const gchar *code);
+QQGroup* qq_info_lookup_group_by_number(QQInfo *, const gchar *number);
 
 //
 // The font of the messages
@@ -262,9 +270,14 @@ struct _QQBuddy{
 
 };
 QQBuddy* qq_buddy_new();
-void qq_buddy_free(QQBuddy *);
+void qq_buddy_free(QQBuddy *bdy);
 //Set the value of the member named `name`
-void qq_buddy_set(QQBuddy *, const gchar *name, ...);
+void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...);
+//
+// Copy `from` to `to`
+// Deep copy
+//
+void qq_buddy_copy(QQBuddy *from, QQBuddy *to);
 
 
 /*
@@ -326,7 +339,8 @@ struct _QQCategory{
     GPtrArray *members;
 };
 QQCategory* qq_category_new();
-void qq_category_free(QQCategory *);
+void qq_category_free(QQCategory *cate);
+void qq_category_set(QQCategory *cate, const gchar *key, ...);
 
 //
 // QQRecentCon

@@ -21,10 +21,13 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c);
 static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
 
+static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data);
 /*
  * The main event loop context of Gtk.
  */
 static GQQMessageLoop gtkloop;
+
+static GPtrArray* login_users = NULL;
 
 GtkType qq_loginpanel_get_type()
 {
@@ -117,18 +120,12 @@ static gint do_login(QQLoginPanel *panel)
 enum{
     LOGIN_SM_CHECKVC,
     LOGIN_SM_LOGIN,
-    LOGIN_SM_GET_MY_INFO,
-    LOGIN_SM_GET_MY_FRIENDS,
-    LOGIN_SM_GET_ONLINE_BUDDIES,
-    LOGIN_SM_GET_RECENT_CONTACT,
-    LOGIN_SM_GET_GRUOP_LIST,
     LOGIN_SM_DONE,
-    LOGIN_SM_ERR,
-    LOGIN_SM_NONE
+    LOGIN_SM_ERR
 };
 
 static void read_verifycode(gpointer p);
-static gint state = LOGIN_SM_NONE;
+static gint state = LOGIN_SM_ERR;
 static void login_state_machine(gpointer data)
 {
     QQLoginPanel *panel = (QQLoginPanel*)data;
@@ -152,45 +149,13 @@ static void login_state_machine(gpointer data)
             if(do_login(panel) != 0){
                 state = LOGIN_SM_ERR;
             }else{
-                state = LOGIN_SM_GET_MY_INFO;
+                //state = LOGIN_SM_DONE;
+                // TEST
+                state = 10;
             }
             break;
-        case LOGIN_SM_GET_MY_INFO:
-            if(qq_get_buddy_info(info, info -> me, NULL) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_GET_MY_FRIENDS;
-            }
-            break;
-        case LOGIN_SM_GET_MY_FRIENDS:
-            if(qq_get_my_friends(info, NULL) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_GET_ONLINE_BUDDIES;
-            }
-            break;
-        case LOGIN_SM_GET_ONLINE_BUDDIES:
-            if(qq_get_online_buddies(info, NULL) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_GET_RECENT_CONTACT;
-            }
-            break;
-        case LOGIN_SM_GET_RECENT_CONTACT:
-            if(qq_get_recent_contact(info, NULL) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_GET_GRUOP_LIST;
-            }
-            break;
-        case LOGIN_SM_GET_GRUOP_LIST:
-            if(qq_get_group_name_list_mask(info, NULL) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_NONE;
-            }
-            break;
-        case LOGIN_SM_NONE:
+        case LOGIN_SM_DONE:
+            g_debug("Login done. show main panel!(%s, %d)", __FILE__, __LINE__);
             // update main panel
             gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
                                     , 1, QQ_MAINWINDOW(panel -> container) 
@@ -296,23 +261,47 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     g_object_set(cfg, "status", panel -> status, NULL);
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
+    gqq_config_save_last_login_user(cfg);
 }
 
 static void qq_loginpanel_init(QQLoginPanel *obj)
 {
+    login_users = gqq_config_get_all_login_user(cfg);
+    //Put the last login user at the first of the array
+    gint i;
+    GQQLoginUser *usr, *tmp;
+    for(i = 0; i < login_users -> len; ++i){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
+        if(usr == NULL){
+            continue;
+        }
+        if(usr -> last == 1){
+            break;
+        }
+    }
+    if(i < login_users -> len){
+        tmp = login_users -> pdata[0];
+        login_users -> pdata[0] = login_users -> pdata[i];
+        login_users -> pdata[i] = tmp;
+    }
+
     obj -> uin_label = gtk_label_new("QQ Number:");
     obj -> uin_entry = gtk_combo_box_entry_new_text();
 
-    gchar *tmp;
-    g_object_get(cfg, "qqnum", &tmp, NULL);
-    gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry), tmp);
+    for(i = 0; i < login_users -> len; ++i){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
+        gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
+                            , usr -> qqnumber);
+    }
     gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> uin_entry), 0);
 
     obj -> passwd_label = gtk_label_new("Password:");
     obj -> passwd_entry = gtk_entry_new();
-    g_object_get(cfg, "passwd", &tmp, NULL);
-    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), tmp);
+    usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
+    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
 
+    g_signal_connect(G_OBJECT(obj -> uin_entry), "changed"
+                        , G_CALLBACK(qqnumber_combox_changed), obj);
     //not visibily 
     gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
     gtk_widget_set_size_request(obj -> uin_entry, 200, -1);
@@ -349,11 +338,12 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     obj -> login_btn = gtk_button_new_with_label("Login");
     gtk_widget_set_size_request(obj -> login_btn, 90, -1);
     g_signal_connect(G_OBJECT(obj -> login_btn), "clicked"
-            , G_CALLBACK(login_btn_cb), (gpointer)obj);
+                                , G_CALLBACK(login_btn_cb), (gpointer)obj);
 
     //status combo box
     obj -> status_comb = qq_statusbutton_new();
-    gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> status_comb), 0);
+    usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
+    qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
 
     GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);
@@ -386,6 +376,18 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(obj), hbox1, FALSE, FALSE, 15);
 }
 
+static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data)
+{
+    QQLoginPanel *obj = QQ_LOGINPANEL(data);
+    gint idx = gtk_combo_box_get_active(widget);
+    if(idx < 0 || idx >= login_users -> len){
+        return;
+    }
+    GQQLoginUser *usr = (GQQLoginUser*)g_ptr_array_index(login_users, idx); 
+    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
+    qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
+    return;
+}
 /*
  * Destroy the instance of QQLoginPanel
  */
@@ -395,6 +397,7 @@ static void qq_loginpanel_destroy(GtkObject *obj)
      * Child widgets will be destroied by their parents.
      * So, we should not try to unref the Child widgets here.
      */
+
 }
 
 const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel)
@@ -412,7 +415,6 @@ const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
 }
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 {
-    return qq_statusbutton_get_status_string(QQ_STATUSBUTTON(
-                        loginpanel -> status_comb));
+    return qq_statusbutton_get_status_string(loginpanel -> status_comb);
 }
 

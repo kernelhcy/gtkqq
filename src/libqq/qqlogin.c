@@ -679,7 +679,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		return retcode;
 	}
     
-	g_debug("Initial done.");
+	g_debug("Initial done.(%s, %d)", __FILE__, __LINE__);
 	return NO_ERR;
 }
 

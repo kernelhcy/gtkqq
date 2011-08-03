@@ -36,7 +36,7 @@ static GString* get_image_type(const gchar *ct)
 static gint do_get_face_img(QQInfo *info, const gchar *uin, QQFaceImg **fimg
                                         ,GError **err)
 {
-    QQBuddy *bdy = qq_info_lookup_buddy(info, uin);
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
     if(bdy == NULL){
         g_warning("Can Not find buddy of %s. (%s, %d)"
                                     , uin, __FILE__, __LINE__);

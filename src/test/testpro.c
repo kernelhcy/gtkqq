@@ -35,9 +35,9 @@ int main(int argc, char **argv)
     g_message("get my information...");
     qq_get_buddy_info(info, info -> me,  NULL);
     g_message("get my friends...");
-    qq_get_my_friends(info, NULL);
+    qq_get_buddies_and_categories(info, NULL);
     g_message("get group name list mask...");
-    qq_get_group_name_list_mask(info, NULL);
+    qq_get_groups(info, NULL);
     g_message("get group info...");
     qq_get_group_info(info, (QQGroup*)g_ptr_array_index(info -> groups, 0), NULL);
     g_message("get online buddies...");
