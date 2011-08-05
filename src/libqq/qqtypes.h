@@ -259,6 +259,7 @@ struct _QQBuddy{
     GString *lnick;
 
     gint allow;
+    gint cate_index;            //The index of the category
 
     /*
      * 1 : 桌面客户端
@@ -266,7 +267,6 @@ struct _QQBuddy{
      * 41: web QQ
      */
     gint client_type;
-    QQCategory *cate;            // The category of this buddy
 
 };
 QQBuddy* qq_buddy_new();

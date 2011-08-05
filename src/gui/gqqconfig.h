@@ -57,7 +57,7 @@ GType gqq_config_get_type();
 //
 // Load the configuration of qq number  
 //
-gint gqq_config_load(GQQConfig *cfg, GString *qqnum);
+gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum);
 //
 // Save all the configuration into the configuration files.
 // Contains:

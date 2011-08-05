@@ -61,6 +61,11 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err);
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_groups(QQInfo *info, GError **err);
+//
+// Update the details of buddies and groups.
+// Buddies, groups etc
+//
+gint qq_update_details(QQInfo *info, GError **err);
 
 //
 // Get buddy information 

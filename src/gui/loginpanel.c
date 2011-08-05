@@ -120,9 +120,29 @@ static gint do_login(QQLoginPanel *panel)
 enum{
     LOGIN_SM_CHECKVC,
     LOGIN_SM_LOGIN,
+    LOGIN_SM_GET_DATA,
     LOGIN_SM_DONE,
     LOGIN_SM_ERR
 };
+
+//
+// Update the details
+//
+static void update_details()
+{
+    gint i;
+    QQBuddy *bdy = NULL;
+    // get the details
+    qq_update_details(info, NULL);
+    for(i = 0; i < info -> buddies -> len; ++i){
+        bdy = g_ptr_array_index(info -> buddies, i);
+        if(bdy == NULL){
+            continue;
+        }
+        qq_save_face_img(bdy, CONFIGDIR"/faces/", NULL);
+    }
+    qq_save_face_img(info -> me, CONFIGDIR"/faces/", NULL);
+}
 
 static void read_verifycode(gpointer p);
 static gint state = LOGIN_SM_ERR;
@@ -149,10 +169,15 @@ static void login_state_machine(gpointer data)
             if(do_login(panel) != 0){
                 state = LOGIN_SM_ERR;
             }else{
-                //state = LOGIN_SM_DONE;
-                // TEST
-                state = 10;
+                state = LOGIN_SM_GET_DATA;
             }
+            break;
+        case LOGIN_SM_GET_DATA:
+            //Read cached data from db
+            gqq_config_load(cfg, panel -> uin);
+            qq_get_buddies_and_categories(info, NULL);
+            qq_get_groups(info, NULL);
+            state = LOGIN_SM_DONE;
             break;
         case LOGIN_SM_DONE:
             g_debug("Login done. show main panel!(%s, %d)", __FILE__, __LINE__);
@@ -163,6 +188,12 @@ static void login_state_machine(gpointer data)
             // show main panel
             gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
                                     , 1, panel -> container);
+            // update the details
+            update_details();
+            // update main panel again
+            gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
+                                    , 1, QQ_MAINWINDOW(panel -> container) 
+                                                    -> main_panel);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
@@ -259,6 +290,10 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     g_object_set(cfg, "qqnum", panel -> uin, NULL);
     g_object_set(cfg, "passwd", panel -> passwd, NULL);
     g_object_set(cfg, "status", panel -> status, NULL);
+
+    qq_buddy_set(info -> me, "qqnumber", panel -> uin);
+    qq_buddy_set(info -> me, "uin", panel -> uin);
+
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
     gqq_config_save_last_login_user(cfg);
@@ -297,9 +332,10 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 
     obj -> passwd_label = gtk_label_new("Password:");
     obj -> passwd_entry = gtk_entry_new();
-    usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
-    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
-
+    if(login_users -> len > 0){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
+        gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
+    }
     g_signal_connect(G_OBJECT(obj -> uin_entry), "changed"
                         , G_CALLBACK(qqnumber_combox_changed), obj);
     //not visibily 
@@ -342,8 +378,10 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 
     //status combo box
     obj -> status_comb = qq_statusbutton_new();
-    usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
-    qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
+    if(login_users -> len > 0){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
+        qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
+    }
 
     GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);

@@ -19,8 +19,8 @@ static const gchar table_sql[] =
         "   qqnumber primary key ,"
         "   passwd, status, last);"
         "create table if not exists buddies("
-        "   id integer primary key asc autoincrement,"
-        "   owner, qqnumber, vip_info, nick, markname, faceimgfile, "
+        "   qqnumber primary key,"
+        "   owner,vip_info, nick, markname, faceimgfile, "
         "   country, province, city, gender, face, flag, birthday_y, "
         "   birthday_m, birthday_d, blood, shengxiao, constel, phone,"
         "   mobile, email, occupation, college, homepage, personal, lnick,"
@@ -34,11 +34,12 @@ static const gchar table_sql[] =
         "   foreign key(owner) references qquser(qqnumber) "
         "   on delete cascade);"
         "create table if not exists gmembers("
+        "   id primary key,"
         "   gnumber, qqnumber, nick, flag, card, "
         "   foreign key(gnumber) references groups(gnumber) "
         "   on delete cascade);"
         "create table if not exists categories("
-        "   id integer primary key asc autoincrement,"
+        "   id primary key,"
         "   owner, idx, name,"
         "   foreign key(owner) references qquser(qqnumber) "
         "   on delete cascade );";
@@ -233,20 +234,12 @@ gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
     return SQLITE_OK;
 }
 
-gint db_config_save(sqlite3 *db, const gchar *owner
-                            , const gchar *key, const gchar *value)
+gint db_exec_sql(sqlite3 *db, const gchar *sql)
 {
-    if(db == NULL || owner == NULL || key == NULL){
+    if(db == NULL || sql == NULL){
         return SQLITE_ERROR;
     }
-    
-    if(value == NULL){
-        value = "";
-    }
 
-    gchar sql[500];
-    g_snprintf(sql, 500, "insert or replace into config (owner, key, value) "
-                    "values ('%s', '%s', '%s');", owner, key, value);
     gchar *err = NULL;
     sqlite3_exec(db, sql, NULL, NULL, &err);
     if(err != NULL){
@@ -258,13 +251,39 @@ gint db_config_save(sqlite3 *db, const gchar *owner
     return SQLITE_OK;
 }
 
-gint db_buddy_save(sqlite3 *db, const gchar *owner, QQBuddy *bdy)
+void db_config_save_sql_append(GString *sql, const gchar *owner
+                                    , const gchar *key, const gchar *value)
 {
-    if(db == NULL || owner == NULL || bdy == NULL){
-        return SQLITE_ERROR;
+    if(sql == NULL || owner == NULL || key == NULL){
+        return;
     }
 
-    GString *sql = g_string_sized_new(5000);
+    if(value == NULL){
+        value = "";
+    }
+    gchar buf[500];
+    g_snprintf(buf, 500, "insert or replace into config (owner, key, value) "
+                    "values ('%s', '%s', '%s');", owner, key, value);
+    g_string_append(sql, buf);
+}
+gint db_config_save(sqlite3 *db, const gchar *owner
+                            , const gchar *key, const gchar *value)
+{
+    if(db == NULL || owner == NULL || key == NULL){
+        return SQLITE_ERROR;
+    }
+    GString *sql = g_string_new(NULL); 
+    db_config_save_sql_append(sql, owner, key, value);
+    gint retcode = db_exec_sql(db, sql -> str);
+    g_string_free(sql, TRUE);
+    return retcode;
+}
+
+void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy)
+{
+    if(sql == NULL || owner == NULL || bdy == NULL){
+        return;
+    }
     g_string_append(sql, "insert or replace into buddies ("
                         "owner, qqnumber, vip_info, nick, markname,"
                         "faceimgfile, country, province, city, gender,"
@@ -298,27 +317,28 @@ gint db_buddy_save(sqlite3 *db, const gchar *owner, QQBuddy *bdy)
     g_string_append_printf(sql, "'%s',", bdy -> homepage -> str);
     g_string_append_printf(sql, "'%s',", bdy -> personal -> str);
     g_string_append_printf(sql, "'%s',", bdy -> lnick-> str);
-    g_string_append_printf(sql, "%d);", bdy -> cate -> index);
+    g_string_append_printf(sql, "%d);", bdy -> cate_index);
 
-    gchar *err = NULL;
-    sqlite3_exec(db, sql -> str,  NULL, NULL, &err);
-    if(err != NULL){
-        g_warning("SQL:(%s) error. %s (%s, %d)", sql -> str, err
-                                        , __FILE__, __LINE__);
-        sqlite3_free(err);
-        return SQLITE_ERROR;
-    }
-    g_string_free(sql, TRUE);
-    return SQLITE_OK;
 }
-
-gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp)
+gint db_buddy_save(sqlite3 *db, const gchar *owner, QQBuddy *bdy)
 {
-    if(db == NULL || owner == NULL || grp == NULL){
+    if(db == NULL || owner == NULL || bdy == NULL){
         return SQLITE_ERROR;
     }
 
     GString *sql = g_string_sized_new(5000);
+    db_buddy_save_sql_append(sql, owner, bdy);
+    gint retcode = db_exec_sql(db, sql -> str);
+    g_string_free(sql, TRUE);
+    return retcode;
+}
+
+void db_group_save_sql_append(GString *sql, const gchar *owner, QQGroup *grp)
+{
+    if(sql == NULL || owner == NULL || grp == NULL){
+        return;
+    }
+
     g_string_append(sql, "insert or replace into groups ("
                     "gnumber, owner, name, code, flag, creator, mark, mask, "
                     "opt, createtime, gclass, glevel, face, memo, fingermemo"
@@ -339,15 +359,6 @@ gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp)
     g_string_append_printf(sql, "%d,", grp -> face);
     g_string_append_printf(sql, "'%s', ", grp -> memo -> str);
     g_string_append_printf(sql, "'%s');", grp -> fingermemo -> str);
-
-    gchar *err = NULL;
-    sqlite3_exec(db, sql -> str, NULL, NULL, &err);
-    if(err != NULL){
-        g_warning("SQL:(%s) error. %s (%s, %d)", sql -> str
-                                    , err, __FILE__, __LINE__);
-        sqlite3_free(err);
-        return SQLITE_ERROR;
-    }
     
     gint i;
     QQGMember *gmem;
@@ -356,25 +367,50 @@ gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp)
         if(gmem == NULL){
             continue;
         }
-        g_string_truncate(sql, 0);
-        g_string_append(sql, "insert into gmembers("
-                    "gnumber, qqnumber, nick, flag, card"
+        g_string_append(sql, "insert or replace into gmembers("
+                    "id, gnumber, qqnumber, nick, flag, card"
                     ") values (");
-        g_string_append_printf(sql, "'%s,'", grp -> gnumber -> str);
-        g_string_append_printf(sql, "'%s,'", gmem -> qqnumber -> str);
-        g_string_append_printf(sql, "'%s,'", gmem -> nick -> str);
-        g_string_append_printf(sql, "'%s,'", gmem -> flag -> str);
+        // Use the group number and qq number as the key
+        g_string_append_printf(sql, "'%s%s',", grp -> gnumber -> str
+                                                , gmem -> qqnumber -> str);
+
+        g_string_append_printf(sql, "'%s',", grp -> gnumber -> str);
+        g_string_append_printf(sql, "'%s',", gmem -> qqnumber -> str);
+        g_string_append_printf(sql, "'%s',", gmem -> nick -> str);
+        g_string_append_printf(sql, "'%s',", gmem -> flag -> str);
         g_string_append_printf(sql, "'%s');", gmem -> card -> str);
-        sqlite3_exec(db, sql -> str, NULL, NULL, &err);
-        if(err != NULL){
-            g_warning("SQL:(%s) error. %s (%s, %d)", sql -> str
-                                            , err, __FILE__, __LINE__);
-            sqlite3_free(err);
-        }
     }
-    
+}
+gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp)
+{
+    if(db == NULL || owner == NULL || grp == NULL){
+        return SQLITE_ERROR;
+    }
+
+    GString *sql = g_string_sized_new(5000);
+    db_group_save_sql_append(sql, owner, grp); 
+    gint retcode = db_exec_sql(db, sql -> str);
     g_string_free(sql, TRUE);
-    return SQLITE_OK;
+    return retcode;
+}
+
+
+void db_category_save_sql_append(GString *sql, const gchar *owner
+                                            , QQCategory *cate)
+{
+    if(sql == NULL || owner == NULL || cate == NULL){
+        return;
+    }
+
+    static const gchar *sql_fmt = "insert or replace into categories (id, "
+                                    "owner, idx, name) values "
+                                    "('%s%d', '%s', %d, '%s')";
+    gchar buf[1000];
+    // Use owner qq number and the index as the key
+    g_snprintf(buf, 1000, sql_fmt, owner, cate -> index, owner
+                                , cate -> index, cate -> name -> str);
+    
+    g_string_append(sql, buf);
 }
 
 gint db_category_save(sqlite3 *db, const gchar *owner, QQCategory *cate)
@@ -382,20 +418,11 @@ gint db_category_save(sqlite3 *db, const gchar *owner, QQCategory *cate)
     if(db == NULL || owner == NULL || cate == NULL){
         return SQLITE_ERROR;
     }
-
-    static const gchar *sql_fmt = "insert or replace into categories ("
-                                "owner, idx, name) values ('%s', %d, '%s')";
-    gchar sql[5000];
-    g_snprintf(sql, 5000, sql_fmt, owner, cate -> index, cate -> name -> str);
-    gchar *err = NULL;
-    sqlite3_exec(db, sql, NULL, NULL, &err);
-    if(err != NULL){
-        g_warning("SQL:(%s) error. %s (%s, %d)", sql, err, __FILE__, __LINE__);
-        sqlite3_free(err);
-        return SQLITE_ERROR;
-    }
-
-    return SQLITE_OK;
+    GString *sql = g_string_new(NULL);
+    db_category_save_sql_append(sql, owner, cate);
+    gint retcode = db_exec_sql(db, sql -> str);
+    g_string_free(sql, TRUE);
+    return retcode;
 }
 
 //
@@ -443,7 +470,7 @@ out_label:
     return retcode;
 }
 
-gint db_buddy_get(sqlite3 *db, const gchar *owner, QQInfo *info)
+gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info)
 {
     if(db == NULL || owner == NULL || info == NULL){
         return SQLITE_ERROR;
@@ -455,7 +482,7 @@ gint db_buddy_get(sqlite3 *db, const gchar *owner, QQInfo *info)
                         "face, flag,"
                         "blood, shengxiao, constel, phone, mobile, email,"
                         "occupation, college, homepage, personal, lnick, "
-                        "cate_idx, birthday_y, birthday_m, birthday_d, "
+                        "cate_idx, birthday_y, birthday_m, birthday_d "
                         "from buddies where owner=");
     g_string_append_printf(sql, "'%s';", owner);
 
@@ -501,6 +528,7 @@ gint db_buddy_get(sqlite3 *db, const gchar *owner, QQInfo *info)
             qq_buddy_set(bdy, "personal", (const gchar *)sqlite3_column_text(stmt, 20));
             qq_buddy_set(bdy, "lnick", (const gchar *)sqlite3_column_text(stmt, 21));
             cate_idx = sqlite3_column_int(stmt, 22);
+            qq_buddy_set(bdy, "cate_index", cate_idx);
             y = sqlite3_column_int(stmt, 23);
             m = sqlite3_column_int(stmt, 24);
             d = sqlite3_column_int(stmt, 25);
@@ -511,7 +539,6 @@ gint db_buddy_get(sqlite3 *db, const gchar *owner, QQInfo *info)
                     continue;
                 }
                 if(cate -> index == cate_idx){
-                    qq_buddy_set(bdy, "cate", cate);
                     g_ptr_array_add(cate -> members, bdy);
                     break;
                 }
@@ -537,7 +564,7 @@ out_label:
 //
 // Get all the group members
 //
-static gint db_group_member_get(sqlite3 *db, QQGroup *grp, QQInfo *info)
+static gint db_get_group_members(sqlite3 *db, QQGroup *grp, QQInfo *info)
 {
     if(db == NULL || grp == NULL || info == NULL){
         return SQLITE_ERROR;
@@ -586,7 +613,7 @@ out_label:
 }
 
 
-gint db_group_get(sqlite3 *db, const gchar *owner, QQInfo *info)
+gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info)
 {
     if(db == NULL || owner == NULL || info == NULL){
         return SQLITE_ERROR;
@@ -628,7 +655,7 @@ gint db_group_get(sqlite3 *db, const gchar *owner, QQInfo *info)
             qq_group_set(grp, "fingermemo", (const gchar *)sqlite3_column_text(stmt, 13));
             g_ptr_array_add(info -> groups, grp);
             //get group members
-            db_group_member_get(db, grp, info);
+            db_get_group_members(db, grp, info);
             break;
         case SQLITE_DONE:
             retcode = SQLITE_OK;
@@ -646,7 +673,7 @@ out_label:
     return retcode;
 }
 
-gint db_category_get(sqlite3 *db, const gchar *owner, QQInfo *info)
+gint db_get_categories(sqlite3 *db, const gchar *owner, QQInfo *info)
 {
     if(db == NULL || owner == NULL || info == NULL){
         return SQLITE_ERROR;

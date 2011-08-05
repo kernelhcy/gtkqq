@@ -18,14 +18,10 @@ QQInfo* qq_info_new()
     info -> recentcons = g_ptr_array_new();
     info -> categories = g_ptr_array_new();
 
-    info -> buddies_ht = g_hash_table_new_full(g_str_hash, g_str_equal
-                                                , g_free, NULL);
-    info -> buddies_number_ht = g_hash_table_new_full(g_str_hash, g_str_equal
-                                                , g_free, NULL);
-    info -> groups_ht = g_hash_table_new_full(g_str_hash, g_str_equal
-                                                , g_free, NULL);
-    info -> groups_number_ht = g_hash_table_new_full(g_str_hash, g_str_equal
-                                                , g_free, NULL);
+    info -> buddies_ht = g_hash_table_new(g_str_hash, g_str_equal);
+    info -> buddies_number_ht = g_hash_table_new(g_str_hash, g_str_equal);
+    info -> groups_ht = g_hash_table_new(g_str_hash, g_str_equal);
+    info -> groups_number_ht = g_hash_table_new(g_str_hash, g_str_equal);
 
     info -> lock = g_mutex_new();
 
@@ -650,8 +646,8 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         bdy -> birthday.year = va_arg(ap, gint);
         bdy -> birthday.month = va_arg(ap, gint);
         bdy -> birthday.day = va_arg(ap, gint);
-    }else if(g_strcmp0(name, "cate") == 0){
-        bdy -> cate = va_arg(ap, QQCategory*);
+    }else if(g_strcmp0(name, "cate_index") == 0){
+        bdy -> cate_index = va_arg(ap, gint); 
     }else{
         g_warning("Unknown member %s in QQBuddy. (%s, %d)", name
                             , __FILE__, __LINE__);
@@ -696,7 +692,7 @@ void qq_buddy_copy(QQBuddy *from, QQBuddy *to)
     COPY_INT(birthday.year);
     COPY_INT(birthday.month);
     COPY_INT(birthday.day);
-    COPY_INT(cate);
+    COPY_INT(cate_index);
 #undef COPY_INT 
 }
 //

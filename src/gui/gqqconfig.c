@@ -242,6 +242,18 @@ static void gqq_config_init(GQQConfig *self)
     priv -> qqnum = g_string_new(NULL);
     priv -> status = g_string_new(NULL);
     priv -> db_con = db_open();
+
+    if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS) 
+                    && -1 == g_mkdir(CONFIGDIR, 0777)){
+        g_error("Create config dir %s error!(%s, %d)"
+                        , CONFIGDIR, __FILE__, __LINE__);
+    }
+    if(!g_file_test(CONFIGDIR"/faces", G_FILE_TEST_EXISTS) 
+                    && -1 == g_mkdir(CONFIGDIR"/faces", 0777)){
+        g_error("Create config dir %s error!(%s, %d)"
+                        , CONFIGDIR"/faces", __FILE__, __LINE__);
+    }
+ 
 }
 
 static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
@@ -335,8 +347,28 @@ static void gqq_config_finalize(GObject *obj)
     db_close(priv -> db_con);
 }
 
-gint gqq_config_load(GQQConfig *cfg, GString *qqnum)
+gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
 {
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+    QQInfo *info = priv -> info; 
+    db_get_categories(priv -> db_con, qqnum, info);
+    db_get_buddies(priv -> db_con, qqnum, info);
+    gint i;
+    QQBuddy *me;
+    for(i = 0; i < info -> buddies -> len; ++i){
+        me = g_ptr_array_index(info -> buddies, i);
+        if(me == NULL){
+            continue;
+        }
+        if(g_strcmp0(qqnum, me -> qqnumber -> str) == 0){
+            qq_buddy_copy(me, info -> me);
+            qq_buddy_set(info -> me, "qqnumber", priv -> qqnum -> str);
+            qq_buddy_set(info -> me, "uin", priv -> qqnum -> str);
+            break;
+        }
+    }
+    db_get_groups(priv -> db_con, qqnum, info);
     return 0;
 }
 
@@ -364,6 +396,8 @@ gint gqq_config_save(GQQConfig *cfg)
         }
         db_buddy_save(priv -> db_con, priv -> qqnum -> str, bdy);
     }
+    qq_buddy_set(info -> me, "cate_index", -1);
+    db_buddy_save(priv -> db_con, priv -> qqnum -> str, info -> me);
 
     QQGroup *grp;
     for(i = 0; i < info -> groups -> len; ++i){

@@ -25,7 +25,11 @@
 #include <glib/gprintf.h>
 #include <stdlib.h>
 
-static gint get_qq_number(QQInfo *info, const gchar *uin, gchar **num, GError **err)
+//
+// Get the qq (group) number.
+// The result is put into num.
+//
+static gint get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
@@ -91,7 +95,7 @@ static gint get_qq_number(QQInfo *info, const gchar *uin, gchar **num, GError **
     json_t *val = json_find_first_label_all(json, "account");
     if(val != NULL){
         if(num != NULL){
-            *num = g_strdup(val -> child -> text);
+            g_stpcpy(num, val -> child -> text);
         }
         g_debug("qq number: %s (%s, %d)", val -> child -> text
                                                 , __FILE__, __LINE__);
@@ -112,13 +116,12 @@ gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err)
         return PARAMETER_ERR;
     }
     
-    gchar *num = NULL;
-    gint retcode = get_qq_number(info, bdy -> uin -> str, &num, err);
+    gchar num[100];
+    gint retcode = get_qq_number(info, bdy -> uin -> str, num, err);
     if(retcode != NO_ERR){
         return retcode;
     }
     qq_buddy_set(bdy, "qqnumber", num);
-    g_free(num);
     return NO_ERR;
 }
 
@@ -618,6 +621,55 @@ error:
     return ret_code;
 }
 
+typedef struct{
+    QQInfo *info;
+    gint mt;
+    gint id;
+}ThreadFuncPar;
+
+static gpointer get_qq_number_thread_func(gpointer data)
+{
+    ThreadFuncPar *par = data;
+    QQInfo *info = par -> info;
+    gint mt = par -> mt;
+    gint id = par -> id;
+    g_slice_free(ThreadFuncPar, par);
+
+    gint i;
+    for(i = id; i < info -> buddies -> len; i += mt){
+        qq_get_qq_number(info, g_ptr_array_index(info -> buddies, i), NULL);
+    }
+    return NULL;
+}
+
+//
+// Start mt threads to get qq number
+//
+static void get_qq_number_mt(QQInfo *info, gint mt)
+{
+    GThread **threads = g_malloc(sizeof(GThread*) * mt);
+    if(threads == NULL){
+        g_warning("Create threads array failes. (%s, %d)", __FILE__, __LINE__);
+        return;
+    }
+    gint i;
+    GError *err = NULL;
+    ThreadFuncPar *par = NULL;
+    for(i = 0; i < mt; ++i){
+        par = g_slice_new0(ThreadFuncPar);
+        par -> info = info;
+        par -> mt = mt;
+        par -> id = i;
+        threads[i] = g_thread_create(get_qq_number_thread_func, par, TRUE, &err);
+        if(threads[i] == NULL){
+            g_error_free(err);
+        }
+    }
+
+    for(i = 0; i < mt; ++i){
+        g_thread_join(threads[i]);
+    }
+}
 
 gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
 {
@@ -626,7 +678,9 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
         return -1;
     }
 
+
     gint ret_code = 0;
+    gint i;
     gchar params[300];
     g_debug("Get all buddies.(%s, %d)", __FILE__, __LINE__);
 
@@ -689,6 +743,17 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
         goto error;
     }
     
+    QQBuddy *bdy = NULL;
+    QQCategory *cate = NULL;
+
+    //Free the old ones
+    for(i = 0; i < info -> categories -> len; ++i){
+        qq_category_free(g_ptr_array_index(info -> categories, i));
+    }
+    if(info -> categories -> len > 0){
+        g_ptr_array_remove_range(info -> categories, 0, info -> categories -> len);
+    }
+
     json_t *val;
     val = json_find_first_label_all(json, "result");
     if(val != NULL){
@@ -704,7 +769,6 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
         GString *sn;
         gint ii;
         gchar *endptr;
-        QQCategory *cate;
         for(cur = val -> child; cur != NULL; cur = cur -> next){
             index = json_find_first_label_all(cur, "index");
             name = json_find_first_label_all(cur, "name");
@@ -736,12 +800,19 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
     /*
      * qq buddies' info
      */
+    for(i = 0; i < info -> buddies -> len; ++i){
+        qq_buddy_free(g_ptr_array_index(info -> buddies, i));
+    }
+    if(info -> buddies -> len > 0){
+        g_ptr_array_remove_range(info -> buddies, 0, info -> buddies -> len);
+    }
+
     val = json_find_first_label_all(json, "info");
     if(val != NULL){
         val = val -> child;
         const gchar *uin = NULL, *nick = NULL, *face = NULL, *flag = NULL;
         json_t *cur = NULL, *tmp = NULL;
-        GString *ns;
+        GString *ns  = g_string_new(NULL);
         for(cur = val -> child; cur != NULL; cur = cur -> next){
             tmp = json_find_first_label(cur, "uin");
             if(tmp != NULL){
@@ -759,28 +830,28 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
             if(tmp != NULL){
                 flag = tmp -> child -> text;
             }
-            ns = g_string_new(NULL);
+            g_string_truncate(ns, 0);
             ucs4toutf8(ns, nick);
             g_debug("uin:%s nick:%s face:%s flag:%s (%s, %d)"
                                     , uin, ns -> str, face, flag
                                     , __FILE__, __LINE__);
 
-            QQBuddy *buddy = NULL;
-            buddy = qq_info_lookup_buddy_by_uin(info, uin);
-            if(buddy == NULL){
-                buddy = qq_buddy_new();    
-                g_ptr_array_add(info -> buddies, buddy);
-            }
-            qq_buddy_set(buddy, "uin", uin);
-            qq_buddy_set(buddy, "nick", ns -> str);
-            qq_buddy_set(buddy, "face", face);
-            qq_buddy_set(buddy, "flag", flag);
-            g_string_free(ns, TRUE);
+            bdy = qq_buddy_new();    
+            qq_buddy_set(bdy, "uin", uin);
+            qq_buddy_set(bdy, "nick", ns -> str);
+            qq_buddy_set(bdy, "face", face);
+            qq_buddy_set(bdy, "flag", flag);
 
-            //Get buddy's details..
-            qq_get_buddy_info(info, buddy, err);
+            g_ptr_array_add(info -> buddies, bdy);
         }
+        g_string_free(ns, TRUE);
     }
+
+    //
+    // Start 10 threads to get qq number
+    //
+    get_qq_number_mt(info, 10);
+
     /*
      * qq buddies' marknames
      */
@@ -798,17 +869,23 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
             if(tmp != NULL){
                 markname = tmp -> child -> text;
             }
-            QQBuddy *tmpb;
-            tmpb = qq_info_lookup_buddy_by_uin(info, uin);
-            if(tmpb != NULL){
+            for(i = 0; i < info -> buddies -> len; ++i){
+                bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
+                if(bdy == NULL){
+                    continue;
+                }
+                if(g_strcmp0(bdy -> uin -> str, uin) == 0){
+                    break;
+                }
+            }
+            if(bdy != NULL){
                 /*
                  * Find the buddy
                  */
-                g_string_truncate(tmpb -> markname, 0);
-                ucs4toutf8(tmpb -> markname, markname);
-                g_debug("uin:%s markname:%s (%s, %d)"
-                            , uin, tmpb -> markname -> str
-                            , __FILE__, __LINE__);
+                g_string_truncate(bdy -> markname, 0);
+                ucs4toutf8(bdy -> markname, markname);
+                g_debug("uin:%s markname:%s (%s, %d)", uin
+                            , bdy -> markname -> str, __FILE__, __LINE__);
             }
         }
     }
@@ -818,7 +895,7 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
     val = json_find_first_label_all(json, "friends");
     if(val != NULL){
         val = val -> child;
-        const gchar *uin = NULL, *cate = NULL;
+        const gchar *uin = NULL, *cateidx = NULL;
         json_t *cur = NULL, *tmp = NULL;
         for(cur = val -> child; cur != NULL; cur = cur -> next){
             tmp = json_find_first_label(cur, "uin");
@@ -827,29 +904,29 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
             }
             tmp = json_find_first_label(cur, "categories");
             if(tmp != NULL){
-                cate = tmp -> child -> text;
-                g_debug("uin %s Category %s(%s, %d)", uin, cate
+                cateidx = tmp -> child -> text;
+                g_debug("uin %s Category %s(%s, %d)", uin, cateidx
                                     , __FILE__, __LINE__);
             }
 
-            QQCategory *qc = NULL;
-            gint idx = 0, i = 0;
+            gint idx = 0;
             char *endptr = NULL;
-            QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
+            bdy = qq_info_lookup_buddy_by_uin(info, uin);
             if(bdy != NULL){
-                idx = strtol(cate, &endptr, 10);
-                if(endptr == cate){
+                idx = strtol(cateidx, &endptr, 10);
+                if(endptr == cateidx){
                     g_warning("strtol error. %s:%d (%s, %d)"
-                                , cate, idx, __FILE__, __LINE__);
+                                , cateidx, idx, __FILE__, __LINE__);
                 }
                 for(i = 0; i < info -> categories -> len; ++i){
-                    qc = info -> categories -> pdata[i];
-                    if(qc != NULL && qc -> index == idx){
+                    cate = (QQCategory*)g_ptr_array_index(
+                                                info -> categories, i); 
+                    if(cate != NULL && cate -> index == idx){
                         //find the category
                         g_debug("Buddy %s in category %d(%s, %d)", uin
                                             , idx, __FILE__, __LINE__);
-                        g_ptr_array_add(qc -> members, bdy);
-                        qq_buddy_set(bdy, "cate", qc);
+                        g_ptr_array_add(cate -> members, bdy);
+                        qq_buddy_set(bdy, "cate_index", cateidx);
                         break;
                     }
                 }
@@ -935,6 +1012,15 @@ gint qq_get_groups(QQInfo *info, GError **err)
         goto error;
     }
     
+    QQGroup *grp = NULL;
+    gint i;
+    for(i = 0; i < info -> groups -> len; ++i){
+        qq_group_free(g_ptr_array_index(info -> groups, i));
+    }
+    if(info -> groups -> len > 0){
+        g_ptr_array_remove_range(info -> groups, 0, info -> groups -> len);
+    }
+
     /*
      * gnamelist
      */
@@ -944,6 +1030,8 @@ gint qq_get_groups(QQInfo *info, GError **err)
         val = val -> child;
         json_t *cur = NULL, *tmp = NULL;
         gchar *gid = NULL, *code = NULL, *flag = NULL, *name = NULL;
+        gchar gnumber[100];
+        GString *tmps = g_string_new(NULL);
         for(cur = val -> child; cur != NULL; cur = cur -> next){
             tmp = json_find_first_label(cur, "gid");
             if(tmp != NULL){
@@ -961,19 +1049,23 @@ gint qq_get_groups(QQInfo *info, GError **err)
             if(tmp != NULL){
                 name = tmp -> child -> text;
             }
-            QQGroup *grp = qq_group_new();
+            grp = qq_group_new();
             qq_group_set(grp, "gid", gid);
             qq_group_set(grp, "code", code);
             qq_group_set(grp, "flag", flag);
-            GString *tmps = g_string_new(NULL);
+            g_string_truncate(tmps, 0);
             ucs4toutf8(tmps, name);
             g_debug("gid: %s, code %s, flag %s, name %s (%s, %d)"
-                    , gid, code, flag, tmps -> str
-                    , __FILE__, __LINE__);
+                                        , gid, code, flag, tmps -> str
+                                        , __FILE__, __LINE__);
             qq_group_set(grp, "name", tmps -> str);
-            g_string_free(tmps, TRUE);
+
+            get_qq_number(info, gid, gnumber, NULL);
+            qq_group_set(grp, "gnumber", gnumber);
+
             g_ptr_array_add(info -> groups, grp);
         }
+        g_string_free(tmps, TRUE);
     }else{
         g_warning("No gnamelist find. (%s, %d)", __FILE__, __LINE__);
     }
@@ -995,15 +1087,12 @@ gint qq_get_groups(QQInfo *info, GError **err)
             if(tmp != NULL){
                 mask = tmp -> child -> text;
             }
-            gint i;
-            QQGroup *tmpg;
             for(i = 0; i < info -> groups -> len; ++i){
-                tmpg = (QQGroup *)info -> groups -> pdata[i];
-                if(g_strstr_len(tmpg -> gid -> str, -1, gid)
-                        != NULL){
+                grp = (QQGroup *)g_ptr_array_index(info -> groups, i);
+                if(g_strstr_len(grp -> gid -> str, -1, gid) != NULL){
                     g_debug("Find group %s for mask %s(%s, %d)", gid, mask
                                             , __FILE__, __LINE__);
-                    qq_group_set(tmpg, "mask", mask);
+                    qq_group_set(grp, "mask", mask);
                 }
             }
         }
@@ -1019,6 +1108,7 @@ gint qq_get_groups(QQInfo *info, GError **err)
         val = val -> child;
         json_t *cur = NULL, *tmp = NULL;
         gchar *gid = NULL, *mark = NULL;
+        GString *tmps = g_string_new(NULL);
         for(cur = val -> child; cur != NULL; cur = cur -> next){
             tmp = json_find_first_label(cur, "gid");
             if(tmp != NULL){
@@ -1028,22 +1118,19 @@ gint qq_get_groups(QQInfo *info, GError **err)
             if(tmp != NULL){
                 mark = tmp -> child -> text;
             }
-            gint i;
-            QQGroup *tmpg;
-            GString *tmps = g_string_new(NULL);
             for(i = 0; i < info -> groups -> len; ++i){
-                tmpg = (QQGroup *)info -> groups -> pdata[i];
-                if(g_strstr_len(tmpg -> gid -> str, -1, gid)
+                grp = (QQGroup *)g_ptr_array_index(info -> groups, i);
+                if(g_strstr_len(grp -> gid -> str, -1, gid)
                         != NULL){
                     g_string_truncate(tmps, 0);
                     ucs4toutf8(tmps, mark);
                     g_debug("Find group %s for mark %s(%s, %d)", gid, tmps -> str
                             , __FILE__, __LINE__);
-                    qq_group_set(tmpg, "mark", tmps -> str);
+                    qq_group_set(grp, "mark", tmps -> str);
                 }
             }
-            g_string_free(tmps, TRUE);
         }
+        g_string_free(tmps, TRUE);
     }else{
         g_warning("No gmarklist find. (%s, %d)", __FILE__, __LINE__);
     }
@@ -1112,10 +1199,9 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
         return -1;
     }
-    gchar *grpnum;
-    if(get_qq_number(info, grp -> code -> str, &grpnum, NULL) == NO_ERR){
+    gchar grpnum[100];
+    if(get_qq_number(info, grp -> code -> str, grpnum, NULL) == NO_ERR){
         qq_group_set(grp, "gnumber", grpnum);
-        g_free(grpnum);
     }else{
         g_warning("Get group number failed... (%s, %d)", __FILE__, __LINE__);
     }
@@ -1223,13 +1309,13 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
     val = json_find_first_label_all(json, "members");
     if(val != NULL){
         val = val -> child -> child;
-        gchar *uin, *flag, *num;
+        gchar *uin, *flag, num[100];
         QQGMember *gmem;
         for(;val != NULL; val = val -> next){
             FIND_VAL(val, "muin", uin);
             FIND_VAL(val, "mflag", flag);
             // get qq number
-            get_qq_number(info, uin, &num, NULL);
+            get_qq_number(info, uin, num, NULL);
             gmem = qq_gmember_new();
             qq_gmember_set(gmem, "uin", uin);
             qq_gmember_set(gmem, "flag", flag);
@@ -1237,7 +1323,6 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
             g_ptr_array_add(grp -> members, gmem);
             g_debug("Group memeber. uin %s, flag %s , num %s(%s, %d)"
                             , uin, flag, num, __FILE__, __LINE__);
-            g_free(num);
         }
     }else{
         g_warning("No group member found. %s (%s, %d)", rps -> msg -> str
@@ -1345,4 +1430,37 @@ error:
     request_del(req);
     response_del(rps);
     return ret_code;
+}
+gint qq_update_details(QQInfo *info, GError **err)
+{
+    if(info == NULL){
+        create_error_msg(err, PARAMETER_ERR, "info == NULL");
+        return PARAMETER_ERR;
+    }
+    
+    qq_get_buddy_info(info, info -> me, NULL);
+    qq_buddy_set(info -> me, "qqnumber", info -> me -> uin -> str);
+    
+    gint i;
+    QQBuddy *bdy = NULL;
+    QQGroup *grp = NULL;
+
+    for(i = 0; i < info -> buddies -> len; ++i){
+        bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
+        if(bdy == NULL){
+            continue;
+        }
+        qq_get_buddy_info(info, bdy, NULL);
+        qq_get_face_img(info, bdy, NULL);
+    }
+    qq_get_face_img(info, info -> me, NULL);
+
+    for(i = 0; i < info -> groups -> len; ++i){
+        grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
+        if(grp == NULL){
+            continue;
+        }
+        qq_get_group_info(info, grp, NULL);
+    }
+    return NO_ERR;
 }

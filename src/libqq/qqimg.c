@@ -130,12 +130,13 @@ gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err)
     qq_buddy_set(bdy, "faceimgfile", path);
     g_string_append(bdy -> faceimgfile, "/");
     g_string_append(bdy -> faceimgfile, bdy -> qqnumber -> str);
+    g_string_append(bdy -> faceimgfile, ".bdy");
 
     g_debug("Save %s's face image in %s (%s, %d)", bdy -> uin -> str
                                     , bdy -> faceimgfile -> str
                                     , __FILE__, __LINE__);
 
     return save_img_to_file(fimg -> data -> str, fimg -> data -> len
-                                        , NULL, path, bdy -> qqnumber -> str);        
+                                        , "bdy", path, bdy -> qqnumber -> str);        
 }
 

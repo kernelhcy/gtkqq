@@ -58,8 +58,12 @@ gint db_config_save(sqlite3 *db, const gchar *owner
 //
 // Store buddy, group, category into db
 //
+void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy);
 gint db_buddy_save(sqlite3 *db, const gchar *owner, QQBuddy *bdy);
+void db_group_save_sql_append(GString *sql, const gchar *owner, QQGroup *grp);
 gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp);
+void db_category_save_sql_append(GString *sql, const gchar *owner
+                                        , QQCategory *cate);
 gint db_category_save(sqlite3 *db, const gchar *owner, QQCategory *cate);
 
 //
@@ -71,8 +75,12 @@ gint db_config_get(sqlite3 *db, const gchar *owner
 // Get all the buddies, groups and categories.
 // Result is stored in info
 //
-gint db_buddy_get(sqlite3 *db, const gchar *owner, QQInfo *info);
-gint db_group_get(sqlite3 *db, const gchar *owner, QQInfo *info);
-gint db_category_get(sqlite3 *db, const gchar *owner, QQInfo *info);
+gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info);
+gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info);
+gint db_get_categories(sqlite3 *db, const gchar *owner, QQInfo *info);
 
+//
+// Execute the sql
+//
+gint db_exec_sql(sqlite3 *db, const gchar *sql);
 #endif
