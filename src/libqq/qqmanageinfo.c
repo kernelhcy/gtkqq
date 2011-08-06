@@ -29,7 +29,7 @@
 // Get the qq (group) number.
 // The result is put into num.
 //
-static gint get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
+gint qq_get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
 {
     if(info -> vfwebqq == NULL || info -> vfwebqq -> len <= 0){
         g_warning("Need vfwebqq!!(%s, %d)", __FILE__, __LINE__);
@@ -108,21 +108,6 @@ error:
     request_del(req);
     response_del(rps);
     return ret_code;
-}
-
-gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err)
-{
-    if(info == NULL || bdy == NULL){
-        return PARAMETER_ERR;
-    }
-    
-    gchar num[100];
-    gint retcode = get_qq_number(info, bdy -> uin -> str, num, err);
-    if(retcode != NO_ERR){
-        return retcode;
-    }
-    qq_buddy_set(bdy, "qqnumber", num);
-    return NO_ERR;
 }
 
 static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
@@ -612,63 +597,15 @@ static gint do_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
     
 
     ret_code = do_get_single_long_nick(info, bdy, err);
-    ret_code = qq_get_qq_number(info, bdy, err);
+    gchar qqnum[100];
+    ret_code = qq_get_qq_number(info, bdy -> uin -> str, qqnum, err);
+    qq_buddy_set(bdy, "qqnumber", qqnum);
 
 error:
     json_free_value(&json);
     request_del(req);
     response_del(rps);
     return ret_code;
-}
-
-typedef struct{
-    QQInfo *info;
-    gint mt;
-    gint id;
-}ThreadFuncPar;
-
-static gpointer get_qq_number_thread_func(gpointer data)
-{
-    ThreadFuncPar *par = data;
-    QQInfo *info = par -> info;
-    gint mt = par -> mt;
-    gint id = par -> id;
-    g_slice_free(ThreadFuncPar, par);
-
-    gint i;
-    for(i = id; i < info -> buddies -> len; i += mt){
-        qq_get_qq_number(info, g_ptr_array_index(info -> buddies, i), NULL);
-    }
-    return NULL;
-}
-
-//
-// Start mt threads to get qq number
-//
-static void get_qq_number_mt(QQInfo *info, gint mt)
-{
-    GThread **threads = g_malloc(sizeof(GThread*) * mt);
-    if(threads == NULL){
-        g_warning("Create threads array failes. (%s, %d)", __FILE__, __LINE__);
-        return;
-    }
-    gint i;
-    GError *err = NULL;
-    ThreadFuncPar *par = NULL;
-    for(i = 0; i < mt; ++i){
-        par = g_slice_new0(ThreadFuncPar);
-        par -> info = info;
-        par -> mt = mt;
-        par -> id = i;
-        threads[i] = g_thread_create(get_qq_number_thread_func, par, TRUE, &err);
-        if(threads[i] == NULL){
-            g_error_free(err);
-        }
-    }
-
-    for(i = 0; i < mt; ++i){
-        g_thread_join(threads[i]);
-    }
 }
 
 gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
@@ -846,12 +783,6 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
         }
         g_string_free(ns, TRUE);
     }
-
-    //
-    // Start 10 threads to get qq number
-    //
-    get_qq_number_mt(info, 10);
-
     /*
      * qq buddies' marknames
      */
@@ -1030,7 +961,6 @@ gint qq_get_groups(QQInfo *info, GError **err)
         val = val -> child;
         json_t *cur = NULL, *tmp = NULL;
         gchar *gid = NULL, *code = NULL, *flag = NULL, *name = NULL;
-        gchar gnumber[100];
         GString *tmps = g_string_new(NULL);
         for(cur = val -> child; cur != NULL; cur = cur -> next){
             tmp = json_find_first_label(cur, "gid");
@@ -1059,9 +989,6 @@ gint qq_get_groups(QQInfo *info, GError **err)
                                         , gid, code, flag, tmps -> str
                                         , __FILE__, __LINE__);
             qq_group_set(grp, "name", tmps -> str);
-
-            get_qq_number(info, gid, gnumber, NULL);
-            qq_group_set(grp, "gnumber", gnumber);
 
             g_ptr_array_add(info -> groups, grp);
         }
@@ -1200,7 +1127,7 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
         return -1;
     }
     gchar grpnum[100];
-    if(get_qq_number(info, grp -> code -> str, grpnum, NULL) == NO_ERR){
+    if(qq_get_qq_number(info, grp -> code -> str, grpnum, NULL) == NO_ERR){
         qq_group_set(grp, "gnumber", grpnum);
     }else{
         g_warning("Get group number failed... (%s, %d)", __FILE__, __LINE__);
@@ -1315,7 +1242,7 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
             FIND_VAL(val, "muin", uin);
             FIND_VAL(val, "mflag", flag);
             // get qq number
-            get_qq_number(info, uin, num, NULL);
+            qq_get_qq_number(info, uin, num, NULL);
             gmem = qq_gmember_new();
             qq_gmember_set(gmem, "uin", uin);
             qq_gmember_set(gmem, "flag", flag);
@@ -1451,9 +1378,7 @@ gint qq_update_details(QQInfo *info, GError **err)
             continue;
         }
         qq_get_buddy_info(info, bdy, NULL);
-        qq_get_face_img(info, bdy, NULL);
     }
-    qq_get_face_img(info, info -> me, NULL);
 
     for(i = 0; i < info -> groups -> len; ++i){
         grp = (QQGroup*)g_ptr_array_index(info -> groups, i);

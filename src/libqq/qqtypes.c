@@ -536,7 +536,6 @@ QQBuddy* qq_buddy_new()
     NEW_STR(personal);
     NEW_STR(homepage);
     NEW_STR(lnick);
-    NEW_STR(faceimgfile);
 #undef NEW_STR
 
     return bd;
@@ -567,10 +566,7 @@ void qq_buddy_free(QQBuddy *bd)
     FREE_STR(personal);
     FREE_STR(homepage);
     FREE_STR(lnick);
-    FREE_STR(faceimgfile);
 #undef FREE_STR
-
-    qq_faceimg_free(bd -> faceimg);
 
     g_slice_free(QQBuddy, bd);
 }
@@ -625,11 +621,6 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...)
         SET_STR(personal);
     }else if(g_strcmp0(name, "lnick") == 0){
         SET_STR(lnick);
-    }else if(g_strcmp0(name, "faceimgfile") == 0){
-        SET_STR(faceimgfile);
-    }else if(g_strcmp0(name, "faceimg") == 0){
-        qq_faceimg_free(bdy -> faceimg);
-        bdy -> faceimg = va_arg(ap, QQFaceImg *);
     }else if(g_strcmp0(name, "vip_info") == 0){
         bdy -> vip_info = va_arg(ap, gint);
     }else if(g_strcmp0(name, "blood") == 0){
@@ -680,7 +671,6 @@ void qq_buddy_copy(QQBuddy *from, QQBuddy *to)
     COPY_STR(personal);
     COPY_STR(homepage);
     COPY_STR(lnick);
-    COPY_STR(faceimgfile);
 #undef COPY_STR
 #define COPY_INT(x) to -> x = from -> x
     COPY_INT(vip_info);
@@ -730,7 +720,6 @@ void qq_gmember_free(QQGMember *m)
     g_string_free(m -> card, TRUE);
     g_string_free(m -> client_type, TRUE);
 
-    qq_faceimg_free(m -> faceimg);
     g_slice_free(QQGMember, m);
 }
 
@@ -762,9 +751,6 @@ void qq_gmember_set(QQGMember *m, const gchar *name, ...)
         SET_VALUE_STR(card);
     }else if(g_strcmp0("client_type", name) == 0){
         SET_VALUE_STR(client_type);
-    }else if(g_strcmp0("faceimg", name) == 0){
-        QQFaceImg *img = va_arg(ap, QQFaceImg*);
-        m -> faceimg = img;
     }else{
         g_warning("Unknown member %s in QQGMember. (%s, %d)", name
                         , __FILE__, __LINE__);
@@ -950,6 +936,7 @@ QQFaceImg* qq_faceimg_new()
     img -> data = g_string_new(NULL);
     img -> type = g_string_new(NULL);
     img -> uin = g_string_new(NULL);
+    img -> num = g_string_new(NULL);
     return img;
 }
 void qq_faceimg_free(QQFaceImg *img)
@@ -961,6 +948,7 @@ void qq_faceimg_free(QQFaceImg *img)
     g_string_free(img -> data, TRUE);
     g_string_free(img -> type, TRUE);
     g_string_free(img -> uin, TRUE);
+    g_string_free(img -> num, TRUE);
 
     g_slice_free(QQFaceImg, img);
 }
@@ -980,6 +968,9 @@ void qq_faceimg_set(QQFaceImg *img, const gchar *key, GString *val)
     }else if(g_strcmp0("uin", key) == 0){
         g_string_truncate(img -> uin, 0);
         g_string_append_len(img -> uin, val -> str, val -> len);
+    }else if(g_strcmp0("num", key) == 0){
+        g_string_truncate(img -> num, 0);
+        g_string_append_len(img -> num, val -> str, val -> len);
     }else{
         g_warning("QQFaceImg has no member named %s. (%s, %d)"
                                 , key, __FILE__, __LINE__);

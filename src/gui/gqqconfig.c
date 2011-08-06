@@ -385,38 +385,6 @@ gint gqq_config_save(GQQConfig *cfg)
 {
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     cfg, gqq_config_get_type(), GQQConfigPriv);
-    QQInfo *info = priv -> info;
-    gint i;
-
-    QQBuddy *bdy;
-    for(i = 0; i < info -> buddies -> len; ++i){
-        bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
-        if(bdy == NULL){
-            continue;
-        }
-        db_buddy_save(priv -> db_con, priv -> qqnum -> str, bdy);
-    }
-    qq_buddy_set(info -> me, "cate_index", -1);
-    db_buddy_save(priv -> db_con, priv -> qqnum -> str, info -> me);
-
-    QQGroup *grp;
-    for(i = 0; i < info -> groups -> len; ++i){
-        grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
-        if(grp == NULL){
-            continue;
-        }
-        db_group_save(priv -> db_con, priv -> qqnum -> str, grp);
-    }
-
-    QQCategory *cate;
-    for(i = 0; i < info -> categories -> len; ++i){
-        cate = (QQCategory*)g_ptr_array_index(info -> categories, i);
-        if(cate == NULL){
-            continue;
-        }
-        db_category_save(priv -> db_con, priv -> qqnum -> str, cate);
-    }
-    
     //Save configuration items
     g_hash_table_foreach(priv -> ht, save_ht, cfg);
     return 0;

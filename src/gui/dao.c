@@ -20,7 +20,7 @@ static const gchar table_sql[] =
         "   passwd, status, last);"
         "create table if not exists buddies("
         "   qqnumber primary key,"
-        "   owner,vip_info, nick, markname, faceimgfile, "
+        "   owner,vip_info, nick, markname, "
         "   country, province, city, gender, face, flag, birthday_y, "
         "   birthday_m, birthday_d, blood, shengxiao, constel, phone,"
         "   mobile, email, occupation, college, homepage, personal, lnick,"
@@ -286,7 +286,7 @@ void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy)
     }
     g_string_append(sql, "insert or replace into buddies ("
                         "owner, qqnumber, vip_info, nick, markname,"
-                        "faceimgfile, country, province, city, gender,"
+                        "country, province, city, gender,"
                         "face, flag, birthday_y, birthday_m, birthday_d,"
                         "blood, shengxiao, constel, phone, mobile, email,"
                         "occupation, college, homepage, personal, lnick, "
@@ -296,7 +296,6 @@ void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy)
     g_string_append_printf(sql, "%d,", bdy -> vip_info);
     g_string_append_printf(sql, "'%s',", bdy -> nick -> str);
     g_string_append_printf(sql, "'%s',", bdy -> markname -> str);
-    g_string_append_printf(sql, "'%s',", bdy -> faceimgfile -> str);
     g_string_append_printf(sql, "'%s',", bdy -> country -> str);
     g_string_append_printf(sql, "'%s',", bdy -> province -> str);
     g_string_append_printf(sql, "'%s',", bdy -> city -> str);
@@ -478,7 +477,7 @@ gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info)
     GString *sql = g_string_sized_new(500);
     g_string_append(sql, "select "
                         "qqnumber, vip_info, nick, markname,"
-                        "faceimgfile, country, province, city, gender,"
+                        "country, province, city, gender,"
                         "face, flag,"
                         "blood, shengxiao, constel, phone, mobile, email,"
                         "occupation, college, homepage, personal, lnick, "
@@ -509,7 +508,6 @@ gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info)
             qq_buddy_set(bdy, "vip_info", sqlite3_column_int(stmt, 1));
             qq_buddy_set(bdy, "nick", (const gchar *)sqlite3_column_text(stmt, 2));
             qq_buddy_set(bdy, "markname", (const gchar *)sqlite3_column_text(stmt, 3));
-            qq_buddy_set(bdy, "faceimgfile", (const gchar *)sqlite3_column_text(stmt, 4));
             qq_buddy_set(bdy, "country", (const gchar *)sqlite3_column_text(stmt, 5));
             qq_buddy_set(bdy, "province", (const gchar *)sqlite3_column_text(stmt, 6));
             qq_buddy_set(bdy, "city", (const gchar *)sqlite3_column_text(stmt, 7));

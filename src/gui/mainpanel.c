@@ -257,6 +257,9 @@ void qq_mainpanel_update(QQMainPanel *panel)
     gtk_label_set_text(GTK_LABEL(panel -> longnick)
                             , info -> me -> lnick -> str);
 
+    qq_statusbutton_set_status_string(panel -> status_btn
+                            , info -> me -> status -> str);
+    
     //update the contact tree
     gtk_tree_view_set_model(GTK_TREE_VIEW(panel -> contact_tree)
                             , create_contact_model(panel));
@@ -401,7 +404,7 @@ static void update_my_face_image(QQMainPanel *panel)
     
     GError *err = NULL;
     gchar buf[500];
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s.bdy", info -> me -> qqnumber -> str);
+    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", info -> me -> qqnumber -> str);
     GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, 48, 48, &err);
     if(pb == NULL){
         g_debug("Load %s's face image error. use default. %s (%s, %d)"
@@ -435,7 +438,7 @@ static void update_face_image(QQMainPanel *panel, const gchar *uin)
     }
     gchar buf[500];
     // test if we have the image file;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s.bdy", bdy -> qqnumber -> str);
+    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
 
     GtkTreeModel *model;
     QQTreeMap *map;
@@ -585,5 +588,3 @@ static void tree_view_setup(GtkWidget *view)
 
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
 }
-
-

@@ -31,27 +31,25 @@ static GString* get_image_type(const gchar *ct)
 }
 
 /*
- * Do get the face image from the server.
+ * get the face image from the server.
  */
-static gint do_get_face_img(QQInfo *info, const gchar *uin, QQFaceImg **fimg
-                                        ,GError **err)
+gint qq_get_face_img(QQInfo *info, QQFaceImg *img, GError **err)
 {
-    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
-    if(bdy == NULL){
-        g_warning("Can Not find buddy of %s. (%s, %d)"
-                                    , uin, __FILE__, __LINE__);
+    if(info == NULL || img == NULL){
         return PARAMETER_ERR;
     }
     gint ret_code = NO_ERR;
     gchar params[300];
-    g_debug("Get face image of %s!(%s, %d)", uin, __FILE__, __LINE__);
+    g_debug("Get face image of %s!(%s, %d)", img -> uin -> str
+                                , __FILE__, __LINE__);
 
     Request *req = request_new();
     Response *rps = NULL;
     request_set_method(req, "GET");
     request_set_version(req, "HTTP/1.1");
     g_snprintf(params, 300, FIMGPATH"?cache=0&type=1&fid=0&uin=%s&"
-            "vfwebqq=%s", uin, info -> vfwebqq -> str);
+                            "vfwebqq=%s", img -> uin -> str
+                            , info -> vfwebqq -> str);
     request_set_uri(req, params);
     request_set_default_headers(req);
     request_add_header(req, "Host", FIMGHOST);
@@ -82,61 +80,32 @@ static gint do_get_face_img(QQInfo *info, const gchar *uin, QQFaceImg **fimg
         goto error;
     }
 
-    QQFaceImg *img = qq_faceimg_new();
-    img -> uin = g_string_new(uin);
-    img -> data = g_string_new_len(rps -> msg -> str, rps -> msg -> len);
-    img -> type = get_image_type(
-                        response_get_header_chars(rps, "Content-Type"));
-    *fimg = img;
+    qq_faceimg_set(img, "data", rps -> msg);
+    qq_faceimg_set(img, "type", get_image_type(
+                        response_get_header_chars(rps
+                                    , "Content-Type")));
 error:
     request_del(req);
     response_del(rps);
     return ret_code;
 }
 
-gint qq_get_face_img(QQInfo *info, QQBuddy *bdy, GError **err)
-{
-    if(info == NULL){
-        return -1;
-    }
-    QQFaceImg *img = NULL;
-
-    gint retcode = do_get_face_img(info, bdy -> uin -> str, &img, err);
-    if(retcode == NO_ERR){
-        qq_buddy_set(bdy, "faceimg", img);        
-    }else{
-        return retcode;
-    }
-    return NO_ERR;
-}
 
 /*
  * in qqutils.c
  */
-extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
-                const gchar *path, const gchar *fname);
+extern gint save_img_to_file(const gchar *data, gint len, const gchar *path);
 //
 //save the face image to file
 //the file name is uin
 //
-gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err)
+gint qq_save_face_img(QQFaceImg *img, const gchar *path, GError **err)
 {
-    if(bdy == NULL || path == NULL){
-        g_warning("bdy == NULL || path == NULL (%s, %d)"
-                , __FILE__, __LINE__);
-        return -1;
+    if(img == NULL || path == NULL){
+        g_warning("img == NULL || path == NULL (%s, %d)"
+                            , __FILE__, __LINE__);
+        return PARAMETER_ERR;
     }
-    QQFaceImg *fimg = bdy -> faceimg;
-    qq_buddy_set(bdy, "faceimgfile", path);
-    g_string_append(bdy -> faceimgfile, "/");
-    g_string_append(bdy -> faceimgfile, bdy -> qqnumber -> str);
-    g_string_append(bdy -> faceimgfile, ".bdy");
-
-    g_debug("Save %s's face image in %s (%s, %d)", bdy -> uin -> str
-                                    , bdy -> faceimgfile -> str
-                                    , __FILE__, __LINE__);
-
-    return save_img_to_file(fimg -> data -> str, fimg -> data -> len
-                                        , "bdy", path, bdy -> qqnumber -> str);        
+    return save_img_to_file(img -> data -> str, img -> data -> len, path);
 }
 

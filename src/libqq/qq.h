@@ -94,9 +94,10 @@ gint qq_get_recent_contact(QQInfo *info, GError **err);
 //
 gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
 //
-// Get the qq number of uin
+// Get the qq (group) number of uin
 //
-gint qq_get_qq_number(QQInfo *info, QQBuddy *bdy, GError **err);
+gint qq_get_qq_number(QQInfo *info, const gchar *uin
+                                    , gchar *num, GError **err);
 
 //
 // The callback of the poll fuction.
@@ -131,9 +132,9 @@ gint qq_send_message(QQInfo *info, QQSendMsg *msg, GError **err);
 // The redata of the cb function is QQFaceImg struct which contains
 // the information of the face image.
 //
-gint qq_get_face_img(QQInfo *info, QQBuddy *bdy, GError **err);
+gint qq_get_face_img(QQInfo *info, QQFaceImg *img, GError **err);
 //
 // Save face image to file path
 //
-gint qq_save_face_img(QQBuddy *bdy, const gchar *path, GError **err);
+gint qq_save_face_img(QQFaceImg *img, const gchar *path, GError **err);
 #endif

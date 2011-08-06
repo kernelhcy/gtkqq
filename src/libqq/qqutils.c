@@ -24,22 +24,14 @@ glong get_now_millisecond()
  * Save the image data to file.
  * The file is path/fname.ext.
  */
-gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
-                const gchar *path, const gchar *fname)
+gint save_img_to_file(const gchar *data, gint len, const gchar *path )
 {
     if(data == NULL){
         return -1;
     }
-    gchar fn[500];
-    if(ext == NULL || strlen(ext) == 0){
-        g_sprintf(fn, "%s/%s", path, fname);
-    }else{
-        g_sprintf(fn, "%s/%s.%s", path, fname, ext);
-    }
 
-
-    g_debug("Create image file : %s (%s, %d)", fn, __FILE__, __LINE__);
-    gint fd = creat(fn, S_IRUSR | S_IWUSR);
+    g_debug("Create image file : %s (%s, %d)", path, __FILE__, __LINE__);
+    gint fd = creat(path, S_IRUSR | S_IWUSR);
     if(fd == -1){
         g_warning("Create image data to file error! %s (%s, %d)"
                 , strerror(errno), __FILE__, __LINE__);

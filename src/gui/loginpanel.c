@@ -22,6 +22,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
 
 static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data);
+static void update_face_image(QQInfo *info, QQMainPanel *panel);
 /*
  * The main event loop context of Gtk.
  */
@@ -125,25 +126,6 @@ enum{
     LOGIN_SM_ERR
 };
 
-//
-// Update the details
-//
-static void update_details()
-{
-    gint i;
-    QQBuddy *bdy = NULL;
-    // get the details
-    qq_update_details(info, NULL);
-    for(i = 0; i < info -> buddies -> len; ++i){
-        bdy = g_ptr_array_index(info -> buddies, i);
-        if(bdy == NULL){
-            continue;
-        }
-        qq_save_face_img(bdy, CONFIGDIR"/faces/", NULL);
-    }
-    qq_save_face_img(info -> me, CONFIGDIR"/faces/", NULL);
-}
-
 static void read_verifycode(gpointer p);
 static gint state = LOGIN_SM_ERR;
 static void login_state_machine(gpointer data)
@@ -188,12 +170,14 @@ static void login_state_machine(gpointer data)
             // show main panel
             gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
                                     , 1, panel -> container);
-            // update the details
-            update_details();
-            // update main panel again
+            // update my information
+            qq_get_buddy_info(info, info -> me, NULL);
             gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
                                     , 1, QQ_MAINWINDOW(panel -> container) 
                                                     -> main_panel);
+            update_face_image(info, (QQMainPanel*)QQ_MAINWINDOW(
+                                                    panel -> container) 
+                                                        -> main_panel);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
@@ -454,5 +438,126 @@ const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 {
     return qq_statusbutton_get_status_string(loginpanel -> status_comb);
+}
+
+typedef struct{
+    QQInfo *info;
+    GPtrArray *imgs;
+    gint t_num;
+    gint id;
+}GetFaceThreadPar;
+
+static gpointer get_face_thread_func(gpointer data)
+{
+    GetFaceThreadPar *par = data;
+    GPtrArray *imgs = par -> imgs;
+    gint t_num = par -> t_num;
+    gint id = par -> id;
+    QQInfo *info = par -> info;
+    g_slice_free(GetFaceThreadPar, par);
+    gint i;
+    QQFaceImg *img;
+    gchar path[500];
+
+    for(i = id; i < imgs -> len; i += t_num){
+        img = g_ptr_array_index(imgs, i);
+        qq_get_face_img(info, img, NULL);
+        g_snprintf(path, 500, CONFIGDIR"/faces/%s", img -> num -> str);
+        qq_save_face_img(img, path, NULL);
+    }
+    return NULL;
+}
+
+//
+// Get all the face images
+// Run in get_info_loop.
+//
+static void update_face_image(QQInfo *info, QQMainPanel *panel)
+{
+    if(info == NULL || panel == NULL){
+        return;
+    }
+
+    GPtrArray *fimgs = g_ptr_array_new();
+    gint i, j;
+    QQBuddy *bdy = NULL;
+    QQGroup *grp = NULL;
+    QQGMember *gmem = NULL;
+    QQFaceImg *img = NULL;
+
+    img = qq_faceimg_new(); 
+    qq_faceimg_set(img, "uin", info -> me -> uin);
+    qq_faceimg_set(img, "num", info -> me  -> qqnumber);
+    g_ptr_array_add(fimgs, img);
+    
+    gchar qqnum [100];
+    for(i = 0; i < info -> buddies -> len; ++i){
+        bdy = g_ptr_array_index(info -> buddies, i);
+        if(bdy == NULL){
+            continue;
+        }
+        img = qq_faceimg_new(); 
+        qq_faceimg_set(img, "uin", bdy -> uin);
+
+        //Get qq number
+        qq_get_qq_number(info, bdy -> uin -> str, qqnum, NULL);
+        qq_buddy_set(bdy, "qqnumber", qqnum);
+        qq_faceimg_set(img, "num", bdy -> qqnumber);
+
+        g_ptr_array_add(fimgs, img);
+    }
+
+    for(i = 0; i < info -> groups -> len; ++i){
+        grp = g_ptr_array_index(info -> groups, i);
+        img = qq_faceimg_new();
+        qq_faceimg_set(img, "uin", grp -> code);
+        
+        qq_get_qq_number(info, grp -> code -> str, qqnum, NULL);
+        qq_group_set(grp, "gnumber", qqnum);
+        qq_faceimg_set(img, "num", grp -> gnumber);
+
+        g_ptr_array_add(fimgs, img);
+        for(j = 0; j < grp -> members -> len; ++j){
+            gmem = g_ptr_array_index(grp -> members, j);
+            img = qq_faceimg_new();
+            qq_faceimg_set(img, "uin", gmem -> uin);
+            
+            qq_get_qq_number(info, gmem -> uin -> str, qqnum, NULL);
+            qq_gmember_set(gmem, "qqnumber", qqnum);
+            qq_faceimg_set(img, "num", gmem -> qqnumber);
+
+            g_ptr_array_add(fimgs, img);
+        }
+    }
+
+    gint t_num = 10;
+    GThread **threads = g_malloc(sizeof(GThread*) * t_num);
+    GError *err = NULL;
+    GetFaceThreadPar *par = NULL;
+    for(i = 0; i < t_num; ++i){
+        par = g_slice_new0(GetFaceThreadPar);
+        par -> imgs = fimgs;
+        par -> t_num = t_num;
+        par -> id = i;
+        par -> info = info;
+        threads[i] = g_thread_create(get_face_thread_func, par, TRUE, &err);
+        if(threads[i] == NULL){
+            g_warning("Create thread to get face image error. %s (%s, %d)"
+                                    , err -> message, __FILE__, __LINE__);
+            g_error_free(err);
+        }
+    }
+    for(i = 0; i < t_num; ++i){
+        g_thread_join(threads[i]);
+    }
+
+    for(i = 0; i < fimgs -> len; ++i){
+        img = g_ptr_array_index(fimgs, i);
+        qq_faceimg_free(img);
+    }
+    g_free(threads);
+
+    //update the panel
+    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update, 1, panel);
 }
 

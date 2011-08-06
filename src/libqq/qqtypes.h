@@ -38,6 +38,7 @@ enum _QQReturnCode{
  */
 struct _QQFaceImg{
     GString *uin;
+    GString *num;
     GString *data;
     GString *type;
 };
@@ -230,8 +231,6 @@ struct _QQBuddy{
     gint vip_info;
     GString *nick;              //
     GString *markname;
-    QQFaceImg *faceimg;         //the face image data
-    GString *faceimgfile;       //the face image file name
 
     GString *country;
     GString *province;
@@ -291,7 +290,6 @@ struct _QQGMember{
     GString *status;
     GString *card;
     GString *client_type;
-    QQFaceImg *faceimg;             //the face image data
 };
 QQGMember* qq_gmember_new();
 void qq_gmember_free(QQGMember *m);
