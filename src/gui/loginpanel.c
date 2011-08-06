@@ -22,7 +22,8 @@ static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
 
 static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data);
-static void update_face_image(QQInfo *info, QQMainPanel *panel);
+static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel);
+static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel);
 /*
  * The main event loop context of Gtk.
  */
@@ -175,7 +176,10 @@ static void login_state_machine(gpointer data)
             gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
                                     , 1, QQ_MAINWINDOW(panel -> container) 
                                                     -> main_panel);
-            update_face_image(info, (QQMainPanel*)QQ_MAINWINDOW(
+            update_buddy_qq_number(info, (QQMainPanel*)QQ_MAINWINDOW(
+                                                    panel -> container) 
+                                                        -> main_panel);
+            update_buddy_face_image(info, (QQMainPanel*)QQ_MAINWINDOW(
                                                     panel -> container) 
                                                         -> main_panel);
             return;
@@ -442,19 +446,84 @@ const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 
 typedef struct{
     QQInfo *info;
-    GPtrArray *imgs;
+    GPtrArray *array;
     gint t_num;
     gint id;
-}GetFaceThreadPar;
+}ThreadFuncPar;
 
-static gpointer get_face_thread_func(gpointer data)
+//
+// Get buddy qq number thread func
+//
+static gpointer get_buddy_qqnumber_thread_func(gpointer data)
 {
-    GetFaceThreadPar *par = data;
-    GPtrArray *imgs = par -> imgs;
+    ThreadFuncPar *par = data;
     gint t_num = par -> t_num;
     gint id = par -> id;
     QQInfo *info = par -> info;
-    g_slice_free(GetFaceThreadPar, par);
+    g_slice_free(ThreadFuncPar, par);
+    gint i;
+    gchar num[100];
+    QQBuddy *bdy;
+
+    for(i = id; i < info -> buddies -> len; i += t_num){
+        bdy = g_ptr_array_index(info -> buddies, i);
+        qq_get_qq_number(info, bdy -> uin -> str, num, NULL);
+        qq_buddy_set(bdy, "qqnumber", num);
+    }
+    return NULL;
+}
+//
+// Update qq number
+// Run in get_info_loop.
+//
+static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel)
+{
+    if(info == NULL || panel == NULL){
+        return;
+    }
+
+    gint i;
+    gint t_num = 10;
+    GThread **threads = g_malloc(sizeof(GThread*) * t_num);
+    GError *err = NULL;
+    ThreadFuncPar *par = NULL;
+    for(i = 0; i < t_num; ++i){
+        par = g_slice_new0(ThreadFuncPar);
+        par -> array = NULL;
+        par -> t_num = t_num;
+        par -> id = i;
+        par -> info = info;
+        threads[i] = g_thread_create(get_buddy_qqnumber_thread_func
+                                        , par, TRUE, &err);
+        if(threads[i] == NULL){
+            g_warning("Create thread to get face image error. %s (%s, %d)"
+                                    , err -> message, __FILE__, __LINE__);
+            g_error_free(err);
+        }
+    }
+    for(i = 0; i < t_num; ++i){
+        g_thread_join(threads[i]);
+    }
+
+    g_free(threads);
+
+    //update the panel
+    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update, 1, panel);
+    return;
+}
+
+
+//
+// Get face image thread func
+//
+static gpointer get_buddy_face_thread_func(gpointer data)
+{
+    ThreadFuncPar *par = data;
+    GPtrArray *imgs = par -> array;
+    gint t_num = par -> t_num;
+    gint id = par -> id;
+    QQInfo *info = par -> info;
+    g_slice_free(ThreadFuncPar, par);
     gint i;
     QQFaceImg *img;
     gchar path[500];
@@ -469,20 +538,18 @@ static gpointer get_face_thread_func(gpointer data)
 }
 
 //
-// Get all the face images
+// Get all buddies' face images
 // Run in get_info_loop.
 //
-static void update_face_image(QQInfo *info, QQMainPanel *panel)
+static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel)
 {
     if(info == NULL || panel == NULL){
         return;
     }
 
     GPtrArray *fimgs = g_ptr_array_new();
-    gint i, j;
+    gint i;
     QQBuddy *bdy = NULL;
-    QQGroup *grp = NULL;
-    QQGMember *gmem = NULL;
     QQFaceImg *img = NULL;
 
     img = qq_faceimg_new(); 
@@ -490,7 +557,6 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
     qq_faceimg_set(img, "num", info -> me  -> qqnumber);
     g_ptr_array_add(fimgs, img);
     
-    gchar qqnum [100];
     for(i = 0; i < info -> buddies -> len; ++i){
         bdy = g_ptr_array_index(info -> buddies, i);
         if(bdy == NULL){
@@ -498,49 +564,22 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
         }
         img = qq_faceimg_new(); 
         qq_faceimg_set(img, "uin", bdy -> uin);
-
-        //Get qq number
-        qq_get_qq_number(info, bdy -> uin -> str, qqnum, NULL);
-        qq_buddy_set(bdy, "qqnumber", qqnum);
         qq_faceimg_set(img, "num", bdy -> qqnumber);
-
         g_ptr_array_add(fimgs, img);
-    }
-
-    for(i = 0; i < info -> groups -> len; ++i){
-        grp = g_ptr_array_index(info -> groups, i);
-        img = qq_faceimg_new();
-        qq_faceimg_set(img, "uin", grp -> code);
-        
-        qq_get_qq_number(info, grp -> code -> str, qqnum, NULL);
-        qq_group_set(grp, "gnumber", qqnum);
-        qq_faceimg_set(img, "num", grp -> gnumber);
-
-        g_ptr_array_add(fimgs, img);
-        for(j = 0; j < grp -> members -> len; ++j){
-            gmem = g_ptr_array_index(grp -> members, j);
-            img = qq_faceimg_new();
-            qq_faceimg_set(img, "uin", gmem -> uin);
-            
-            qq_get_qq_number(info, gmem -> uin -> str, qqnum, NULL);
-            qq_gmember_set(gmem, "qqnumber", qqnum);
-            qq_faceimg_set(img, "num", gmem -> qqnumber);
-
-            g_ptr_array_add(fimgs, img);
-        }
     }
 
     gint t_num = 10;
     GThread **threads = g_malloc(sizeof(GThread*) * t_num);
     GError *err = NULL;
-    GetFaceThreadPar *par = NULL;
+    ThreadFuncPar *par = NULL;
     for(i = 0; i < t_num; ++i){
-        par = g_slice_new0(GetFaceThreadPar);
-        par -> imgs = fimgs;
+        par = g_slice_new0(ThreadFuncPar);
+        par -> array = fimgs;
         par -> t_num = t_num;
         par -> id = i;
         par -> info = info;
-        threads[i] = g_thread_create(get_face_thread_func, par, TRUE, &err);
+        threads[i] = g_thread_create(get_buddy_face_thread_func
+                                        , par, TRUE, &err);
         if(threads[i] == NULL){
             g_warning("Create thread to get face image error. %s (%s, %d)"
                                     , err -> message, __FILE__, __LINE__);

@@ -98,7 +98,6 @@ gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
 //
 gint qq_get_qq_number(QQInfo *info, const gchar *uin
                                     , gchar *num, GError **err);
-
 //
 // The callback of the poll fuction.
 // @param msg : the message received
