@@ -1,5 +1,6 @@
 #include <buddytree.h>
 #include <string.h>
+#include <chatwindow.h>
 
 //
 // The map between the QQBuddy uin and the tree row.
@@ -14,6 +15,7 @@ enum{
     BDY_IMAGE,          //The face image of buddy
     BDY_MARKNAME,       //Group name or buddy markname
     BDY_NICK,           //buddy nick
+    BDY_UIN,            //buddy uin
     BDY_QQNUMBER,       //buddy nick
     BDY_LONGNICK,       //buddy long nick
     BDY_STATUS,         //The status
@@ -26,7 +28,10 @@ enum{
     COLUMNS             //The number of columns
 };
 
+// The map of the tree path and the qq uin
 static GHashTable *tree_map = NULL;
+// The map of the chat dialog and the qq uin
+static GHashTable *chatwindow_map = NULL;
 
 //
 // Set the text columns' values
@@ -189,16 +194,20 @@ static gboolean buddy_tree_on_show_tooltip(GtkWidget* widget
                         , BDY_LONGNICK, &lnick
                         , BDY_QQNUMBER, &qqnum, -1);
     gchar buf[500];
+    // ☾ ☼ ☆
     g_snprintf(buf, 500, "<span color='#808080'>Nick Name:</span><b>%s</b>\n"
                          "<span color='#808080'>Mark Name:</span><b>%s</b>\n"
-                         "<span color='#808080'>QQ Number:</span><span color='blue'><b>%s</b></span>\n"
-                         "<span color='#808080'>Long Nick:</span><span color='grey'>%s</span>"
+                         "<span color='#808080'>QQ Number:</span><span "
+                         "color='blue'><b>%s</b></span>\n"
+                         "<span color='#808080'>Long Nick:</span><span "
+                         "color='grey'>%s</span><span color='blue'><b>☾ ☼ ☆ </b></span>"
                             , nick, markname, qqnum, lnick);
     gtk_tooltip_set_markup(tip, buf);
     gtk_tooltip_set_icon(tip, pb);
     gtk_tree_view_set_tooltip_row(tree, tip, path);
 
     gtk_tree_path_free(path);
+    g_object_unref(pb);
     g_free(nick);
     g_free(markname);
     g_free(lnick);
@@ -206,11 +215,35 @@ static gboolean buddy_tree_on_show_tooltip(GtkWidget* widget
     return TRUE;
 }
 
-static void buddy_tree_on_double_click(GtkTreeView *treeview
+static void buddy_tree_on_double_click(GtkTreeView *tree
                                     , GtkTreePath *path 
                                     , GtkTreeViewColumn  *col 
                                     , gpointer data)
 {
+    gchar *uin;
+    GtkTreeModel *model = gtk_tree_view_get_model(tree); 
+    if(gtk_tree_path_get_depth(path) < 2){
+        return;
+    }
+
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter(model, &iter, path);
+    gtk_tree_model_get(model, &iter, BDY_UIN, &uin, -1);
+
+    GtkWidget *cw = g_hash_table_lookup(chatwindow_map, uin); 
+    if(cw != NULL){
+        // We have open a window for this uin
+        // Just focus on it.
+        g_debug("Focus on chat window of %s(%s, %d)", uin, __FILE__, __LINE__);
+        gtk_widget_grab_focus(cw);
+        return;
+    }
+    
+    cw = qq_chatwindow_new();
+    gtk_widget_show_all(cw);
+    // hash table will free uin
+    g_hash_table_insert(chatwindow_map, uin, cw);
+    g_debug("Create chat window for %s(%s, %d)", uin, __FILE__, __LINE__);
 
 }
 
@@ -275,6 +308,8 @@ GtkWidget* qq_buddy_tree_new()
 				   , NULL);
 
     tree_map = g_hash_table_new(g_str_hash, g_str_equal);
+    chatwindow_map = g_hash_table_new_full(g_str_hash, g_str_equal
+                                            , g_free, NULL);
     return view;
 }
 
@@ -305,7 +340,8 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
     gtk_tree_store_set(store, iter
                             , BDY_LONGNICK, bdy -> lnick -> str
                             , BDY_STATUS, bdy -> status -> str
-                            , BDY_QQNUMBER, bdy -> qqnumber -> str, -1);
+                            , BDY_QQNUMBER, bdy -> qqnumber -> str
+                            , BDY_UIN, bdy -> uin -> str, -1);
     gchar buf[500];
     GdkPixbuf *pb;
     GError *err = NULL;
@@ -360,6 +396,7 @@ static GtkTreeModel* create_contact_model(QQInfo *info)
     GtkTreeStore *store = gtk_tree_store_new(COLUMNS
                                             , GDK_TYPE_PIXBUF
                                             , GDK_TYPE_PIXBUF
+                                            , G_TYPE_STRING
                                             , G_TYPE_STRING
                                             , G_TYPE_STRING
                                             , G_TYPE_STRING
