@@ -112,9 +112,9 @@ static void qq_mainpanel_init(QQMainPanel *panel)
                         , "focus-out-event"
                         , G_CALLBACK(lnick_focus_out_cb), panel);
 
-    panel -> contact_btn = gtk_event_box_new();
-    gtk_container_add(GTK_CONTAINER(panel -> contact_btn)
-                        , this_class -> contact_img[0]);
+    panel -> buddy_btn = gtk_event_box_new();
+    gtk_container_add(GTK_CONTAINER(panel -> buddy_btn)
+                        , this_class -> buddy_img[0]);
     panel -> grp_btn = gtk_event_box_new();
     gtk_container_add(GTK_CONTAINER(panel -> grp_btn)
                         , this_class -> grp_img[1]);
@@ -122,21 +122,21 @@ static void qq_mainpanel_init(QQMainPanel *panel)
     gtk_container_add(GTK_CONTAINER(panel -> recent_btn)
                         , this_class -> recent_img[1]);
 
-    g_signal_connect(GTK_WIDGET(panel -> contact_btn), "button-release-event"
+    g_signal_connect(GTK_WIDGET(panel -> buddy_btn), "button-release-event"
                                 , G_CALLBACK(btn_group_release_cb), panel);
     g_signal_connect(GTK_WIDGET(panel -> grp_btn), "button-release-event"
                                 , G_CALLBACK(btn_group_release_cb), panel);
     g_signal_connect(GTK_WIDGET(panel -> recent_btn), "button-release-event"
                                 , G_CALLBACK(btn_group_release_cb), panel);
 
-    g_signal_connect(GTK_WIDGET(panel -> contact_btn), "enter-notify-event"
+    g_signal_connect(GTK_WIDGET(panel -> buddy_btn), "enter-notify-event"
                                 , G_CALLBACK(btn_group_enter_cb), panel);
     g_signal_connect(GTK_WIDGET(panel -> grp_btn), "enter-notify-event"
                                 , G_CALLBACK(btn_group_enter_cb), panel);
     g_signal_connect(GTK_WIDGET(panel -> recent_btn), "enter-notify-event"
                                 , G_CALLBACK(btn_group_enter_cb), panel);
 
-    g_signal_connect(GTK_WIDGET(panel -> contact_btn), "leave-notify-event"
+    g_signal_connect(GTK_WIDGET(panel -> buddy_btn), "leave-notify-event"
                                 , G_CALLBACK(btn_group_leave_cb), panel);
     g_signal_connect(GTK_WIDGET(panel -> grp_btn), "leave-notify-event"
                                 , G_CALLBACK(btn_group_leave_cb), panel);
@@ -144,7 +144,7 @@ static void qq_mainpanel_init(QQMainPanel *panel)
                                 , G_CALLBACK(btn_group_leave_cb), panel);
 
     hbox = gtk_hbox_new(TRUE, 0);
-    gtk_box_pack_start(GTK_BOX(hbox), panel -> contact_btn, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(hbox), panel -> buddy_btn, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), panel -> grp_btn, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), panel -> recent_btn, TRUE, TRUE, 0);
     gtk_box_pack_start(GTK_BOX(panel), hbox, FALSE, FALSE, 0);
@@ -188,9 +188,9 @@ static void qq_mainpanelclass_init(QQMainPanelClass *c)
     this_class = c;
     GdkPixbuf * pb;
     pb= gdk_pixbuf_new_from_file(IMGDIR"ContactMainTabButton1.png", NULL);
-    c -> contact_img[0] = gtk_image_new_from_pixbuf(pb);
+    c -> buddy_img[0] = gtk_image_new_from_pixbuf(pb);
     pb = gdk_pixbuf_new_from_file(IMGDIR"ContactMainTabButton2.png", NULL);
-    c -> contact_img[1] = gtk_image_new_from_pixbuf(pb);
+    c -> buddy_img[1] = gtk_image_new_from_pixbuf(pb);
     pb = gdk_pixbuf_new_from_file(IMGDIR"GroupMainTabButton1.png", NULL);
     c -> grp_img[0] = gtk_image_new_from_pixbuf(pb);
     pb = gdk_pixbuf_new_from_file(IMGDIR"GroupMainTabButton2.png", NULL);
@@ -201,16 +201,16 @@ static void qq_mainpanelclass_init(QQMainPanelClass *c)
     c -> recent_img[1] = gtk_image_new_from_pixbuf(pb);
 
     //increase the reference count
-    g_object_ref(G_OBJECT(c -> contact_img[0]));
-    g_object_ref(G_OBJECT(c -> contact_img[1]));
+    g_object_ref(G_OBJECT(c -> buddy_img[0]));
+    g_object_ref(G_OBJECT(c -> buddy_img[1]));
     g_object_ref(G_OBJECT(c -> grp_img[0]));
     g_object_ref(G_OBJECT(c -> grp_img[1]));
     g_object_ref(G_OBJECT(c -> recent_img[0]));
     g_object_ref(G_OBJECT(c -> recent_img[1]));
 
     //show the image
-    gtk_widget_show(c -> contact_img[0]);
-    gtk_widget_show(c -> contact_img[1]);
+    gtk_widget_show(c -> buddy_img[0]);
+    gtk_widget_show(c -> buddy_img[1]);
     gtk_widget_show(c -> grp_img[0]);
     gtk_widget_show(c -> grp_img[1]);
     gtk_widget_show(c -> recent_img[0]);
@@ -225,8 +225,9 @@ static void qq_mainpanelclass_init(QQMainPanelClass *c)
 void qq_mainpanel_update_my_info(QQMainPanel *panel)
 {
     update_my_face_image(panel);
-    gtk_label_set_text(GTK_LABEL(panel -> nick)
-                            , info -> me -> nick -> str);
+    gchar buf[100];
+    g_snprintf(buf, 100, "<b>%s</b>", info -> me -> nick -> str);
+    gtk_label_set_markup(GTK_LABEL(panel -> nick), buf);
     gtk_label_set_text(GTK_LABEL(panel -> longnick)
                             , info -> me -> lnick -> str);
 
@@ -301,34 +302,37 @@ static void btn_group_release_cb(GtkWidget *btn, GdkEvent *event, gpointer data)
 
     //clear
     QQMainPanel *panel = QQ_MAINPANEL(data);
-    gtk_container_remove(GTK_CONTAINER(panel -> contact_btn)
-                        , gtk_bin_get_child(GTK_BIN(panel -> contact_btn)));
+    gtk_container_remove(GTK_CONTAINER(panel -> buddy_btn)
+                        , gtk_bin_get_child(GTK_BIN(panel -> buddy_btn)));
     gtk_container_remove(GTK_CONTAINER(panel -> grp_btn)
                         , gtk_bin_get_child(GTK_BIN(panel -> grp_btn)));
     gtk_container_remove(GTK_CONTAINER(panel -> recent_btn)
                         , gtk_bin_get_child(GTK_BIN(panel -> recent_btn)));
 
-    if(btn == panel -> contact_btn){
-        gtk_container_add(GTK_CONTAINER(panel -> contact_btn)
-                            , this_class -> contact_img[0]);
+    if(btn == panel -> buddy_btn){
+        gtk_container_add(GTK_CONTAINER(panel -> buddy_btn)
+                            , this_class -> buddy_img[0]);
         gtk_container_add(GTK_CONTAINER(panel -> grp_btn)
                             , this_class -> grp_img[1]);
         gtk_container_add(GTK_CONTAINER(panel -> recent_btn)
                             , this_class -> recent_img[1]);
+        gtk_notebook_set_current_page(GTK_NOTEBOOK(panel -> notebook), 0);
     }else if(btn == panel -> grp_btn){
-        gtk_container_add(GTK_CONTAINER(panel -> contact_btn)
-                            , this_class -> contact_img[1]);
+        gtk_container_add(GTK_CONTAINER(panel -> buddy_btn)
+                            , this_class -> buddy_img[1]);
         gtk_container_add(GTK_CONTAINER(panel -> grp_btn)
                             , this_class -> grp_img[0]);
         gtk_container_add(GTK_CONTAINER(panel -> recent_btn)
                             , this_class -> recent_img[1]);
+        gtk_notebook_set_current_page(GTK_NOTEBOOK(panel -> notebook), 1);
     }else if(btn == panel -> recent_btn){
-        gtk_container_add(GTK_CONTAINER(panel -> contact_btn)
-                            , this_class -> contact_img[1]);
+        gtk_container_add(GTK_CONTAINER(panel -> buddy_btn)
+                            , this_class -> buddy_img[1]);
         gtk_container_add(GTK_CONTAINER(panel -> grp_btn)
                             , this_class -> grp_img[1]);
         gtk_container_add(GTK_CONTAINER(panel -> recent_btn)
                             , this_class -> recent_img[0]);
+        gtk_notebook_set_current_page(GTK_NOTEBOOK(panel -> notebook), 2);
     }
 
 }

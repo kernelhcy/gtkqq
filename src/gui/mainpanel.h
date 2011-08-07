@@ -28,7 +28,7 @@ struct _QQMainPanel{
 
     GtkWidget *search_entry;
 
-    GtkWidget *contact_btn, *grp_btn, *recent_btn;
+    GtkWidget *buddy_btn, *grp_btn, *recent_btn;
     
     GtkWidget *notebook;
     GtkWidget *buddy_tree;
@@ -44,7 +44,7 @@ struct _QQMainPanelClass{
     GtkVBoxClass parent;
 
     /*< private >*/
-    GtkWidget *contact_img[2];
+    GtkWidget *buddy_img[2];
     GtkWidget *grp_img[2];
     GtkWidget *recent_img[2];
 

@@ -14,8 +14,11 @@ enum{
     BDY_IMAGE,          //The face image of buddy
     BDY_MARKNAME,       //Group name or buddy markname
     BDY_NICK,           //buddy nick
+    BDY_QQNUMBER,       //buddy nick
     BDY_LONGNICK,       //buddy long nick
     BDY_STATUS,         //The status
+
+    BDY_TOOLTIPIMAGE,   //The face image of buddy
 
     CATE_CNT,           //Used by category. The online buddies's number
     CATE_TOTAL,         //Used by category. The total number of buddies.
@@ -134,6 +137,89 @@ static gboolean get_category_iter_by_index(GtkTreeModel *model, gint index
     return TRUE;
 }
 
+//
+// Get the face image of num with width and height.
+//
+static GdkPixbuf* create_face_image(const gchar *num, gint width, gint height)
+{
+    gchar buf[500];
+    GError *err = NULL;
+    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", num);
+    GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, width, height, &err);
+    if(pb == NULL){
+        g_error_free(err);
+        err = NULL;
+        pb = gdk_pixbuf_new_from_file_at_size(
+                                    IMGDIR"/avatar.gif", width, height, &err);
+        if(pb == NULL){
+            g_warning("Load default face image error. %s (%s, %d)"
+                                    , err -> message, __FILE__, __LINE__);
+            g_error_free(err);
+        }
+    }
+    return pb;
+}
+
+static gboolean buddy_tree_on_show_tooltip(GtkWidget* widget
+                                            , int x
+                                            , int y
+                                            , gboolean keybord_mode
+                                            , GtkTooltip* tip
+                                            , gpointer data)
+{
+	GtkTreeView *tree = GTK_TREE_VIEW(widget);
+    GtkTreeModel *model = gtk_tree_view_get_model(tree); 
+    GtkTreePath *path;
+    GtkTreeIter iter;
+
+	if(!gtk_tree_view_get_tooltip_context(tree , &x , &y , keybord_mode
+						, &model , &path , &iter)){
+		return FALSE;
+    }
+    if(gtk_tree_path_get_depth(path) < 2){
+        return FALSE;
+    }
+
+    gchar *nick, *markname, *lnick, *qqnum;
+    GdkPixbuf *pb;
+    gtk_tree_model_get(model, &iter
+                        , BDY_NICK, &nick
+                        , BDY_TOOLTIPIMAGE, &pb
+                        , BDY_MARKNAME, &markname
+                        , BDY_LONGNICK, &lnick
+                        , BDY_QQNUMBER, &qqnum, -1);
+    gchar buf[500];
+    g_snprintf(buf, 500, "<span color='#808080'>Nick Name:</span><b>%s</b>\n"
+                         "<span color='#808080'>Mark Name:</span><b>%s</b>\n"
+                         "<span color='#808080'>QQ Number:</span><span color='blue'><b>%s</b></span>\n"
+                         "<span color='#808080'>Long Nick:</span><span color='grey'>%s</span>"
+                            , nick, markname, qqnum, lnick);
+    gtk_tooltip_set_markup(tip, buf);
+    gtk_tooltip_set_icon(tip, pb);
+    gtk_tree_view_set_tooltip_row(tree, tip, path);
+
+    gtk_tree_path_free(path);
+    g_free(nick);
+    g_free(markname);
+    g_free(lnick);
+    g_free(qqnum);
+    return TRUE;
+}
+
+static void buddy_tree_on_double_click(GtkTreeView *treeview
+                                    , GtkTreePath *path 
+                                    , GtkTreeViewColumn  *col 
+                                    , gpointer data)
+{
+
+}
+
+static gboolean buddy_tree_on_rightbutton_click(GtkWidget* tree
+		                                        , GdkEventButton* event
+                                                , gpointer data)
+{
+    return FALSE;
+}
 
 GtkWidget* qq_buddy_tree_new()
 {
@@ -173,6 +259,20 @@ GtkWidget* qq_buddy_tree_new()
 
     gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
     gtk_tree_view_set_level_indentation(GTK_TREE_VIEW(view), -35);
+    gtk_tree_view_set_hover_selection(GTK_TREE_VIEW(view), TRUE);
+
+    gtk_widget_set_has_tooltip(view, TRUE);
+	g_signal_connect(view, "query-tooltip"
+                        , G_CALLBACK(buddy_tree_on_show_tooltip) , NULL);
+
+	g_signal_connect(view
+				   , "button_press_event"
+				   , G_CALLBACK(buddy_tree_on_rightbutton_click)
+				   , NULL);
+	g_signal_connect(view
+				   , "row-activated"
+				   , G_CALLBACK(buddy_tree_on_double_click)
+				   , NULL);
 
     tree_map = g_hash_table_new(g_str_hash, g_str_equal);
     return view;
@@ -202,10 +302,10 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
                             , BDY_NICK, bdy -> nick -> str, -1);
     }
 
-    // set long nick
     gtk_tree_store_set(store, iter
                             , BDY_LONGNICK, bdy -> lnick -> str
-                            , BDY_STATUS, bdy -> status -> str, -1);
+                            , BDY_STATUS, bdy -> status -> str
+                            , BDY_QQNUMBER, bdy -> qqnumber -> str, -1);
     gchar buf[500];
     GdkPixbuf *pb;
     GError *err = NULL;
@@ -238,20 +338,13 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
     }
 
     // set face image
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
-    pb = gdk_pixbuf_new_from_file_at_size(buf, 20, 20, &err);
-    if(pb == NULL){
-        g_error_free(err);
-        err = NULL;
-        pb = gdk_pixbuf_new_from_file_at_size(
-                                    IMGDIR"/avatar.gif", 20, 20, &err);
-        if(pb == NULL){
-            g_warning("Load default face image error. %s (%s, %d)"
-                                    , err -> message, __FILE__, __LINE__);
-            g_error_free(err);
-        }
-    }
+    pb = create_face_image(bdy -> qqnumber -> str, 20, 20);
     gtk_tree_store_set(store, iter, BDY_IMAGE, pb, -1);
+    g_object_unref(pb);
+
+    // set the tool tip image
+    pb = create_face_image(bdy -> qqnumber -> str, 80, 80);
+    gtk_tree_store_set(store, iter, BDY_TOOLTIPIMAGE, pb, -1);
     g_object_unref(pb);
 }
 
@@ -271,6 +364,8 @@ static GtkTreeModel* create_contact_model(QQInfo *info)
                                             , G_TYPE_STRING
                                             , G_TYPE_STRING
                                             , G_TYPE_STRING
+                                            , G_TYPE_STRING
+                                            , GDK_TYPE_PIXBUF
                                             , G_TYPE_INT
                                             , G_TYPE_INT
                                             , G_TYPE_INT);
@@ -332,9 +427,6 @@ static void update_face_image(GtkWidget *tree, QQInfo *info, const gchar *uin)
     if(bdy == NULL){
         return;
     }
-    gchar buf[500];
-    // test if we have the image file;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
 
     GtkTreeModel *model;
     QQTreeMap *map;
@@ -345,25 +437,20 @@ static void update_face_image(GtkWidget *tree, QQInfo *info, const gchar *uin)
         return;
     }
 
-    GError *err = NULL;
-    GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, 20, 20, &err);
-    if(pb == NULL){
-        g_error_free(err);
-        err = NULL;
-        pb = gdk_pixbuf_new_from_file_at_size(
-                                    IMGDIR"/avatar.gif", 20, 20, &err);
-        if(pb == NULL){
-            g_warning("Load default face image error. %s (%s, %d)"
-                                    , err -> message, __FILE__, __LINE__);
-            g_error_free(err);
-        }
-    }
     GtkTreePath *path;
     GtkTreeIter iter;
     path = gtk_tree_row_reference_get_path(map -> row_ref);
     gtk_tree_model_get_iter(model, &iter, path);
+
+    GdkPixbuf *pb = create_face_image(bdy -> qqnumber -> str, 20, 20);
     gtk_tree_store_set(GTK_TREE_STORE(model), &iter, BDY_IMAGE, pb, -1);
     g_object_unref(pb);
+    pb = create_face_image(bdy -> qqnumber -> str, 80, 80);
+    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, BDY_TOOLTIPIMAGE, pb, -1);
+    g_object_unref(pb);
+
+    gtk_tree_store_set(GTK_TREE_STORE(model), &iter
+                            , BDY_QQNUMBER, bdy -> qqnumber -> str, -1);
     gtk_tree_path_free(path);
 }
 
