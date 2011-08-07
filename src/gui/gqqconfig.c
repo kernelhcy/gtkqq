@@ -362,6 +362,7 @@ gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
             continue;
         }
         if(g_strcmp0(qqnum, me -> qqnumber -> str) == 0){
+            qq_buddy_set(me, "status", info -> me -> status -> str);
             qq_buddy_copy(me, info -> me);
             qq_buddy_set(info -> me, "qqnumber", priv -> qqnum -> str);
             qq_buddy_set(info -> me, "uin", priv -> qqnum -> str);

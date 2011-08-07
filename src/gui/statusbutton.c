@@ -1,6 +1,7 @@
 #include <statusbutton.h>
 
-static const gchar *status_label[] = {"online", "hidden", "away", "offline", NULL};
+static const gchar *status_label[] = {"online", "hidden", "away", "offline"
+                                       , "callme", "busy", "silent", NULL};
 
 static QQStatusButtonClass *this_class = NULL;
 
@@ -46,7 +47,7 @@ static GtkTreeModel* create_model()
 	gint i;
         
 	store = gtk_list_store_new(2, GDK_TYPE_PIXBUF, G_TYPE_STRING);
-	for(i = 0; i < 4; i++){
+	for(i = 0; i < STATUS_NUM; i++){
 		gtk_list_store_append(store, &iter);
 		gtk_list_store_set(store, &iter, 0, this_class -> pb[i]
 					, 1, status_label[i], -1);
@@ -108,6 +109,15 @@ static void qq_statusbuttonclass_init(QQStatusButtonClass *c)
 					, 12, 12, TRUE, NULL);
 	c -> pb[STATUS_AWAY] = gdk_pixbuf_new_from_file_at_scale(
 					IMGDIR"/status/away.png"
+					, 12, 12, TRUE, NULL);
+	c -> pb[STATUS_CALLME] = gdk_pixbuf_new_from_file_at_scale(
+					IMGDIR"/status/callme.png"
+					, 12, 12, TRUE, NULL);
+	c -> pb[STATUS_BUSY] = gdk_pixbuf_new_from_file_at_scale(
+					IMGDIR"/status/busy.png"
+					, 12, 12, TRUE, NULL);
+	c -> pb[STATUS_SILENT] = gdk_pixbuf_new_from_file_at_scale(
+					IMGDIR"/status/silent.png"
 					, 12, 12, TRUE, NULL);
 	c -> arrow = gdk_pixbuf_new_from_file_at_scale(
 					IMGDIR"/status/downarrow.png"
@@ -174,7 +184,7 @@ const gchar* qq_statusbutton_get_status_string(GtkWidget *btn)
 QQStatusButtonStatus qq_statusbutton_get_status(GtkWidget *btn)
 {
 	if(btn == NULL){
-		return STATUS_UNKNOWN;
+		return STATUS_NUM;
 	}
 
 	gint idx = gtk_combo_box_get_active(GTK_COMBO_BOX(btn));
@@ -188,12 +198,12 @@ void qq_statusbutton_set_status_string(GtkWidget *btn
         return;
     }
     gint i;
-    for(i = 0; i < STATUS_UNKNOWN; ++i){
+    for(i = 0; i < STATUS_NUM; ++i){
         if(g_strcmp0(status_label[i], status) == 0){
             break;
         }
     }
-    if(i < STATUS_UNKNOWN){
+    if(i < STATUS_NUM){
         gtk_combo_box_set_active(GTK_COMBO_BOX(btn), i);
     }
 }
@@ -201,7 +211,7 @@ void qq_statusbutton_set_status_string(GtkWidget *btn
 void qq_statusbutton_set_status(GtkWidget *btn
                                         , QQStatusButtonStatus status)
 {
-    if(btn == NULL || status >= STATUS_UNKNOWN || status < 0){
+    if(btn == NULL || status >= STATUS_NUM|| status < 0){
         return;
     }
 

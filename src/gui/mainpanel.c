@@ -233,6 +233,8 @@ void qq_mainpanel_update(QQMainPanel *panel)
     gtk_label_set_text(GTK_LABEL(panel -> longnick)
                             , info -> me -> lnick -> str);
 
+    g_debug("Update status: %s (%s, %d)", info -> me -> status -> str
+                                , __FILE__, __LINE__);
     qq_statusbutton_set_status_string(panel -> status_btn
                             , info -> me -> status -> str);
     

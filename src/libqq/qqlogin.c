@@ -704,13 +704,10 @@ gint qq_login(QQInfo *info, const gchar *qqnum, const gchar *passwd
     qq_buddy_set(info -> me, "qqnumber", qqnum);
     qq_buddy_set(info -> me, "uin", qqnum);
 
-	if(info -> me -> status!= NULL){
-		g_string_free(info -> me -> status, TRUE);
-	}
 	if(status != NULL){
-		info -> me -> status = g_string_new(status);
+        qq_buddy_set(info -> me, "status", status);
 	}else{
-		info -> me -> status = g_string_new(NULL);
+        qq_buddy_set(info -> me, "status", "online");
 	}
 
     return do_login(info, qqnum, passwd, status, err);

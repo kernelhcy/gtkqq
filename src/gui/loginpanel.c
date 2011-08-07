@@ -270,6 +270,9 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     panel -> passwd = qq_loginpanel_get_passwd(panel);
     panel -> status = qq_loginpanel_get_status(panel);
 
+    g_debug("Start login... qqnum: %s, status: %s (%s, %d)", panel -> uin
+                                        , panel -> status, __FILE__, __LINE__);
+
     // run the login state machine
     g_debug("Run login state machine...(%s, %d)", __FILE__, __LINE__);
     state = LOGIN_SM_CHECKVC;
@@ -281,6 +284,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 
     qq_buddy_set(info -> me, "qqnumber", panel -> uin);
     qq_buddy_set(info -> me, "uin", panel -> uin);
+    qq_buddy_set(info -> me, "status", panel -> status);
 
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");

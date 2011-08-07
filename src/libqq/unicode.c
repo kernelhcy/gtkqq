@@ -41,45 +41,48 @@ static guint hex2char(gchar c)
 
 static void do_ucs4toutf8(GString *to, const gchar *from)
 {
-        static guint E = 0xe0;
-        static guint T = 0x2;
-        static guint sep = 0x800;
+    static guint E = 0xe0;
+    static guint T = 0x02;
+    static guint sep1 = 0x80;
+    static guint sep2 = 0x800;
         
-        guint tmp[4];
-        gchar re[3];
-        guint ivalue = 0;
+    guint tmp[4];
+    gchar re[3];
+    guint ivalue = 0;
         
-        gint i;
-        for(i = 0; i < 4; ++i){
-                tmp[i] = 0xf & hex2char(from[ i + 2]);
-                ivalue *= 16;
-                ivalue += tmp[i];
+    gint i;
+    for(i = 0; i < 4; ++i){
+            tmp[i] = 0xf & hex2char(from[ i + 2]);
+            ivalue *= 16;
+            ivalue += tmp[i];
+    }
+    
+    //decode
+   if(ivalue < sep1){
+        //0xxxxxxx
+   }else if(ivalue < sep2){
+        //110xxxxx 10xxxxxx
+        re[0] = (0x3 << 6) | ((tmp[1] & 7) << 2) | (tmp[2] >> 2);
+        re[1] = (0x1 << 7) | ((tmp[2] & 3) << 4) | tmp[3];
+        g_string_append_c(to, re[0]);
+        g_string_append_c(to, re[1]);
+    }else{
+        //1110xxxx 10xxxxxx 10xxxxxx
+        re[0] = E | (tmp[0] & 0xf);
+        re[1] = (T << 6) | (tmp[1] << 2) | ((tmp[2] >> 2) & 0x3);
+        re[2] = (T << 6) | (tmp[2] & 0x3) << 4 | tmp[3];
+        //copy to @to.
+        for(i = 0; i < 3; ++i){
+            g_string_append_c(to, re[i]);
         }
-        
-        //decode
-        if(ivalue < sep){
-                //110xxxxx 10xxxxxx
-                re[0] = (0x3 << 6) | ((tmp[1] & 7) << 2) | (tmp[2] >> 2);
-                re[1] = (0x1 << 7) | ((tmp[2] & 3) << 4) | tmp[3];
-                g_string_append_c(to, re[0]);
-                g_string_append_c(to, re[1]);
-        }else{
-                //1110xxxx 10xxxxxx 10xxxxxx
-                re[0] = E | (tmp[0] & 0xf);
-                re[1] = (T << 6) | (tmp[1] << 2) | ((tmp[2] >> 2) & 0x3);
-                re[2] = (T << 6) | (tmp[2] & 0x3) << 4 | tmp[3];
-                //copy to @to.
-                for(i = 0; i < 3; ++i){
-                        g_string_append_c(to, re[i]);
-                }
-        }
+    }
 }
 
 void ucs4toutf8(GString *to, const gchar *from)
 {
-        if(to == NULL || from == NULL){
-                return;
-        }
+    if(to == NULL || from == NULL){
+        return;
+    }
     const gchar *c;
     for(c = from; *c != '\0'; ++c){
         if(*c == '\\' && *(c + 1) == 'u'){

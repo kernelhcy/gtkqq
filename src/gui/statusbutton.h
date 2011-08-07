@@ -27,7 +27,10 @@ enum _QQStatusButtonStatus{
 	STATUS_HIDDEN,
 	STATUS_AWAY,
 	STATUS_OFFLINE,
-	STATUS_UNKNOWN
+	STATUS_CALLME,
+	STATUS_BUSY,
+	STATUS_SILENT,
+	STATUS_NUM
 };
 
 struct _QQStatusButton{
@@ -42,7 +45,7 @@ struct _QQStatusButtonClass{
 	GtkComboBoxClass parent;
 
 	/*< private >*/
-	GdkPixbuf *pb[4];
+	GdkPixbuf *pb[STATUS_NUM];
 	GdkPixbuf *arrow;
 	GdkCursor *hand_cursor;
 };
