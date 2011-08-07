@@ -31,10 +31,9 @@ struct _QQMainPanel{
     GtkWidget *contact_btn, *grp_btn, *recent_btn;
     
     GtkWidget *notebook;
-    GtkWidget *contact_tree;
-    GtkWidget *grp_list;
+    GtkWidget *buddy_tree;
+    GtkWidget *group_list;
     GtkWidget *recent_list;
-    GHashTable *tree_maps;        //the maps between buddys and rows
 
     GtkWidget *menubar;
 

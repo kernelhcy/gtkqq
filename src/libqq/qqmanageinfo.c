@@ -1037,7 +1037,7 @@ gint qq_get_groups(QQInfo *info, GError **err)
         gchar *gid = NULL, *mark = NULL;
         GString *tmps = g_string_new(NULL);
         for(cur = val -> child; cur != NULL; cur = cur -> next){
-            tmp = json_find_first_label(cur, "gid");
+            tmp = json_find_first_label(cur, "uin");
             if(tmp != NULL){
                 gid = tmp -> child -> text;
             }

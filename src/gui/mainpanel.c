@@ -2,6 +2,7 @@
 #include <statusbutton.h>
 #include <msgloop.h>
 #include <qq.h>
+#include <buddytree.h>
 
 /*
  * The main event loop context of Gtk.
@@ -30,28 +31,7 @@ static void btn_group_release_cb(GtkWidget *btn, GdkEvent *event, gpointer data)
 static void btn_group_enter_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
 static void btn_group_leave_cb(GtkWidget *btn, GdkEvent *event, gpointer data);
 
-static void update_face_image(QQMainPanel *panel, const gchar *uin);
 static void update_my_face_image(QQMainPanel *panel);
-
-//
-// The map between the QQBuddy uin and the tree row.
-//
-typedef struct{
-    GString *uin;
-    GtkTreeRowReference *row_ref;
-}QQTreeMap;
-
-enum{
-    TV_IMAGE = 0,       //The face image of buddy or group
-    TV_NAME,            //Group name or buddy nick
-    TV_TYPE,            //The client type
-    COLUMNS             //The number of columns
-};
-//
-// Setup the tree view of contact tree, group list and recent list
-//
-static void tree_view_setup(GtkWidget *view);
-static GtkTreeModel* create_contact_model(QQMainPanel *panel);
 
 GType qq_mainpanel_get_type()
 {
@@ -85,7 +65,6 @@ GtkWidget* qq_mainpanel_new(GtkWidget *container)
 
 static void qq_mainpanel_init(QQMainPanel *panel)
 {
-    panel -> tree_maps = g_hash_table_new(g_str_hash, g_str_equal);
 
     GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *box = NULL;
@@ -177,25 +156,22 @@ static void qq_mainpanel_init(QQMainPanel *panel)
     gtk_notebook_set_show_border(GTK_NOTEBOOK(panel -> notebook), TRUE);
     gtk_box_pack_start(GTK_BOX(panel), panel -> notebook, TRUE, TRUE, 3);
 
-    panel -> contact_tree = gtk_tree_view_new();
-    panel -> grp_list = gtk_tree_view_new();
+    panel -> buddy_tree= qq_buddy_tree_new();
+    panel -> group_list = gtk_tree_view_new();
     panel -> recent_list = gtk_tree_view_new();
-    tree_view_setup(panel -> contact_tree);
-    tree_view_setup(panel -> grp_list);
-    tree_view_setup(panel -> recent_list);
 
     GtkWidget *scrolled_win; 
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolled_win),
                 GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> contact_tree);
+    gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> buddy_tree);
     gtk_notebook_append_page(GTK_NOTEBOOK(panel -> notebook)
                             , scrolled_win, NULL);
 
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolled_win),
                 GTK_POLICY_NEVER, GTK_POLICY_AUTOMATIC);
-    gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> grp_list);
+    gtk_container_add(GTK_CONTAINER(scrolled_win), panel -> group_list);
     gtk_notebook_append_page(GTK_NOTEBOOK(panel -> notebook)
                             , scrolled_win, NULL);
 
@@ -260,19 +236,8 @@ void qq_mainpanel_update(QQMainPanel *panel)
     qq_statusbutton_set_status_string(panel -> status_btn
                             , info -> me -> status -> str);
     
-    //update the contact tree
-    gtk_tree_view_set_model(GTK_TREE_VIEW(panel -> contact_tree)
-                            , create_contact_model(panel));
-    //update the face images
-    gint i;
-    QQBuddy *bdy;
-    for(i = 0; i < info -> buddies -> len; ++i){
-        bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
-        if(bdy == NULL){
-            continue;
-        }
-        update_face_image(panel, bdy -> uin -> str);
-    }
+    // Update buddy tree
+    qq_buddy_tree_update(panel -> buddy_tree, info);
 }
 
 //
@@ -425,166 +390,4 @@ static void update_my_face_image(QQMainPanel *panel)
     //we MUST show it!
     gtk_widget_show(img);
     gtk_container_add(GTK_CONTAINER(faceimgframe), img);
-}
-
-//
-// Update the face image of uin
-//
-static void update_face_image(QQMainPanel *panel, const gchar *uin)
-{
-    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info , uin);
-    if(bdy == NULL){
-        return;
-    }
-    gchar buf[500];
-    // test if we have the image file;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
-
-    GtkTreeModel *model;
-    QQTreeMap *map;
-    model = gtk_tree_view_get_model(GTK_TREE_VIEW(panel -> contact_tree));
-    map = (QQTreeMap*)g_hash_table_lookup(panel -> tree_maps, uin);
-    if(map == NULL){
-        g_warning("No TreeMap for %s(%s, %d)", uin, __FILE__, __LINE__);
-        return;
-    }
-
-    GError *err = NULL;
-    GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, 20, 20, &err);
-    if(pb == NULL){
-        g_debug("Load face image image error. use default. %s : %s (%s, %d)"
-                        , err -> message, buf, __FILE__, __LINE__);
-        g_error_free(err);
-        err = NULL;
-        pb = gdk_pixbuf_new_from_file_at_size(
-                                    IMGDIR"/avatar.gif", 20, 20, &err);
-        if(pb == NULL){
-            g_warning("Load default face image error. %s (%s, %d)"
-                                    , err -> message, __FILE__, __LINE__);
-            g_error_free(err);
-        }
-    }
-    GtkTreePath *path;
-    GtkTreeIter iter;
-    path = gtk_tree_row_reference_get_path(map -> row_ref);
-    gtk_tree_model_get_iter(model, &iter, path);
-    gtk_tree_store_set(GTK_TREE_STORE(model), &iter, TV_IMAGE, pb, -1);
-    g_object_unref(pb);
-}
-
-//
-// Create the QQTreeMap hash table.
-//
-void clear_treemap_ht(gpointer key, gpointer value, gpointer data)
-{
-    QQTreeMap *map = value;
-    g_string_free(map -> uin, TRUE);
-    gtk_tree_row_reference_free(map -> row_ref);
-    g_slice_free(QQTreeMap, map);
-}
-
-//
-// Create the model of the contact tree
-//
-static GtkTreeModel* create_contact_model(QQMainPanel *panel)
-{
-    //Clear
-    g_hash_table_foreach(panel -> tree_maps, clear_treemap_ht, NULL);
-
-    GtkTreeIter iter, child;
-    GtkTreeStore *store = gtk_tree_store_new(COLUMNS
-                                            , GDK_TYPE_PIXBUF
-                                            , G_TYPE_STRING
-                                            , GDK_TYPE_PIXBUF);
-    QQCategory *cate;
-    QQTreeMap *map;
-    QQBuddy *bdy;
-    GtkTreeRowReference *ref;
-    GtkTreePath *path;
-    GdkPixbuf *pb;
-    gchar buf[500];
-    gint i, j, k;
-    gint num;
-    for(i = 0; i < info -> categories -> len; ++i){
-        //add the categories
-
-        //find the ith catogory.
-        k = 0;
-        do{
-            cate = (QQCategory*)info -> categories -> pdata[k];
-            if(cate -> index == i){
-                break;
-            }
-            ++k;
-        }while(k < info -> categories -> len);
-
-        num = cate -> members -> len;
-        g_snprintf(buf, 500, "%s  [%d/%d]", cate -> name -> str, 0, num);
-        gtk_tree_store_append(store, &iter, NULL);
-        gtk_tree_store_set(store, &iter, TV_NAME, buf, -1);
-
-        //add the buddies in this category.
-        for(j = 0; j < cate -> members -> len; ++j){
-            gtk_tree_store_append(store, &child, &iter);
-            bdy = (QQBuddy*) cate -> members -> pdata[j];
-            if(bdy -> markname == NULL || bdy -> markname -> len <=0){
-                g_snprintf(buf, 500, "%s", bdy -> nick -> str);
-            }else{
-                g_snprintf(buf, 500, "%s  (%s)", bdy -> markname -> str
-                                        , bdy -> nick -> str);
-            }
-            pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.png"
-                                        , 20, 20, NULL);
-            gtk_tree_store_set(store, &child, TV_IMAGE, pb, TV_NAME, buf, -1);
-            g_object_unref(pb);
-
-            //get the tree row reference
-            path = gtk_tree_model_get_path(GTK_TREE_MODEL(store), &child);
-            ref = gtk_tree_row_reference_new(GTK_TREE_MODEL(store), path);
-            gtk_tree_path_free(path);
-
-            //create and add a tree map
-            map = g_slice_new0(QQTreeMap);
-            map -> uin = g_string_new(bdy -> uin -> str);
-            map -> row_ref = ref;
-            g_hash_table_insert(panel -> tree_maps, bdy -> uin -> str, map);
-        }
-    }
-
-    return GTK_TREE_MODEL(store);
-}
-
-//
-// Setup the tree view of contact tree, group list and recent list
-//
-static void tree_view_setup(GtkWidget *view)
-{
-    GtkCellRenderer *renderer;
-    GtkTreeViewColumn *column;
-
-    // The face image column
-    column = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(column, "Face");
-    renderer = gtk_cell_renderer_pixbuf_new();
-    gtk_tree_view_column_pack_start(column, renderer, FALSE);
-    gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", TV_IMAGE, NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-
-    // The name column
-    column = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(column, "Name");
-    renderer = gtk_cell_renderer_text_new();
-    gtk_tree_view_column_pack_start(column, renderer, TRUE);
-    gtk_tree_view_column_set_attributes(column, renderer, "text", TV_NAME, NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-
-    // The client type image column
-    column = gtk_tree_view_column_new();
-    gtk_tree_view_column_set_title(column, "Client");
-    renderer = gtk_cell_renderer_pixbuf_new();
-    gtk_tree_view_column_pack_start(column, renderer, FALSE);
-    gtk_tree_view_column_set_attributes(column, renderer, "pixbuf", TV_TYPE, NULL);
-    gtk_tree_view_append_column(GTK_TREE_VIEW(view), column);
-
-    gtk_tree_view_set_headers_visible(GTK_TREE_VIEW(view), FALSE);
 }

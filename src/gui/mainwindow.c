@@ -60,7 +60,7 @@ static void qq_mainwindow_init(QQMainWindow *win)
 {
     GtkWidget *w = GTK_WIDGET(win);
     gtk_widget_set_size_request(w, 250, 500);
-    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+//    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
     g_signal_connect(G_OBJECT(w), "destroy",
                              G_CALLBACK(destroy_handler), NULL);
     
