@@ -222,10 +222,7 @@ static void qq_mainpanelclass_init(QQMainPanelClass *c)
     gtkloop.name = "MainPanel Gtk";
 }
 
-//
-// Update the information of all the widgets.
-//
-void qq_mainpanel_update(QQMainPanel *panel)
+void qq_mainpanel_update_my_info(QQMainPanel *panel)
 {
     update_my_face_image(panel);
     gtk_label_set_text(GTK_LABEL(panel -> nick)
@@ -233,15 +230,31 @@ void qq_mainpanel_update(QQMainPanel *panel)
     gtk_label_set_text(GTK_LABEL(panel -> longnick)
                             , info -> me -> lnick -> str);
 
-    g_debug("Update status: %s (%s, %d)", info -> me -> status -> str
-                                , __FILE__, __LINE__);
     qq_statusbutton_set_status_string(panel -> status_btn
                             , info -> me -> status -> str);
-    
+}
+//
+// Update the information of all the widgets.
+//
+void qq_mainpanel_update(QQMainPanel *panel)
+{
+    qq_mainpanel_update_my_info(panel);
     // Update buddy tree
-    qq_buddy_tree_update(panel -> buddy_tree, info);
+    qq_buddy_tree_update_model(panel -> buddy_tree, info);
 }
 
+void qq_mainpanel_update_buddy_info(QQMainPanel *panel)
+{
+    qq_buddy_tree_update_buddy_info(panel -> buddy_tree, info);
+}
+void qq_mainpanel_update_buddy_faceimg(QQMainPanel *panel)
+{
+    qq_buddy_tree_update_faceimg(panel -> buddy_tree, info);
+}
+void qq_mainpanel_update_online_buddies(QQMainPanel *panel)
+{
+    qq_buddy_tree_update_online_buddies(panel -> buddy_tree, info);
+}
 //
 // click the long nick label, replace it with the gtkentry.
 //

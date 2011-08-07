@@ -118,6 +118,35 @@ static gint do_login(QQLoginPanel *panel)
     return -1;
 }
 
+//
+// Update the details.
+//
+static void update_details(QQInfo *info, QQLoginPanel *panel)
+{
+    // update my information
+    qq_get_buddy_info(info, info -> me, NULL);
+    gqq_mainloop_attach(&gtkloop
+                        , qq_mainpanel_update_my_info
+                        , 1
+                        , QQ_MAINWINDOW(panel -> container) -> main_panel);
+
+    // update online buddies
+    qq_get_online_buddies(info, NULL);
+    gqq_mainloop_attach(&gtkloop
+                        , qq_mainpanel_update_online_buddies
+                        , 1
+                        , QQ_MAINWINDOW(panel -> container) -> main_panel);
+
+    //update qq number
+    update_buddy_qq_number(info
+                        , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+                                                -> main_panel);
+    // /update buddy face image
+    update_buddy_face_image(info
+                        , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+                                                -> main_panel);
+}
+
 //login state machine state.
 enum{
     LOGIN_SM_CHECKVC,
@@ -171,17 +200,7 @@ static void login_state_machine(gpointer data)
             // show main panel
             gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
                                     , 1, panel -> container);
-            // update my information
-            qq_get_buddy_info(info, info -> me, NULL);
-            gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
-                                    , 1, QQ_MAINWINDOW(panel -> container) 
-                                                    -> main_panel);
-            update_buddy_qq_number(info, (QQMainPanel*)QQ_MAINWINDOW(
-                                                    panel -> container) 
-                                                        -> main_panel);
-            update_buddy_face_image(info, (QQMainPanel*)QQ_MAINWINDOW(
-                                                    panel -> container) 
-                                                        -> main_panel);
+            update_details(info, panel);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
@@ -512,7 +531,7 @@ static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel)
     g_free(threads);
 
     //update the panel
-    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update, 1, panel);
+    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_buddy_faceimg, 1, panel);
     return;
 }
 
@@ -600,7 +619,7 @@ static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel)
     }
     g_free(threads);
 
-    //update the panel
-    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update, 1, panel);
+    //update the buddy info
+    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_buddy_faceimg, 1, panel);
 }
 

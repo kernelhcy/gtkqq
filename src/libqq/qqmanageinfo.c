@@ -278,24 +278,21 @@ static gint do_get_online_buddies(QQInfo *info, GError **err)
             if(tmp != NULL){
                 client_type= tmp -> child -> text;
             }
-//            g_debug("uin: %s, status: %s, client_type: %s (%s, %d)"
-//                    , uin, status, client_type
-//                    , __FILE__, __LINE__);
             QQBuddy *bdy;
             gint ct;
             char *endptr;
             for(i = 0; i < info -> buddies -> len; ++i){
                 bdy = (QQBuddy *)info -> buddies -> pdata[i];
-                if(g_strstr_len(bdy -> uin -> str, -1, uin)
-                        != NULL){
+                if(g_strstr_len(bdy -> uin -> str, -1, uin) != NULL){
                     qq_buddy_set(bdy, "status", status);
                     ct = strtol(client_type, &endptr, 10);
                     if(endptr == client_type){
-                        g_warning("strtol error(%s,%d)"
-                                , __FILE__, __LINE__);
+                        g_warning("strtol error(%s,%d)", __FILE__, __LINE__);
                         continue;
                     }
                     qq_buddy_set(bdy, "client_type", ct);
+                    g_debug("Online buddies: %s %s %d(%s, %d)", uin, status, ct
+                                        , __FILE__, __LINE__);
                 }
             }
         }
@@ -857,7 +854,7 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
                         g_debug("Buddy %s in category %d(%s, %d)", uin
                                             , idx, __FILE__, __LINE__);
                         g_ptr_array_add(cate -> members, bdy);
-                        qq_buddy_set(bdy, "cate_index", cateidx);
+                        qq_buddy_set(bdy, "cate_index", idx);
                         break;
                     }
                 }

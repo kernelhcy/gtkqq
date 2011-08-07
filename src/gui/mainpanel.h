@@ -56,6 +56,18 @@ GtkWidget* qq_mainpanel_new(GtkWidget *container);
 
 //
 //Update the information of the panel.
+//NOTE:
+//      This function will create a new model for the tree.
 //
 void qq_mainpanel_update(QQMainPanel *panel);
+//
+// Update my information
+//
+void qq_mainpanel_update_my_info(QQMainPanel *panel);
+//
+// Update the buddy info
+//
+void qq_mainpanel_update_buddy_info(QQMainPanel *panel);
+void qq_mainpanel_update_buddy_faceimg(QQMainPanel *panel);
+void qq_mainpanel_update_online_buddies(QQMainPanel *panel);
 #endif

@@ -423,7 +423,7 @@ QQRecvMsg* qq_recvmsg_new(QQInfo *info, const gchar *poll_type)
     NEW_STR(time, "");
     NEW_STR(raw_content, "");
     NEW_STR(uin, "");
-    NEW_STR(status, "");
+    NEW_STR(status, "offline");
     NEW_STR(client_type, "");
 #undef NEW_STR
 
@@ -516,6 +516,7 @@ QQBuddy* qq_buddy_new()
 {
     QQBuddy *bd = g_slice_new0(QQBuddy);
     bd -> vip_info = -1;
+    bd -> client_type = -1;
 #define NEW_STR(x) bd -> x = g_string_new("")
     NEW_STR(uin);
     NEW_STR(qqnumber);
@@ -537,7 +538,8 @@ QQBuddy* qq_buddy_new()
     NEW_STR(homepage);
     NEW_STR(lnick);
 #undef NEW_STR
-
+    
+    qq_buddy_set(bd, "status", "offline");
     return bd;
 }
 void qq_buddy_free(QQBuddy *bd)
