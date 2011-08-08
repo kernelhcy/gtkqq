@@ -7,7 +7,7 @@
 #include <log.h>
 #include <gqqconfig.h>
 #include <msgloop.h>
-
+#include <chatwindow.h>
 /*
  * Global
  */
@@ -46,6 +46,9 @@ int main(int argc, char **argv)
 
     GtkWidget *win = qq_mainwindow_new();
     gtk_widget_show_all(win);
+
+    GtkWidget *cw = qq_chatwindow_new();
+    gtk_widget_show_all(cw);
     
     gtk_main();
 

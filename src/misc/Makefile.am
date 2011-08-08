@@ -21,6 +21,8 @@ img_DATA=\
 	avatar.gif\
 	phone.png\
 	webqq.png\
+	sendfile.png selectfont.png selectface.png sendpic.png\
+	showhistory.png clearscreen.png\
 	avatar.png\
 	ContactMainTabButton1.png ContactMainTabButton2.png\
 	GroupMainTabButton1.png GroupMainTabButton2.png\

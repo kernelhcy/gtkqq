@@ -28,6 +28,10 @@ enum{
     COLUMNS             //The number of columns
 };
 
+//
+// We have only instance around the program.
+// So, I think this is fine...
+//
 // The map of the tree path and the qq uin
 static GHashTable *tree_map = NULL;
 // The map of the chat dialog and the qq uin
@@ -233,9 +237,6 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
     GtkWidget *cw = g_hash_table_lookup(chatwindow_map, uin); 
     if(cw != NULL){
         // We have open a window for this uin
-        // Just focus on it.
-        g_debug("Focus on chat window of %s(%s, %d)", uin, __FILE__, __LINE__);
-        gtk_widget_grab_focus(cw);
         return;
     }
     

@@ -2,11 +2,11 @@
 #define __GTKQQ_CHATWINDOW_H
 #include <gtk/gtk.h>
 
-#define QQ_CHATWINDOW(obj)	GTK_CHECK_CAST(obj, qq_chatwindow_get_type()\
-						, QQChatWindow)
+#define QQ_CHATWINDOW(obj)	    GTK_CHECK_CAST(obj, qq_chatwindow_get_type()\
+						                        , QQChatWindow)
 #define QQ_CHATWINDOWCLASS(c)	GTK_CHECK_CLASS_CAST(c\
-						, qq_chatwindow_get_type()\
-						, QQChatWindowClass)
+						                        , qq_chatwindow_get_type()\
+						                        , QQChatWindowClass)
 #define QQ_IS_CHATWINDOW(obj)	GTK_CHECK_TYPE(obj, qq_chatwindow_get_type())
 
 typedef struct __QQChatWindow 		QQChatWindow;
