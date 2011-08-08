@@ -1,6 +1,7 @@
 #ifndef __GTKQQ_CHATWINDOW_H
 #define __GTKQQ_CHATWINDOW_H
 #include <gtk/gtk.h>
+#include <qq.h>
 
 #define QQ_CHATWINDOW(obj)	    GTK_CHECK_CAST(obj, qq_chatwindow_get_type()\
 						                        , QQChatWindow)
@@ -22,4 +23,10 @@ struct __QQChatWindowClass{
 
 GtkWidget* qq_chatwindow_new();
 GType qq_chatwindow_get_type();
+
+//
+// Add messages
+//
+void qq_chatwindow_add_recv_message(GtkWidget *widget, QQRecvMsg *msg);
+void qq_chatwindow_add_send_message(GtkWidget *widget, QQSendMsg *msg);
 #endif

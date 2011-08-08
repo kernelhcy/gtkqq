@@ -126,7 +126,7 @@ struct _QQMsgFont{
     gint size;
     GString *color;
     struct{
-        gint a, b, c;
+        gint a, b, c; // bold , italic , underline
     }style;
 };
 QQMsgFont* qq_msgfont_new(const gchar *name, gint size, const gchar *color

@@ -24,6 +24,8 @@ QQInfo* qq_info_new()
     info -> groups_number_ht = g_hash_table_new(g_str_hash, g_str_equal);
 
     info -> lock = g_mutex_new();
+    info -> clientid = g_string_new("");
+    info -> psessionid = g_string_new("");
 
     GTimeVal now;
     g_get_current_time(&now);
