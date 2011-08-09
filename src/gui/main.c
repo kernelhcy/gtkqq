@@ -49,20 +49,43 @@ int main(int argc, char **argv)
 
     //test chat window
     GtkWidget *cw = qq_chatwindow_new();
-    gtk_widget_show_all(cw);
+
     QQSendMsg *msg = qq_sendmsg_new(info, 0, "1234567890");
-    QQMsgContent *ctent = qq_msgcontent_new(1, 62);
-    qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(1, 51);
+    QQMsgContent *ctent = NULL;
+    ctent = qq_msgcontent_new(2, "hello你好");
     qq_sendmsg_add_content(msg, ctent);
     ctent = qq_msgcontent_new(2, "hello你好");
     qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(3, "宋体", 20, "0000FF", 1, 0, 1);
+    ctent = qq_msgcontent_new(2, "hello你好");
     qq_sendmsg_add_content(msg, ctent);
+    ctent = qq_msgcontent_new(1, 62);
+    qq_sendmsg_add_content(msg, ctent);
+    ctent = qq_msgcontent_new(1, 51);
+    qq_sendmsg_add_content(msg, ctent);
+    ctent = qq_msgcontent_new(3, "宋体", 20, "808000", 0, 0, 0);
+    qq_sendmsg_add_content(msg, ctent);
+    qq_chatwindow_add_send_message(cw, msg);
     qq_chatwindow_add_send_message(cw, msg);
     qq_sendmsg_free(msg);
 
     
+    QQRecvMsg *rmsg = qq_recvmsg_new(info, "buddy_message");
+    ctent = qq_msgcontent_new(2, "hello你好");
+    qq_recvmsg_add_content(rmsg, ctent);
+    ctent = qq_msgcontent_new(2, "hello你好");
+    qq_recvmsg_add_content(rmsg, ctent);
+    ctent = qq_msgcontent_new(2, "hello你好");
+    qq_recvmsg_add_content(rmsg, ctent);
+    ctent = qq_msgcontent_new(1, 62);
+    qq_recvmsg_add_content(rmsg, ctent);
+    ctent = qq_msgcontent_new(1, 51);
+    qq_recvmsg_add_content(rmsg, ctent);
+    ctent = qq_msgcontent_new(3, "黑体", 15, "808080", 1, 1, 0);
+    qq_recvmsg_add_content(rmsg, ctent);
+    qq_chatwindow_add_recv_message(cw, rmsg);
+    qq_chatwindow_add_recv_message(cw, rmsg);
+    qq_recvmsg_free(rmsg);
+
     gtk_main();
 
     qq_logout(info, NULL);

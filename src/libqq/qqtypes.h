@@ -132,7 +132,10 @@ struct _QQMsgFont{
 QQMsgFont* qq_msgfont_new(const gchar *name, gint size, const gchar *color
                             , gint sa, gint sb, gint sc);
 void qq_msgfont_free(QQMsgFont *font);
-
+//
+// If two font is the same
+//
+gboolean qq_msgfont_equal(QQMsgFont *a, QQMsgFont *b);
 
 //
 // The message content.

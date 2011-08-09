@@ -205,6 +205,35 @@ void qq_msgfont_free(QQMsgFont *font)
     g_slice_free(QQMsgFont, font);
 }
 
+gboolean qq_msgfont_equal(QQMsgFont *a, QQMsgFont *b)
+{
+    if(a == b){
+        return TRUE;
+    }
+    if(a == NULL || b == NULL){
+        return FALSE;
+    }
+
+    if(!g_string_equal(a -> name, b -> name)){
+        return FALSE;
+    }
+    if(!g_string_equal(a -> color, b -> color)){
+        return FALSE;
+    }
+    if(a -> size != b -> size){
+        return FALSE;
+    }
+    if(a -> style.a != b -> style.a){
+        return FALSE;
+    }
+    if(a -> style.b != b -> style.b){
+        return FALSE;
+    }
+    if(a -> style.c != b -> style.c){
+        return FALSE;
+    }
+    return TRUE;
+}
 //
 // QQMsgContent
 //

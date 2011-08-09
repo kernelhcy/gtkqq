@@ -14,7 +14,9 @@ gtkqq_LDADD = $(GTK_LIBS) ${srcdir}/../libqq/libwebqq.la $(SQLITE3_LIBS)
 gtkqq_SOURCES=main.c \
           msgloop.c msgpoll.h\
           dao.c dao.h\
+          facepopupwindow.c facepopupwindow.h\
           chatwindow.c chatwindow.h\
+          chattextview.c chattextview.h\
           buddytree.c buddytree.h\
           loginpanel.c loginpanel.h \
           mainpanel.h mainpanel.c\
