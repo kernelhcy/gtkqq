@@ -31,4 +31,22 @@ GType qq_chat_textview_get_type();
 //
 void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg);
 void qq_chat_textview_add_send_message(GtkWidget *widget, QQSendMsg *msg);
+
+//
+// Add face or string
+//
+void qq_chat_textview_add_face(GtkWidget *widget, gint face);
+void qq_chat_textview_add_string(GtkWidget *widget, const gchar *str, gint len);
+
+//
+// Set font
+// @param name      : font name
+// @param color     : foreground color
+// @param size      : font size
+// @param a, b, c   : bold? italic? underline?
+//
+void qq_chat_textview_set_font(GtkWidget *widget, const gchar *name
+                                                , const gchar *color
+                                                , gint size
+                                                , gint a, gint b, gint c);
 #endif

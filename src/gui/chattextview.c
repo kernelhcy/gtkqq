@@ -8,9 +8,20 @@ extern GQQConfig *cfg;
 static void qq_chat_textview_init(QQChatTextview *view);
 static void qq_chat_textviewclass_init(QQChatTextviewClass *klass);
 
+//
+// Store the position of the qq faces in the buffer
+//
+typedef struct{
+    gint face;
+    gint pos;
+}TextViewFacePos;
+
 typedef struct{
     //QQMsgFont array
     GPtrArray *msgfonts;
+    gint cur_font_index;       // current font's index of msgfonts
+
+    GPtrArray *face_pos;
 
     GtkTextMark *end_mark, *inserted_left_mark;
 }QQChatTextviewPriv;
@@ -22,13 +33,13 @@ GType qq_chat_textview_get_type()
         const GTypeInfo info =
         {
             sizeof(QQChatTextviewClass),
-            NULL,    /* base_init */
-            NULL,    /* base_finalize */
+            NULL,       /* base_init */
+            NULL,       /* base_finalize */
             (GClassInitFunc)qq_chat_textviewclass_init,
-            NULL,    /* class finalize*/
-            NULL,    /* class data */
+            NULL,       /* class finalize*/
+            NULL,       /* class data */
             sizeof(QQChatTextview),
-            0,    /* n pre allocs */
+            0,          /* n pre allocs */
             (GInstanceInitFunc)qq_chat_textview_init,
             0
         };
@@ -53,13 +64,7 @@ static void qq_chatwindow_text_buffer_create_tags(GtkTextBuffer *textbuf)
 	gtk_text_buffer_create_tag(textbuf, "grey", "foreground", "grey", NULL);
 	gtk_text_buffer_create_tag(textbuf, "green", "foreground", "darkgreen", NULL);
 	gtk_text_buffer_create_tag(textbuf, "red", "foreground", "red", NULL);
-    gtk_text_buffer_create_tag(textbuf, "italic"
-                                    , "style", PANGO_STYLE_ITALIC, NULL);
-    gtk_text_buffer_create_tag(textbuf, "bold"
-                                    , "weight", PANGO_WEIGHT_BOLD, NULL);  
-    gtk_text_buffer_create_tag(textbuf, "underline"
-                                    , "underline", PANGO_UNDERLINE_SINGLE
-                                    , NULL);
+
 }
 
 //
@@ -84,7 +89,7 @@ static void qq_chat_textview_add_message(QQChatTextview *view
 
     GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(view));
 
-    GtkTextIter start_iter, end_iter;
+    GtkTextIter end_iter;
     gint64 timev = (gint64)strtoll(time, NULL, 10);
     GDateTime *t = g_date_time_new_from_unix_local(timev);
     gchar head[500];
@@ -133,44 +138,15 @@ static void qq_chat_textview_add_message(QQChatTextview *view
             break;
         }
     }
-    gchar fonttagname[100];
-    gboolean gotfonttag = FALSE;
-    // We already has this font tag?
     if(font != NULL){
-        for(i = 0; i < priv -> msgfonts -> len; ++i){
-            if(qq_msgfont_equal(font, g_ptr_array_index(priv -> msgfonts, i))){
-                // Yes, we have.
-                // Set font to it.
-                g_snprintf(fonttagname, 100, "msgfonttag%d", i);
-                gotfonttag = TRUE;
-                break;
-            }
-        }
-        if(!gotfonttag){
-            g_snprintf(fonttagname, 100, "msgfonttag%d", priv -> msgfonts -> len);
-            g_string_prepend(font -> color, "#");
-            gtk_text_buffer_create_tag(textbuf, fonttagname
-                                    , "family", font -> name -> str
-                                    , "foreground", font -> color -> str
-                                    , "size", font -> size * PANGO_SCALE
-                                    ,  NULL);
-            // erase #
-            g_string_erase(font -> color, 0, 1);
-            gotfonttag = TRUE;
-            // save the font
-            g_ptr_array_add(priv -> msgfonts, qq_msgfont_new(
-                                                        font -> name -> str
-                                                        , font -> size
-                                                        , font -> color -> str
-                                                        , font -> style.a
-                                                        , font -> style.b
-                                                        , font -> style.c));
-        }
+        qq_chat_textview_set_font(GTK_WIDGET(view)
+                                , font -> name -> str
+                                , font -> color -> str
+                                , font -> size
+                                , font -> style.a
+                                , font -> style.b
+                                , font -> style.c);
     }
-
-    gchar path[500];
-    GtkWidget *img;
-    GtkTextChildAnchor *anchor = NULL;
     for(i = 0; i < contents -> len; ++i){
         cent = g_ptr_array_index(contents, i);
         if(cent == NULL){
@@ -182,44 +158,12 @@ static void qq_chat_textview_add_message(QQChatTextview *view
             if(cent -> value.face > 134){
                 break;
             }
-            g_snprintf(path, 500, IMGDIR"/qqfaces/%d.gif", cent -> value.face);
-            img = gtk_image_new_from_file(path);
-            gtk_widget_show(img);
-            gtk_text_buffer_get_end_iter(textbuf, &end_iter);
-            anchor = gtk_text_buffer_create_child_anchor(textbuf, &end_iter);
-            gtk_text_view_add_child_at_anchor(GTK_TEXT_VIEW(view)
-                                                , img, anchor);
+            qq_chat_textview_add_face(GTK_WIDGET(view), cent -> value.face);
             break;
         case 2:         // string
-            gtk_text_buffer_get_end_iter(textbuf, &end_iter);
-            gtk_text_buffer_move_mark(textbuf, priv -> inserted_left_mark
-                                                , &end_iter);
-            gtk_text_buffer_insert(textbuf, &end_iter
+            qq_chat_textview_add_string(GTK_WIDGET(view)
                                         , cent -> value.str -> str
                                         , cent -> value.str -> len);
-            // apply font
-            if(gotfonttag){
-                gtk_text_buffer_get_iter_at_mark(textbuf, &start_iter
-                                                , priv -> inserted_left_mark);
-                gtk_text_buffer_apply_tag_by_name(textbuf, fonttagname 
-                                                , &start_iter
-                                                , &end_iter);
-                if(font -> style.a == 1){
-                    gtk_text_buffer_apply_tag_by_name(textbuf, "bold"
-                                                , &start_iter
-                                                , &end_iter);
-                }
-                if(font -> style.b == 1){
-                    gtk_text_buffer_apply_tag_by_name(textbuf, "italic"
-                                                , &start_iter
-                                                , &end_iter);
-                }
-                if(font -> style.c == 1){
-                    gtk_text_buffer_apply_tag_by_name(textbuf, "underline"
-                                                , &start_iter
-                                                , &end_iter);
-                }
-            }
             break;
         case 3:         // font
             break;
@@ -257,6 +201,7 @@ static void qq_chat_textview_init(QQChatTextview *view)
                                                     , "insertedleft"
                                                     , &iter, TRUE);
     priv -> msgfonts = g_ptr_array_new();
+    priv -> cur_font_index = -1;
 }
 
 static void qq_chat_textviewclass_init(QQChatTextviewClass *klass)
@@ -306,7 +251,81 @@ void qq_chat_textview_add_face(GtkWidget *widget, gint face)
     gtk_text_view_add_child_at_anchor(GTK_TEXT_VIEW(widget), img, anchor);
 }
 
-QQSendMsg* qq_chat_textview_create_sendmsg(GtkWidget *widget)
+void qq_chat_textview_add_string(GtkWidget *widget, const gchar *str, gint len)
 {
-    return NULL;
+    QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    widget, qq_chat_textview_get_type()
+                                    , QQChatTextviewPriv);
+    GtkTextIter start_iter, end_iter;
+    GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+    gtk_text_buffer_get_end_iter(textbuf, &end_iter);
+    gtk_text_buffer_move_mark(textbuf, priv -> inserted_left_mark
+                                        , &end_iter);
+    gtk_text_buffer_insert(textbuf, &end_iter, str, len);
+    // apply font
+    gchar tagname[100];
+    if(priv -> cur_font_index >= 0){
+        g_snprintf(tagname, 100, "msgfonttag%d", priv -> cur_font_index);
+        gtk_text_buffer_get_iter_at_mark(textbuf, &start_iter
+                                        , priv -> inserted_left_mark);
+        gtk_text_buffer_apply_tag_by_name(textbuf, tagname 
+                                                , &start_iter
+                                                , &end_iter);
+    }
+}
+
+void qq_chat_textview_set_font(GtkWidget *widget, const gchar *name
+                                                , const gchar *color
+                                                , gint size
+                                                , gint a, gint b, gint c)
+{
+    QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    widget, qq_chat_textview_get_type()
+                                    , QQChatTextviewPriv);
+    QQMsgFont *font = NULL;
+    gint i;
+    for(i = 0; i < priv -> msgfonts -> len; ++i){
+        font = g_ptr_array_index(priv -> msgfonts, i);
+        if(g_strcmp0(name, font -> name -> str) == 0
+                    && g_strcmp0(color, font -> color -> str) == 0
+                    && size == font -> size
+                    && a == font -> style.a
+                    && b == font -> style.b
+                    && c == font -> style.c){
+            break;
+        }
+    }
+    if(i < priv -> msgfonts -> len){
+        // We already have this font tag. Just use it.
+        priv -> cur_font_index = i;
+        return;
+    }
+
+    // Create the font tag
+    gchar fonttagname[100];
+    gchar colorstr[100];
+    g_snprintf(fonttagname, 100, "msgfonttag%d", priv -> msgfonts -> len);
+    GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+    g_snprintf(colorstr, 100, "#%s", color);
+    GtkTextTag *tag = gtk_text_buffer_create_tag(textbuf, fonttagname
+                                                , "family", name
+                                                , "foreground", colorstr
+                                                , "size", size * PANGO_SCALE
+                                                , NULL);
+    if(a == 1){
+        g_object_set(tag, "weight", PANGO_WEIGHT_BOLD, NULL);
+    }
+    if(b == 1){
+        g_object_set(tag, "style", PANGO_STYLE_ITALIC, NULL);
+    }
+    if(c == 1){
+        g_object_set(tag, "underline", PANGO_UNDERLINE_SINGLE, NULL);
+    }
+    // save the font
+    g_ptr_array_add(priv -> msgfonts, qq_msgfont_new(name, size, color
+                                                    , a, b, c));
+    priv -> cur_font_index = priv -> msgfonts -> len - 1;
+    g_debug("Create font tag %s : %s %s %d %d %d %d(%s, %d)"
+                        , fonttagname, name, color, size, a, b, c
+                        , __FILE__, __LINE__);
 }
