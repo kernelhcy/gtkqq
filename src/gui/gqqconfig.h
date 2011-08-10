@@ -94,4 +94,26 @@ gint gqq_config_set_str(GQQConfig *cfg, const gchar *key, const gchar *value);
 gint gqq_config_set_int(GQQConfig *cfg, const gchar *key, gint value);
 gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value);
 
+//
+// The string key hash table.
+//
+
+//
+// Create a hash table named `name`.
+//
+GHashTable* gqq_config_create_str_hash_table(GQQConfig *cfg, const gchar *name);
+
+// Delete the hash table named `name`
+gint gqq_config_delete_ht_ht(GQQConfig *cfg, const gchar *name);
+//
+// Operate the hash table named `name`
+//
+gpointer gqq_config_lookup_ht(GQQConfig *cfg, const gchar *name
+                                            , const gchar *key);
+gpointer gqq_config_remove_ht(GQQConfig *cfg, const gchar *name
+                                            , const gchar *key);
+gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name);
+gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
+                                        , gchar *key
+                                        , gpointer value);
 #endif

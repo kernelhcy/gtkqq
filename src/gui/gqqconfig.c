@@ -31,6 +31,9 @@ typedef struct{
     GString *status;    //current user's status
 
     sqlite3 *db_con;    //database connection
+    
+    // the hash table of the string key hash table
+    GHashTable *ht_ht;
 }GQQConfigPriv;
 
 //
@@ -242,6 +245,8 @@ static void gqq_config_init(GQQConfig *self)
     priv -> qqnum = g_string_new(NULL);
     priv -> status = g_string_new(NULL);
     priv -> db_con = db_open();
+    priv -> ht_ht = g_hash_table_new_full(g_str_hash, g_str_equal
+                                                    , g_free, NULL);
 
     if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS) 
                     && -1 == g_mkdir(CONFIGDIR, 0777)){
@@ -345,6 +350,8 @@ static void gqq_config_finalize(GObject *obj)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     cfg, gqq_config_get_type(), GQQConfigPriv);
     db_close(priv -> db_con);
+
+    g_hash_table_unref(priv -> ht_ht);
 }
 
 gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
@@ -503,4 +510,120 @@ GPtrArray* gqq_config_get_all_login_user(GQQConfig *cfg)
         return NULL;
     }
     return result;
+}
+
+
+GHashTable* gqq_config_create_str_hash_table(GQQConfig *cfg, const gchar *name)
+{
+    if(cfg == NULL || name == NULL){
+        return NULL;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+
+    GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
+    if(ht != NULL){
+        g_warning("There already be one hash map named %s (%s, %d)", name
+                                            , __FILE__, __LINE__);
+        return ht;
+    }
+
+    ht = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
+    g_hash_table_insert(priv -> ht_ht, g_strdup(name), ht);
+    return ht;
+}
+
+gint gqq_config_delete_ht_ht(GQQConfig *cfg, const gchar *name)
+{
+    if(cfg == NULL || name == NULL){
+        return -1;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+
+    GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
+    if(ht == NULL){
+        g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        return -1;
+    }
+    g_hash_table_remove(priv -> ht_ht, name);
+    g_hash_table_remove_all(ht);
+    g_hash_table_unref(ht);
+    return 0;
+}
+gpointer gqq_config_lookup_ht(GQQConfig *cfg, const gchar *name
+                                            , const gchar *key)
+{
+    if(cfg == NULL || name == NULL){
+        return NULL;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+
+    GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
+    if(ht == NULL){
+        g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        return NULL;
+    }
+    return g_hash_table_lookup(ht, key);
+}
+gpointer gqq_config_remove_ht(GQQConfig *cfg, const gchar *name
+                                            , const gchar *key)
+{
+    if(cfg == NULL || name == NULL){
+        return NULL;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+
+    GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
+    if(ht == NULL){
+        g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        return NULL;
+    }
+    gpointer data = g_hash_table_lookup(ht, key); 
+    g_hash_table_remove(ht, key);
+    return data;
+}
+
+gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name)
+{
+    if(cfg == NULL || name == NULL){
+        return -1;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+
+    GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
+    if(ht == NULL){
+        g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        return -1;
+    }
+    g_hash_table_remove_all(ht);
+    return 0;
+}
+
+gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
+                                            , gchar *key
+                                            , gpointer value)
+{
+    if(cfg == NULL || name == NULL){
+        return -1;
+    }
+
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+
+    GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
+    if(ht == NULL){
+        g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        return -1;
+    }
+    g_hash_table_insert(ht, g_strdup(key), value);
+    return 0;
 }

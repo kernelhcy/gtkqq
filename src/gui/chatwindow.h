@@ -15,13 +15,14 @@ typedef struct __QQChatWindowClass	QQChatWindowClass;
 
 struct __QQChatWindow{
 	GtkWindow parent;
+
 };
 
 struct __QQChatWindowClass{
 	GtkWindowClass parent;
 };
 
-GtkWidget* qq_chatwindow_new();
+GtkWidget* qq_chatwindow_new(const gchar *uin);
 GType qq_chatwindow_get_type();
 
 //

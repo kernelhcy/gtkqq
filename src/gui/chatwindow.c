@@ -19,6 +19,8 @@ static const gchar *font_names[] = {"宋体", "黑体", "隶书", "微软雅黑"
 // Private members
 //
 typedef struct{
+    gchar uin[100];
+
     GtkWidget *body_vbox;
 
     GtkWidget *faceimage;
@@ -48,8 +50,22 @@ typedef struct{
 //
 static void qq_chatwindow_on_close_clicked(GtkWidget *widget, gpointer  data)
 {
+    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
+                                        , qq_chatwindow_get_type()
+                                        , QQChatWindowPriv);
+    gqq_config_remove_ht(cfg, "chat_window_map", priv -> uin);
     gtk_widget_destroy(data);
     return;
+}
+
+static gboolean qq_chatwindow_delete_event(GtkWidget *widget, GdkEvent *event
+                                        , gpointer data)
+{
+    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
+                                        , qq_chatwindow_get_type()
+                                        , QQChatWindowPriv);
+    gqq_config_remove_ht(cfg, "chat_window_map", priv -> uin);
+    return FALSE;
 }
 
 GType qq_chatwindow_get_type()
@@ -76,10 +92,15 @@ GType qq_chatwindow_get_type()
     return t;
 }
 
-GtkWidget* qq_chatwindow_new()
+GtkWidget* qq_chatwindow_new(const gchar *uin)
 {
-    return GTK_WIDGET(g_object_new(qq_chatwindow_get_type()
-                        , "type", GTK_WINDOW_TOPLEVEL, NULL));
+    GtkWidget *win = GTK_WIDGET(g_object_new(qq_chatwindow_get_type()
+                                    , "type", GTK_WINDOW_TOPLEVEL, NULL));
+    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(win
+                                        , qq_chatwindow_get_type()
+                                        , QQChatWindowPriv);
+    g_stpcpy(priv -> uin, uin);
+    return win;
 }
 
 //
@@ -216,6 +237,7 @@ static void qq_chatwindow_init(QQChatWindow *win)
     priv -> color_btn = gtk_color_button_new();
     gtk_box_pack_start(GTK_BOX(priv -> font_tool_box), priv -> color_btn
                                         , FALSE, FALSE, 0); 
+    gtk_widget_show_all(priv -> font_tool_box);
 
     // tool bar
     priv -> tool_bar = gtk_toolbar_new();
@@ -285,8 +307,8 @@ static void qq_chatwindow_init(QQChatWindow *win)
     GtkWidget *w = GTK_WIDGET(win);
     //gtk_widget_set_size_request(w, 500, 500);
     gtk_window_resize(GTK_WINDOW(w), 500, 450);
-    g_signal_connect(G_OBJECT(w), "destroy",
-                             G_CALLBACK(qq_chatwindow_on_close_clicked), win);
+    g_signal_connect(G_OBJECT(w), "delete-event",
+                             G_CALLBACK(qq_chatwindow_delete_event), win);
     gtk_container_add(GTK_CONTAINER(win), priv -> body_vbox);
 
     gtk_widget_show_all(w);

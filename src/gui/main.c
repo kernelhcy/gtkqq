@@ -48,7 +48,7 @@ int main(int argc, char **argv)
     gtk_widget_show_all(win);
 
     //test chat window
-    GtkWidget *cw = qq_chatwindow_new();
+    GtkWidget *cw = qq_chatwindow_new("1234567890");
 
     QQSendMsg *msg = qq_sendmsg_new(info, 0, "1234567890");
     QQMsgContent *ctent = NULL;

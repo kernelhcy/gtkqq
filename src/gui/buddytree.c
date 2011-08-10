@@ -1,7 +1,10 @@
 #include <buddytree.h>
 #include <string.h>
 #include <chatwindow.h>
+#include <gqqconfig.h>
 
+extern QQInfo *info;
+extern GQQConfig *cfg;
 //
 // The map between the QQBuddy uin and the tree row.
 //
@@ -34,8 +37,6 @@ enum{
 //
 // The map of the tree path and the qq uin
 static GHashTable *tree_map = NULL;
-// The map of the chat dialog and the qq uin
-static GHashTable *chatwindow_map = NULL;
 
 //
 // Set the text columns' values
@@ -234,18 +235,17 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
     gtk_tree_model_get_iter(model, &iter, path);
     gtk_tree_model_get(model, &iter, BDY_UIN, &uin, -1);
 
-    GtkWidget *cw = g_hash_table_lookup(chatwindow_map, uin); 
+    GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin); 
     if(cw != NULL){
         // We have open a window for this uin
         return;
     }
     
-    cw = qq_chatwindow_new();
+    cw = qq_chatwindow_new(uin);
     gtk_widget_show_all(cw);
-    // hash table will free uin
-    g_hash_table_insert(chatwindow_map, uin, cw);
+    gqq_config_insert_ht(cfg, "chat_window_map", uin, cw);
     g_debug("Create chat window for %s(%s, %d)", uin, __FILE__, __LINE__);
-
+    g_free(uin);
 }
 
 static gboolean buddy_tree_on_rightbutton_click(GtkWidget* tree
@@ -309,8 +309,9 @@ GtkWidget* qq_buddy_tree_new()
 				   , NULL);
 
     tree_map = g_hash_table_new(g_str_hash, g_str_equal);
-    chatwindow_map = g_hash_table_new_full(g_str_hash, g_str_equal
-                                            , g_free, NULL);
+
+    //create the chat window map
+    gqq_config_create_str_hash_table(cfg, "chat_window_map");
     return view;
 }
 
@@ -589,3 +590,4 @@ void qq_buddy_tree_update_buddy_info(GtkWidget *tree, QQInfo *info)
         gtk_tree_path_free(path);
     }
 }
+
