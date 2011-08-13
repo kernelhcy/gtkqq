@@ -87,8 +87,9 @@ static void qq_mainwindow_init(QQMainWindow *win)
 
     gtk_container_add(GTK_CONTAINER(win), win -> notebook);
 
-    GtkWidget *img = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
-    gtk_window_set_icon(GTK_WINDOW(win), gtk_image_get_pixbuf(GTK_IMAGE(img)));
+    GdkPixbuf *pb = gdk_pixbuf_new_from_file(IMGDIR"webqq_icon.png", NULL);
+    gtk_window_set_icon(GTK_WINDOW(win), pb);
+    g_object_unref(pb);
     gtk_window_set_title(GTK_WINDOW(win), "GtkQQ");
 
     /*

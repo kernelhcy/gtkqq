@@ -340,7 +340,7 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt)
 //
 // QQSendMsg
 //
-QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin)
+QQSendMsg* qq_sendmsg_new(QQInfo *info, QQMsgType type, const gchar *to_uin)
 {
     QQSendMsg *msg = g_slice_new0(QQSendMsg);
 

@@ -45,12 +45,22 @@ void qq_chat_textview_add_string(GtkWidget *widget, const gchar *str, gint len);
 
 //
 // Set font
+// This function will create a new font tag and the new inserted string is setted
+// to the new font. Old strings will not change.
 // @param name      : font name
 // @param color     : foreground color
 // @param size      : font size
 // @param a, b, c   : bold? italic? underline?
 //
 void qq_chat_textview_set_font(GtkWidget *widget, const gchar *name
+                                                , const gchar *color
+                                                , gint size
+                                                , gint a, gint b, gint c);
+
+//
+// Set the default font the the text view widget
+//
+void qq_chat_textview_set_default_font(GtkWidget *widget, const gchar *name
                                                 , const gchar *color
                                                 , gint size
                                                 , gint a, gint b, gint c);

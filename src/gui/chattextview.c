@@ -30,7 +30,11 @@ typedef struct{
 typedef struct{
     //QQMsgFont array
     GPtrArray *msgfonts;
-    gint cur_font_index;       // current font's index of msgfonts
+    gint cur_font_index;        // current font's index of msgfonts
+    //
+    // Default under line flag
+    //
+    gboolean default_underline;
 
     GPtrArray *widget_marks;;
 
@@ -75,7 +79,26 @@ static void qq_chatwindow_text_buffer_create_tags(GtkTextBuffer *textbuf)
 	gtk_text_buffer_create_tag(textbuf, "grey", "foreground", "grey", NULL);
 	gtk_text_buffer_create_tag(textbuf, "green", "foreground", "darkgreen", NULL);
 	gtk_text_buffer_create_tag(textbuf, "red", "foreground", "red", NULL);
+	gtk_text_buffer_create_tag(textbuf, "underline", "underline"
+                                    , PANGO_UNDERLINE_SINGLE, NULL);
+}
 
+//
+// Applay the default under line
+//
+static void qq_chat_buffer_insert_text(GtkTextBuffer *textbuf
+                                        , GtkTextIter *pos
+                                        , gchar *text
+                                        , gint len
+                                        , gpointer data)
+{
+    QQChatTextviewPriv *priv = data;
+    if(priv -> default_underline){
+        GtkTextIter start, end;
+        gtk_text_buffer_get_start_iter(textbuf, &start);
+        gtk_text_buffer_get_end_iter(textbuf, &end);
+        gtk_text_buffer_apply_tag_by_name(textbuf, "underline", &start, &end);
+    }
 }
 
 //
@@ -213,6 +236,11 @@ static void qq_chat_textview_init(QQChatTextview *view)
     priv -> cur_font_index = -1;
     priv -> widget_marks = g_ptr_array_new();
 
+    //
+    // Connect the insert-text signal to apply the underline tag
+    //
+    g_signal_connect_after(G_OBJECT(textbuf), "insert-text"
+                            , G_CALLBACK(qq_chat_buffer_insert_text), priv);
 }
 
 static void qq_chat_textviewclass_init(QQChatTextviewClass *klass)
@@ -353,6 +381,51 @@ void qq_chat_textview_set_font(GtkWidget *widget, const gchar *name
                         , __FILE__, __LINE__);
 }
 
+void qq_chat_textview_set_default_font(GtkWidget *widget, const gchar *name
+                                                , const gchar *color
+                                                , gint size
+                                                , gint a, gint b, gint c)
+{
+    if(widget == NULL){
+        return;
+    }
+
+    gchar buf[100];
+    PangoFontDescription *desc = NULL;
+
+    if(color != NULL){
+        g_snprintf(buf, 100, color[0] == '#' ? "%s":"#%s", color);
+        GdkColor cc;
+        if(gdk_color_parse(buf, &cc)){
+            gtk_widget_modify_text(widget, GTK_STATE_NORMAL, &cc);
+        }else{
+            g_warning("Wrong color: %s (%s, %d)", buf, __FILE__, __LINE__);
+        }
+    }
+
+    g_snprintf(buf, 100, "%s %s %s %d", name == NULL ? "" : name
+                                        , a == 1 ? "bold" : ""
+                                        , b == 1 ? "italic" : ""
+                                        , size);
+    desc = pango_font_description_from_string(buf);
+    gtk_widget_modify_font(widget, desc);
+    pango_font_description_free(desc);
+
+    QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    widget, qq_chat_textview_get_type()
+                                    , QQChatTextviewPriv);
+    priv -> default_underline = (c == 1 ? TRUE : FALSE); 
+    GtkTextIter start, end;
+    GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+    gtk_text_buffer_get_start_iter(textbuf, &start);
+    gtk_text_buffer_get_end_iter(textbuf, &end);
+    if(priv -> default_underline){
+        gtk_text_buffer_apply_tag_by_name(textbuf, "underline", &start, &end);
+    }else{
+        gtk_text_buffer_remove_tag_by_name(textbuf, "underline", &start, &end);
+    }
+    return;
+}
 void qq_chat_textview_clear(GtkWidget *widget)
 {
     if(widget == NULL){

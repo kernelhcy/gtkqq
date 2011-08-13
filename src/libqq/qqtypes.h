@@ -9,6 +9,7 @@
  */
 typedef struct _QQInfo              QQInfo;
 
+typedef enum   _QQMsgType           QQMsgType;
 typedef struct _QQSendMsg           QQSendMsg;
 typedef struct _QQRecvMsg           QQRecvMsg;
 typedef struct _QQMsgContent        QQMsgContent;
@@ -184,11 +185,19 @@ void qq_msgcontent_free(QQMsgContent *cnt);
 GString* qq_msgcontent_tostring(QQMsgContent *cnt);
 
 //
+// Message type
+//
+enum _QQMsgType{
+    MSG_BUDDY_T = 128,
+    MSG_GROUP_T,
+    MSG_UNKNOWN_T
+};
+//
 // The send message.
 //
 struct _QQSendMsg{
     QQInfo *info;
-    gint type;              // 0 this is buddy message, or 1 is group message.
+    QQMsgType type;         // 0 this is buddy message, or 1 is group message.
     GString *to_uin;        // If buddy msg, this is "to"
                             // If group msg, this is "group_uin"
     GString *face;          // Only used when this is buddy message.
@@ -199,7 +208,8 @@ struct _QQSendMsg{
     GString *clientid;
     GString *psessionid;
 };
-QQSendMsg* qq_sendmsg_new(QQInfo *info, gint type, const gchar *to_uin);
+QQSendMsg* qq_sendmsg_new(QQInfo *info, QQMsgType type
+                                , const gchar *to_uin);
 void qq_sendmsg_free(QQSendMsg *msg);
 void qq_sendmsg_add_content(QQSendMsg *msg, QQMsgContent *content);
 //
@@ -216,7 +226,7 @@ struct _QQRecvMsg{
     GString *poll_type;
     GString *msg_id, *msg_id2;
     GString *from_uin, *to_uin;
-    gint msg_type;
+    QQMsgType msg_type;
     GString *reply_ip;
     GString *group_code;        // only group message
     GString *send_uin;          // only group message

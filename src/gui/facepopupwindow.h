@@ -23,6 +23,11 @@ struct __QQFacePopupWindow{
 
 struct __QQFacePopupWindowClass{
 	GtkTextViewClass parent;
+
+    void (*face_clicked_default_handler)(gpointer instance
+                                        , gint face
+                                        , gpointer usrdata);
+    guint face_clicked_signal_id;
 };
 
 GtkWidget* qq_face_popup_window_new();

@@ -68,6 +68,7 @@ static gboolean face_popup_window_clicked(GtkWidget *widget
 {
     struct FaceClickedPar *par = data;
     g_debug("Clicked face %d.gif (%s, %d)", par -> face, __FILE__, __LINE__);
+    g_signal_emit_by_name(par -> win, "face-clicked", par -> face);
     gtk_widget_hide(par -> win);
     return FALSE;
 }
@@ -112,7 +113,6 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
     for(i = 0; i < 7; ++i){
         for(j = 0; j < 15; ++j){
             g_snprintf(path, 500, IMGDIR"/qqfaces/%d.gif", k);
-            ++k;
             img = gtk_image_new_from_file(path);
             eventbox = gtk_event_box_new();
             gtk_widget_set_events(eventbox, GDK_ALL_EVENTS_MASK);
@@ -120,6 +120,7 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
             par = g_slice_new0(struct FaceClickedPar);
             par -> face = k;
             par -> win = GTK_WIDGET(win);
+            ++k;
             g_signal_connect(eventbox , "button-release-event" 
                                 , GTK_SIGNAL_FUNC(face_popup_window_clicked)
                                 , par);
@@ -141,9 +142,30 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
 	gtk_container_add(GTK_CONTAINER(win) , frame);
 }
 
+//
+// Default signal handler
+//
+static void default_handler(gpointer instance, gint face
+                                    , gpointer usr_data)
+{
+    //do nothing.
+    return;
+}
 static void qq_face_popup_windowclass_init(QQFacePopupWindowClass *klass)
 {
-
+    //install the 'face-clicked' signal
+    klass -> face_clicked_default_handler = default_handler;
+    //void signal_handler(gpointer instance, gint face, gpointer data)
+    klass -> face_clicked_signal_id = 
+            g_signal_new("face-clicked"
+                , G_TYPE_FROM_CLASS(klass) 
+                , G_SIGNAL_RUN_LAST     //run after the default handler
+                , G_STRUCT_OFFSET(QQFacePopupWindowClass
+                                , face_clicked_default_handler)
+                , NULL, NULL            //no used
+                , g_cclosure_marshal_VOID__INT
+                , G_TYPE_NONE
+                , 1, G_TYPE_INT);
 }
 
 void qq_face_popup_window_popup(GtkWidget *win, gint x, gint y)

@@ -19,7 +19,7 @@ enum{
     BDY_MARKNAME,       //Group name or buddy markname
     BDY_NICK,           //buddy nick
     BDY_UIN,            //buddy uin
-    BDY_QQNUMBER,       //buddy nick
+    BDY_QQNUMBER,       //buddy qqnumber
     BDY_LONGNICK,       //buddy long nick
     BDY_STATUS,         //The status
 
@@ -225,7 +225,7 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
                                     , GtkTreeViewColumn  *col 
                                     , gpointer data)
 {
-    gchar *uin;
+    gchar *uin, *markname, *qqnum, *status, *lnick;
     GtkTreeModel *model = gtk_tree_view_get_model(tree); 
     if(gtk_tree_path_get_depth(path) < 2){
         return;
@@ -233,7 +233,13 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
 
     GtkTreeIter iter;
     gtk_tree_model_get_iter(model, &iter, path);
-    gtk_tree_model_get(model, &iter, BDY_UIN, &uin, -1);
+    gtk_tree_model_get(model, &iter
+                        , BDY_UIN, &uin
+                        , BDY_STATUS, &status
+                        , BDY_MARKNAME, &markname
+                        , BDY_QQNUMBER, &qqnum
+                        , BDY_LONGNICK, &lnick
+                        , -1);
 
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin); 
     if(cw != NULL){
@@ -241,11 +247,15 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
         return;
     }
     
-    cw = qq_chatwindow_new(uin);
+    g_debug("Create chat window for %s(%s, %d)", uin, __FILE__, __LINE__);
+    cw = qq_chatwindow_new(uin, markname, qqnum, status, lnick);
     gtk_widget_show_all(cw);
     gqq_config_insert_ht(cfg, "chat_window_map", uin, cw);
-    g_debug("Create chat window for %s(%s, %d)", uin, __FILE__, __LINE__);
     g_free(uin);
+    g_free(markname);
+    g_free(qqnum);
+    g_free(status);
+    g_free(lnick);
 }
 
 static gboolean buddy_tree_on_rightbutton_click(GtkWidget* tree
@@ -328,15 +338,22 @@ void clear_treemap_ht(gpointer key, gpointer value, gpointer data)
 
 static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTreeIter *iter)
 {
+    GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", bdy -> uin -> str);
     // set markname and nick
     if(bdy -> markname == NULL || bdy -> markname -> len <=0){
         gtk_tree_store_set(store, iter
                             , BDY_MARKNAME, ""
                             , BDY_NICK, bdy -> nick -> str, -1);
+        if(cw != NULL){
+            g_object_set(cw, "name", bdy -> nick -> str, NULL);
+        }
     }else{
         gtk_tree_store_set(store, iter 
                             , BDY_MARKNAME, bdy -> markname -> str
                             , BDY_NICK, bdy -> nick -> str, -1);
+        if(cw != NULL){
+            g_object_set(cw, "name", bdy -> markname -> str, NULL);
+        }
     }
 
     gtk_tree_store_set(store, iter
@@ -344,6 +361,14 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
                             , BDY_STATUS, bdy -> status -> str
                             , BDY_QQNUMBER, bdy -> qqnumber -> str
                             , BDY_UIN, bdy -> uin -> str, -1);
+    if(cw != NULL){
+        g_object_set(cw, "lnick", bdy -> lnick -> str
+                        , "status", bdy -> status -> str
+                        , "qqnumber", bdy -> qqnumber -> str
+                        , "uin", bdy -> qqnumber -> str 
+                        , NULL);
+    }
+
     gchar buf[500];
     GdkPixbuf *pb;
     GError *err = NULL;
@@ -491,6 +516,12 @@ static void update_face_image(GtkWidget *tree, QQInfo *info, const gchar *uin)
     gtk_tree_store_set(GTK_TREE_STORE(model), &iter
                             , BDY_QQNUMBER, bdy -> qqnumber -> str, -1);
     gtk_tree_path_free(path);
+    
+    // update the chat window
+    GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin); 
+    if(cw != NULL){
+        g_object_set(cw, "qqnumber", bdy -> qqnumber -> str, NULL);
+    }
 }
 
 void qq_buddy_tree_update_faceimg(GtkWidget *tree, QQInfo *info)
@@ -523,6 +554,7 @@ void qq_buddy_tree_update_online_buddies(GtkWidget *tree, QQInfo *info)
     GtkTreeModel *model;
     QQTreeMap *map;
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
+    GtkWidget *cw;
 
 #define MOVE_TO_FIRST(x) \
     for(i = 0; i < info -> buddies -> len; ++i){\
@@ -550,6 +582,10 @@ void qq_buddy_tree_update_online_buddies(GtkWidget *tree, QQInfo *info)
                 ++cate_cnt;\
                 gtk_tree_store_set(GTK_TREE_STORE(model), &cate_iter, \
                                     CATE_CNT, cate_cnt, -1);\
+            }\
+            cw = gqq_config_lookup_ht(cfg, "chat_window_map", bdy -> uin -> str);\
+            if(cw != NULL){\
+                g_object_set(cw, "status", bdy -> status -> str, NULL);\
             }\
         }\
     }
