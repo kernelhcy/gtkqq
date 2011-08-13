@@ -201,6 +201,11 @@ static void login_state_machine(gpointer data)
             gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
                                     , 1, panel -> container);
             update_details(info, panel);
+
+            //
+            // Start poll message
+            //
+            //qq_start_poll(info, NULL, NULL, NULL);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);

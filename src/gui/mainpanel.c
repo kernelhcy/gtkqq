@@ -72,7 +72,7 @@ static void qq_mainpanel_init(QQMainPanel *panel)
 
     panel -> faceimgframe = gtk_frame_new(NULL);
     gtk_box_pack_start(GTK_BOX(hbox), panel -> faceimgframe
-                , FALSE, FALSE, 15);
+                , FALSE, FALSE, 5);
 
     panel -> status_btn = qq_statusbutton_new();
     panel -> nick = gtk_label_new("");

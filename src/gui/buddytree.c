@@ -240,6 +240,18 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
                         , BDY_QQNUMBER, &qqnum
                         , BDY_LONGNICK, &lnick
                         , -1);
+    if(strlen(markname) < 1){
+        // no markname
+        // use nick as the name
+        g_free(markname);
+        gtk_tree_model_get(model, &iter, BDY_NICK, &markname, -1);
+    }
+    if(strlen(markname) < 1){
+        // also no nick
+        // use qq number as the name
+        g_free(markname);
+        markname = g_strdup(qqnum);
+    }
 
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin); 
     if(cw != NULL){
@@ -340,20 +352,11 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
 {
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", bdy -> uin -> str);
     // set markname and nick
-    if(bdy -> markname == NULL || bdy -> markname -> len <=0){
-        gtk_tree_store_set(store, iter
-                            , BDY_MARKNAME, ""
-                            , BDY_NICK, bdy -> nick -> str, -1);
-        if(cw != NULL){
-            g_object_set(cw, "name", bdy -> nick -> str, NULL);
-        }
-    }else{
-        gtk_tree_store_set(store, iter 
-                            , BDY_MARKNAME, bdy -> markname -> str
-                            , BDY_NICK, bdy -> nick -> str, -1);
-        if(cw != NULL){
-            g_object_set(cw, "name", bdy -> markname -> str, NULL);
-        }
+    gtk_tree_store_set(store, iter 
+                        , BDY_MARKNAME, bdy -> markname -> str
+                        , BDY_NICK, bdy -> nick -> str, -1);
+    if(cw != NULL){
+        g_object_set(cw, "name", bdy -> markname -> str, NULL);
     }
 
     gtk_tree_store_set(store, iter
