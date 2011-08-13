@@ -7,22 +7,23 @@
 /*
  * The data structures of gtkqq
  */
-typedef struct _QQInfo          QQInfo;
+typedef struct _QQInfo              QQInfo;
 
-typedef struct _QQSendMsg       QQSendMsg;
-typedef struct _QQRecvMsg       QQRecvMsg;
-typedef struct _QQMsgContent    QQMsgContent;
-typedef struct _QQMsgFont       QQMsgFont;
+typedef struct _QQSendMsg           QQSendMsg;
+typedef struct _QQRecvMsg           QQRecvMsg;
+typedef struct _QQMsgContent        QQMsgContent;
+typedef enum   _QQMsgContentType    QQMsgContentType;
+typedef struct _QQMsgFont           QQMsgFont;
 
-typedef struct _QQBuddy         QQBuddy;
-typedef struct _QQGroup         QQGroup;
-typedef struct _QQGMember       QQGMember;
-typedef struct _QQCategory      QQCategory;
+typedef struct _QQBuddy             QQBuddy;
+typedef struct _QQGroup             QQGroup;
+typedef struct _QQGMember           QQGMember;
+typedef struct _QQCategory          QQCategory;
 
-typedef struct _QQRecentCon     QQRecentCon;
-typedef struct _QQFaceImg       QQFaceImg;
+typedef struct _QQRecentCon         QQRecentCon;
+typedef struct _QQFaceImg           QQFaceImg;
 
-typedef enum  _QQErrorCode      QQErrorCode;
+typedef enum  _QQErrorCode          QQErrorCode;
 
 enum _QQReturnCode{
     NO_ERR          = 0,    // no error
@@ -138,13 +139,22 @@ void qq_msgfont_free(QQMsgFont *font);
 gboolean qq_msgfont_equal(QQMsgFont *a, QQMsgFont *b);
 
 //
-// The message content.
-//
+// Type of the message content
 // type :
-//      1, face.    eg: ["face", 21]
-//      2, string.  eg: "some string"
-//      3, font.    eg: ["font", {"name":"Arial", "size":10
+//      face.    eg: ["face", 21]
+//      string.  eg: "some string"
+//      font.    eg: ["font", {"name":"Arial", "size":10
 //                          ,"style":[1, 0, 0], "color":"000000"}]
+//
+enum  _QQMsgContentType
+{
+    QQ_MSG_CONTENT_FACE_T = 256,        // face
+    QQ_MSG_CONTENT_STRING_T,            // string
+    QQ_MSG_CONTENT_FONT_T,              // font
+    QQ_MSG_CONTENT_UNKNOWN_T            // unknown
+};
+//
+// The message content.
 //
 struct _QQMsgContent{
     gint type;              //the type of the content.

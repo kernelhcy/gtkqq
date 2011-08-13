@@ -52,17 +52,17 @@ int main(int argc, char **argv)
 
     QQSendMsg *msg = qq_sendmsg_new(info, 0, "1234567890");
     QQMsgContent *ctent = NULL;
-    ctent = qq_msgcontent_new(2, "hello你好");
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, "hello你好");
     qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(2, "hello你好");
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, "hello你好");
     qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(2, "hello你好");
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, "hello你好");
     qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(1, 62);
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_FACE_T, 62);
     qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(1, 51);
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_FACE_T, 51);
     qq_sendmsg_add_content(msg, ctent);
-    ctent = qq_msgcontent_new(3, "宋体", 20, "808000", 0, 0, 0);
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_FONT_T, "宋体", 20, "808000", 0, 0, 0);
     qq_sendmsg_add_content(msg, ctent);
     qq_chatwindow_add_send_message(cw, msg);
     qq_chatwindow_add_send_message(cw, msg);
@@ -70,17 +70,17 @@ int main(int argc, char **argv)
 
     
     QQRecvMsg *rmsg = qq_recvmsg_new(info, "buddy_message");
-    ctent = qq_msgcontent_new(2, "hello你好");
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, "hello你好");
     qq_recvmsg_add_content(rmsg, ctent);
-    ctent = qq_msgcontent_new(2, "hello你好");
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, "hello你好");
     qq_recvmsg_add_content(rmsg, ctent);
-    ctent = qq_msgcontent_new(2, "hello你好");
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, "hello你好");
     qq_recvmsg_add_content(rmsg, ctent);
-    ctent = qq_msgcontent_new(1, 62);
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_FACE_T, 62);
     qq_recvmsg_add_content(rmsg, ctent);
-    ctent = qq_msgcontent_new(1, 51);
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_FACE_T, 51);
     qq_recvmsg_add_content(rmsg, ctent);
-    ctent = qq_msgcontent_new(3, "黑体", 15, "808080", 1, 1, 0);
+    ctent = qq_msgcontent_new(QQ_MSG_CONTENT_FONT_T, "黑体", 15, "808080", 1, 1, 0);
     qq_recvmsg_add_content(rmsg, ctent);
     qq_chatwindow_add_recv_message(cw, rmsg);
     qq_chatwindow_add_recv_message(cw, rmsg);

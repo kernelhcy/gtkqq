@@ -27,6 +27,11 @@ GtkWidget* qq_chat_textview_new();
 GType qq_chat_textview_get_type();
 
 //
+// Clear the view
+//
+void qq_chat_textview_clear(GtkWidget *widget);
+
+//
 // Add messages
 //
 void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg);
@@ -49,4 +54,11 @@ void qq_chat_textview_set_font(GtkWidget *widget, const gchar *name
                                                 , const gchar *color
                                                 , gint size
                                                 , gint a, gint b, gint c);
+
+//
+// Get the QQMsgContent of the text view.
+// Save them in the contents.
+// Return the number of the contents
+//
+gint qq_chat_textview_get_msg_contents(GtkWidget *widget, GPtrArray *contents);
 #endif

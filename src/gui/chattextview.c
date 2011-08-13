@@ -9,19 +9,30 @@ static void qq_chat_textview_init(QQChatTextview *view);
 static void qq_chat_textviewclass_init(QQChatTextviewClass *klass);
 
 //
-// Store the position of the qq faces in the buffer
+// Widget type.
+//
+typedef enum{
+    QQ_WIDGET_FACE_T,
+    QQ_WIDGET_UNKNOWN_T
+}QQWidgetType;
+//
+// The marks of the widget in the text buffer.
 //
 typedef struct{
-    gint face;
-    gint pos;
-}TextViewFacePos;
+    GtkTextMark *begin, *end;
+    QQWidgetType type;
+    union{
+        gint face;
+        gpointer p;
+    }data;
+}QQWidgetMark;
 
 typedef struct{
     //QQMsgFont array
     GPtrArray *msgfonts;
     gint cur_font_index;       // current font's index of msgfonts
 
-    GPtrArray *face_pos;
+    GPtrArray *widget_marks;;
 
     GtkTextMark *end_mark, *inserted_left_mark;
 }QQChatTextviewPriv;
@@ -133,7 +144,7 @@ static void qq_chat_textview_add_message(QQChatTextview *view
         if(cent == NULL){
             continue;
         }
-        if(cent -> type == 3){
+        if(cent -> type == QQ_MSG_CONTENT_FONT_T){
             font = cent -> value.font;
             break;
         }
@@ -154,18 +165,16 @@ static void qq_chat_textview_add_message(QQChatTextview *view
         }
         switch(cent -> type)
         {
-        case 1:         // face
+        case QQ_MSG_CONTENT_FACE_T:         // face
             if(cent -> value.face > 134){
                 break;
             }
             qq_chat_textview_add_face(GTK_WIDGET(view), cent -> value.face);
             break;
-        case 2:         // string
+        case QQ_MSG_CONTENT_STRING_T:         // string
             qq_chat_textview_add_string(GTK_WIDGET(view)
                                         , cent -> value.str -> str
                                         , cent -> value.str -> len);
-            break;
-        case 3:         // font
             break;
         default:
             break;
@@ -202,6 +211,8 @@ static void qq_chat_textview_init(QQChatTextview *view)
                                                     , &iter, TRUE);
     priv -> msgfonts = g_ptr_array_new();
     priv -> cur_font_index = -1;
+    priv -> widget_marks = g_ptr_array_new();
+
 }
 
 static void qq_chat_textviewclass_init(QQChatTextviewClass *klass)
@@ -239,6 +250,8 @@ void qq_chat_textview_add_face(GtkWidget *widget, gint face)
     if(widget == NULL || face > 134){
         return;
     }
+
+    QQWidgetMark *mark = g_slice_new0(QQWidgetMark);
     gchar path[500];
     g_snprintf(path, 500, IMGDIR"/qqfaces/%d.gif", face);
     GtkWidget *img = gtk_image_new_from_file(path);
@@ -247,8 +260,18 @@ void qq_chat_textview_add_face(GtkWidget *widget, gint face)
     GtkTextIter iter;
     GtkTextChildAnchor *anchor;
     gtk_text_buffer_get_end_iter(textbuf, &iter);
+    mark -> begin =  gtk_text_buffer_create_mark(textbuf, NULL, &iter, TRUE);
     anchor = gtk_text_buffer_create_child_anchor(textbuf, &iter);
     gtk_text_view_add_child_at_anchor(GTK_TEXT_VIEW(widget), img, anchor);
+    gtk_text_buffer_get_end_iter(textbuf, &iter);
+    mark -> end =  gtk_text_buffer_create_mark(textbuf, NULL, &iter, TRUE);
+
+    QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    widget, qq_chat_textview_get_type()
+                                    , QQChatTextviewPriv);
+    mark -> data.face = face;
+    mark -> type = QQ_WIDGET_FACE_T;
+    g_ptr_array_add(priv -> widget_marks, mark);
 }
 
 void qq_chat_textview_add_string(GtkWidget *widget, const gchar *str, gint len)
@@ -328,4 +351,78 @@ void qq_chat_textview_set_font(GtkWidget *widget, const gchar *name
     g_debug("Create font tag %s : %s %s %d %d %d %d(%s, %d)"
                         , fonttagname, name, color, size, a, b, c
                         , __FILE__, __LINE__);
+}
+
+void qq_chat_textview_clear(GtkWidget *widget)
+{
+    if(widget == NULL){
+        return;
+    }
+    QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    widget, qq_chat_textview_get_type()
+                                    , QQChatTextviewPriv);
+    GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+    gtk_text_buffer_set_text(textbuf, "", -1);
+
+    gint i;
+    QQWidgetMark *mark;
+    for(i = 0; i < priv -> widget_marks -> len; ++i){
+        mark = g_ptr_array_index(priv -> widget_marks, i);
+        gtk_text_buffer_delete_mark(textbuf, mark -> begin);
+        gtk_text_buffer_delete_mark(textbuf, mark -> end);
+        g_slice_free(QQWidgetMark, mark);
+    }
+    g_ptr_array_remove_range(priv -> widget_marks, 0
+                                , priv -> widget_marks -> len);
+    return;
+}
+
+gint qq_chat_textview_get_msg_contents(GtkWidget *widget, GPtrArray *contents)
+{
+    if(widget == NULL || contents == NULL){
+        return 0;
+    }
+
+    QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    widget, qq_chat_textview_get_type()
+                                    , QQChatTextviewPriv);
+    GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+    GtkTextIter start_iter, end_iter;
+    gtk_text_buffer_get_start_iter(textbuf, &start_iter);
+    gint i;
+    QQWidgetMark *mark;
+    gchar *text;
+    QQMsgContent *cent;
+    for(i = 0; i < priv -> widget_marks -> len; ++i){
+        mark = g_ptr_array_index(priv -> widget_marks, i);
+        if(mark == NULL){
+            continue;
+        }
+        gtk_text_buffer_get_iter_at_mark(textbuf, &end_iter, mark -> begin);
+        // get text between two widgets
+        text = gtk_text_buffer_get_text(textbuf, &start_iter, &end_iter, FALSE);
+        cent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, text);
+        g_ptr_array_add(contents, cent);
+        g_free(text);
+        switch(mark -> type)
+        {
+        case QQ_WIDGET_FACE_T:
+            cent = qq_msgcontent_new(QQ_MSG_CONTENT_FACE_T, mark -> data.face);
+            g_ptr_array_add(contents, cent);
+            break;
+        default:
+            g_warning("Unknown chat text view widget type! %d (%s, %d)"
+                            , mark -> type, __FILE__, __LINE__);
+            break;
+        }
+        gtk_text_buffer_get_iter_at_mark(textbuf, &start_iter, mark -> end);
+    }
+
+    // add the last text
+    gtk_text_buffer_get_end_iter(textbuf, &end_iter);
+    text = gtk_text_buffer_get_text(textbuf, &start_iter, &end_iter, FALSE);
+    cent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, text);
+    g_ptr_array_add(contents, cent);
+    g_free(text);
+    return contents -> len;
 }

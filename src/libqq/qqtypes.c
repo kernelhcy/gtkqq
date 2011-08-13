@@ -251,13 +251,13 @@ QQMsgContent *qq_msgcontent_new(gint type, ...)
     va_start(ap, type);
     switch(type)
     {
-    case 1:         //face
+    case QQ_MSG_CONTENT_FACE_T:             //face
         cnt -> value.face = va_arg(ap, gint);
         break;
-    case 2:         //string
+    case QQ_MSG_CONTENT_STRING_T:           //string
         cnt -> value.str = g_string_new(va_arg(ap, const gchar *));
         break;
-    case 3:         //font
+    case QQ_MSG_CONTENT_FONT_T:             //font
         name = va_arg(ap, const gchar *);
         size = va_arg(ap, gint);
         color = va_arg(ap, const gchar *);
@@ -284,13 +284,13 @@ void qq_msgcontent_free(QQMsgContent *cnt)
 
     switch(cnt -> type)
     {
-    case 1:     //face
+    case QQ_MSG_CONTENT_FACE_T:         //face
         // nothing to do...
         break;
-    case 2:     //string
+    case QQ_MSG_CONTENT_STRING_T:       //string
         g_string_free(cnt -> value.str, TRUE);
         break;
-    case 3:     //font
+    case QQ_MSG_CONTENT_FONT_T:         //font
         qq_msgfont_free(cnt -> value.font);
         break;
     default:
@@ -311,13 +311,13 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt)
     gchar buf[500];
     switch(cnt -> type)
     {
-    case 1:         //face. [\"face\",110]
+    case QQ_MSG_CONTENT_FACE_T:             //face. [\"face\",110]
         g_snprintf(buf, 500, "[\\\"face\\\", %d]", cnt -> value.face);
         break;
-    case 2:         //string, \"test\"
+    case QQ_MSG_CONTENT_STRING_T:           //string, \"test\"
         g_snprintf(buf, 500, "\\\"%s\\\"", cnt -> value.str -> str);
         break;
-    case 3:
+    case QQ_MSG_CONTENT_FONT_T:
         g_snprintf(buf, 500, "[\\\"font\\\", {\\\"name\\\": \\\"%s\\\", "
                         "\\\"size\\\": %d, "
                         "\\\"style\\\": [%d,%d,%d], "

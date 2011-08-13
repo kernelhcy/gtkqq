@@ -58,6 +58,25 @@ static void qq_chatwindow_on_close_clicked(GtkWidget *widget, gpointer  data)
     return;
 }
 
+//
+// Send button clicked handler
+//
+static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
+{
+    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
+                                        , qq_chatwindow_get_type()
+                                        , QQChatWindowPriv);
+    GPtrArray *cs = g_ptr_array_new();
+    qq_chat_textview_get_msg_contents(priv -> message_textview, cs); 
+    gint i;
+    GString *str;
+    for(i = 0; i < cs -> len; ++i){
+        str = qq_msgcontent_tostring(g_ptr_array_index(cs, i));
+        g_debug("%s", str -> str);
+    }
+    return;
+}
+
 static gboolean qq_chatwindow_delete_event(GtkWidget *widget, GdkEvent *event
                                         , gpointer data)
 {
@@ -300,6 +319,8 @@ static void qq_chatwindow_init(QQChatWindow *win)
     g_signal_connect(G_OBJECT(priv -> close_btn), "clicked",
                              G_CALLBACK(qq_chatwindow_on_close_clicked), win);
     priv -> send_btn = gtk_button_new_with_label("Send");
+    g_signal_connect(G_OBJECT(priv -> send_btn), "clicked",
+                             G_CALLBACK(qq_chatwindow_on_send_clicked), win);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> close_btn);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> send_btn);
     gtk_box_pack_start(GTK_BOX(priv -> body_vbox), buttonbox, FALSE, FALSE, 3); 
