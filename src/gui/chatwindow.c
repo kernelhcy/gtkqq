@@ -27,6 +27,14 @@ enum{
     QQ_CHATWINDOW_PROPERTY_UNKNOWN
 };
 
+static guint scale_255(guint v)
+{
+    guint re = (guint)(v / 65535.0 * 255.0 + 0.5);
+    re = re < 0 ? 0 : re;
+    re = re > 255 ? 255 : re;
+    return re;
+}
+
 //
 // Private members
 //
@@ -113,7 +121,7 @@ static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
     g_ptr_array_free(cs, TRUE);
 
     // font
-    gchar *name = NULL, *color = NULL, *sizestr = NULL;
+    gchar *name = NULL, color[20] , *sizestr = NULL;
     gint size, a = 0, b = 0, c = 0;
 
     name = gtk_combo_box_text_get_active_text(
@@ -123,10 +131,8 @@ static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
     }
     GdkColor gc;
     gtk_color_button_get_color(GTK_COLOR_BUTTON(priv -> color_btn), &gc);
-    color = gdk_color_to_string(&gc);
-    if(color == NULL){
-        color = g_strdup("#ffffff");
-    }
+    g_snprintf(color, 20, "%2X%2X%2X", scale_255(gc.red), scale_255(gc.green)
+                                    , scale_255(gc.blue));
 
     sizestr = gtk_combo_box_text_get_active_text(
                         GTK_COMBO_BOX_TEXT(priv -> size_cb));
@@ -145,9 +151,8 @@ static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
         c = 1;
     }
     QQMsgContent *font = qq_msgcontent_new(QQ_MSG_CONTENT_FONT_T, name, size
-                                                , color + 1, a, b, c);
+                                                , color, a, b, c);
     g_free(name);
-    g_free(color);
     g_free(sizestr);
     qq_sendmsg_add_content(msg, font);
 
@@ -281,7 +286,7 @@ static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
                                         , qq_chatwindow_get_type()
                                         , QQChatWindowPriv);
-    gchar *name = NULL, *color, *sizestr = NULL;
+    gchar *name = NULL, color[20], *sizestr = NULL;
     gint size, a = 0, b = 0, c = 0;
 
     name = gtk_combo_box_text_get_active_text(
@@ -292,7 +297,8 @@ static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
     
     GdkColor gc;
     gtk_color_button_get_color(GTK_COLOR_BUTTON(priv -> color_btn), &gc);
-    color = gdk_color_to_string(&gc);
+    g_snprintf(color, 20, "#%2X%2X%2X", scale_255(gc.red), scale_255(gc.green)
+                                    , scale_255(gc.blue));
     g_debug("Set text view color %s (%u,%u,%u)(%s, %d)", color, gc.red
                                 , gc.green, gc.blue, __FILE__, __LINE__);
 
@@ -317,7 +323,6 @@ static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
 
 out_label:
     g_free(name);
-    g_free(color);
     g_free(sizestr);
 }
 
