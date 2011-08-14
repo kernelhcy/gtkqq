@@ -12,18 +12,11 @@ extern GQQConfig *cfg;
 // Private members
 //
 typedef struct{
-    GQueue *msg_queue;          // message queue
+    GQueue *blinking_queue;     // blinking queue
+    GQueue *tmp_queue;          // tmp queue
 
     GtkWidget *popupmenu;       // popup menu
 }QQTrayPriv;
-
-//
-// Queue item
-//
-typedef struct{
-    gchar uin[100];             // uin
-    QQRecvMsg *msg;             // message. maybe NULL
-}QQTrayQueueItem;
 
 static void qq_tray_init(QQTray *tray);
 static void qq_trayclass_init(QQTrayClass *tc, gpointer data);
@@ -157,7 +150,8 @@ static void qq_tray_init(QQTray *tray)
     QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
                                                     , QQTrayPriv);
 
-    priv -> msg_queue = g_queue_new();
+    priv -> blinking_queue = g_queue_new();
+    priv -> tmp_queue = g_queue_new();
     priv -> popupmenu = gtk_menu_new();
 
     GtkWidget *menuitem;
@@ -259,21 +253,6 @@ static void qq_tray_blinking(QQTray *tray, const gchar *uin)
     }
 }
 
-void qq_tray_add_msg(QQTray *tray, QQRecvMsg *msg)
-{
-    if(tray == NULL || msg == NULL){
-        return;
-    }
-    QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
-                                                    , QQTrayPriv);
-
-    QQTrayQueueItem *item = g_slice_new0(QQTrayQueueItem);
-    g_stpcpy(item -> uin, msg -> from_uin -> str);
-    item -> msg = msg;
-    g_queue_push_head(priv -> msg_queue, item);
-    qq_tray_blinking(tray, item -> uin);
-}
-
 void qq_tray_blinking_for(QQTray *tray, const gchar *uin)
 {
     if(tray == NULL || uin == NULL){
@@ -283,12 +262,15 @@ void qq_tray_blinking_for(QQTray *tray, const gchar *uin)
     QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
                                                     , QQTrayPriv);
 
-    QQTrayQueueItem *item = g_slice_new0(QQTrayQueueItem);
-    g_stpcpy(item -> uin, uin);
-    item -> msg = NULL;
-    g_queue_push_head(priv -> msg_queue, item);
-    qq_tray_blinking(tray, uin);
+    if(NULL != g_queue_find_custom(priv -> blinking_queue, uin
+                                    , (GCompareFunc)g_strcmp0)){
+        // already blinking
+        return;
+    }
+    g_queue_push_head(priv -> blinking_queue, g_strdup(uin));
+    qq_tray_blinking(tray, g_queue_peek_tail(priv -> blinking_queue));
 }
+
 void qq_tray_stop_blinking_for(QQTray *tray, const gchar *uin)
 {
     if(tray == NULL || uin == NULL){
@@ -298,26 +280,30 @@ void qq_tray_stop_blinking_for(QQTray *tray, const gchar *uin)
     QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
                                                     , QQTrayPriv);
 
-    QQTrayQueueItem *item = g_queue_pop_tail(priv -> msg_queue);
-    if(item == NULL){
-        return;
+    gchar *tmpuin = NULL;
+    g_queue_clear(priv -> tmp_queue);
+    while(!g_queue_is_empty(priv -> blinking_queue)){
+        tmpuin = g_queue_pop_tail(priv -> blinking_queue);
+        if(g_strcmp0(tmpuin, uin) == 0){
+            //remove it
+            g_free(tmpuin);
+            break;
+        }
+        g_queue_push_head(priv -> tmp_queue, tmpuin);
+    }
+    while(!g_queue_is_empty(priv -> tmp_queue)){
+        g_queue_push_tail(priv -> blinking_queue
+                            , g_queue_pop_head(priv -> tmp_queue));
     }
 
     GdkPixbuf *pb;
-    if(g_queue_is_empty(priv -> msg_queue)){
+    if(g_queue_is_empty(priv -> blinking_queue)){
         // no more blinking
         gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), FALSE);
         pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png", NULL);
         gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
         g_object_unref(pb);
     }else{
-        QQTrayQueueItem *nextitem = g_queue_peek_tail(priv -> msg_queue);
-        qq_tray_blinking(tray, nextitem -> uin);
+        qq_tray_blinking(tray, g_queue_peek_tail(priv -> blinking_queue));
     }
-
-    // free 
-    if(item -> msg != NULL){
-        qq_recvmsg_free(item -> msg);
-    }
-    g_slice_free(QQTrayQueueItem, item);
 }

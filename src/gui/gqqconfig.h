@@ -96,6 +96,8 @@ gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value);
 
 //
 // The string key hash table.
+// NOTE:
+//      These functions are thread-safe.
 //
 
 //

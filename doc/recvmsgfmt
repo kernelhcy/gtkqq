@@ -96,6 +96,19 @@
 "status":"online",
 "client_type":41}}]}
 
+//别处登录提示
+{"retcode":0,"result":[{"poll_type":"kick_message","value":{
+	"msg_id":61831,
+	"from_uin":10000,
+	"to_uin":494498045,
+	"msg_id2":61832,
+	"msg_type":48,
+	"reply_ip":0,
+	"show_reason":1,
+	"reason":"\u60A8\u7684\u5E10\u53F7\u5728\u53E6\u4E00\u5730\u70B9\u767B\u5F55\uFF0C\u60A8\u5DF2\u88AB\u8FEB\u4E0B\u7EBF\u3002\u5982\u6709\u7591\u95EE\uFF0C\u8BF7\u767B\u5F55 safe.qq.com \u4E86\u89E3\u66F4\u591A\u3002"}
+	}]}
+
+
 //发送图片
 {"retcode":0,"result":[{"poll_type":"message","value":{"msg_id":19938,"from_uin":3187951892,"to_uin":1421032531,"msg_id2":151848,"msg_type":9,"reply_ip":2887459631,"time":1298638601,"content":[["font",{"size":11,"color":"000000","style":[0,0,0],"name":"\u5FAE\u8F6F\u96C5\u9ED1"}],["face",109],["face",108],["face",38],"hello",["face",110],["offpic",{"success":1,"file_path":"/43da94dc-0d70-4729-b38f-b04e9ebd3855"}]],"raw_content":"\u0014\u00AE\u0014\u00AD\u0014ghello\u0014\u00AF\u0016  7711 661AB      8633Owebqq_icon.pngf/43da94dc-0d70-4729-b38f-b04e9ebd3855A"}}]}
 

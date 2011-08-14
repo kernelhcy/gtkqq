@@ -6,6 +6,7 @@
 #include <stdlib.h>
 #include <statusbutton.h>
 #include <msgloop.h>
+#include <msgdispacher.h>
 
 /*
  * The global value
@@ -205,7 +206,7 @@ static void login_state_machine(gpointer data)
             //
             // Start poll message
             //
-            //qq_start_poll(info, NULL, NULL, NULL);
+            qq_start_poll(info, qq_poll_message_callback, &gtkloop, NULL);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);

@@ -8,6 +8,21 @@ extern GQQConfig *cfg;
 static void qq_chat_textview_init(QQChatTextview *view);
 static void qq_chat_textviewclass_init(QQChatTextviewClass *klass);
 
+static gint face_transfer_table[] = {14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
+                                    , 12, 13, 0, 50, 51, 96, 53, 54, 73
+                                    , 74, 75, 76, 77, 78, 55, 56, 57, 58
+                                    , 79, 80, 81, 82, 83, 84, 85, 86, 87
+                                    , 88, 97, 98, 99, 100, 101, 102, 103
+                                    , 104, 105, 106, 107, 108, 109, 110, 111
+                                    , 112, 32, 113, 114, 115, 63, 64, 59, 33
+                                    , 34, 116, 36, 37, 38, 91, 92, 93, 29, 117
+                                    , 72, 45, 42, 39, 62, 46, 47, 71, 95, 118
+                                    , 119, 120, 121, 122, 123, 124, 27, 21, 23
+                                    , 25, 26, 125, 126, 127, 128, 129, 130
+                                    , 131, 132, 133, 134, 52, 24, 22, 20, 60
+                                    , 61, 89, 90, 31, 94, 65, 35, 66, 67, 68
+                                    , 69, 70, 15, 16, 17, 18, 19, 28, 30, 40
+                                    , 41, 43, 44, 48, 49};
 //
 // Widget type.
 //
@@ -278,10 +293,18 @@ void qq_chat_textview_add_face(GtkWidget *widget, gint face)
     if(widget == NULL || face > 134){
         return;
     }
+    gint i;
+    gint real_face = face;
+    for(i = 0; i < 135; ++i){
+        if(face_transfer_table[i] == face){
+            real_face = i;
+            break;
+        }
+    }
 
     QQWidgetMark *mark = g_slice_new0(QQWidgetMark);
     gchar path[500];
-    g_snprintf(path, 500, IMGDIR"/qqfaces/%d.gif", face);
+    g_snprintf(path, 500, IMGDIR"/qqfaces/%d.gif", real_face);
     GtkWidget *img = gtk_image_new_from_file(path);
     gtk_widget_show(img);
     GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
@@ -445,8 +468,10 @@ void qq_chat_textview_clear(GtkWidget *widget)
         gtk_text_buffer_delete_mark(textbuf, mark -> end);
         g_slice_free(QQWidgetMark, mark);
     }
-    g_ptr_array_remove_range(priv -> widget_marks, 0
+    if(priv -> widget_marks -> len > 0){
+        g_ptr_array_remove_range(priv -> widget_marks, 0
                                 , priv -> widget_marks -> len);
+    }
     return;
 }
 

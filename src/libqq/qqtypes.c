@@ -308,14 +308,41 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt)
         return g_string_new("");
     }
 
+    GString * str = g_string_new("");
     gchar buf[500];
+    gint i;
     switch(cnt -> type)
     {
     case QQ_MSG_CONTENT_FACE_T:             //face. [\"face\",110]
         g_snprintf(buf, 500, "[\\\"face\\\", %d]", cnt -> value.face);
+        g_string_append(str, buf);
         break;
     case QQ_MSG_CONTENT_STRING_T:           //string, \"test\"
-        g_snprintf(buf, 500, "\\\"%s\\\"", cnt -> value.str -> str);
+        g_string_append(str, "\\\"");
+        for(i = 0; i < cnt -> value.str -> len; ++i){
+            switch(cnt -> value.str -> str[i])
+            {
+            case '\\':
+                g_string_append(str, "\\\\\\\\");
+                break;
+            case '"':\
+                g_string_append(str, "\\\\\\\"");
+                break;
+            case '\n':
+                g_string_append(str, "\\\\n");
+                break;
+            case '\r':
+                g_string_append(str, "\\\\r");
+                break;
+            case '\t':
+                g_string_append(str, "\\\\t");
+                break;
+            default:
+                g_string_append_c(str, cnt -> value.str -> str[i]);
+                break;
+            }
+        }
+        g_string_append(str, "\\\"");
         break;
     case QQ_MSG_CONTENT_FONT_T:
         g_snprintf(buf, 500, "[\\\"font\\\", {\\\"name\\\": \\\"%s\\\", "
@@ -328,13 +355,14 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt)
                         , cnt -> value.font -> style.b
                         , cnt -> value.font -> style.c
                         , cnt -> value.font -> color -> str);
-
+        g_string_append(str, buf);
         break;
     default:
         g_snprintf(buf, 500, "%s", "");
+        g_string_append(str, buf);
         break;
     }
-    return g_string_new(buf);
+    return str;
 }
 
 //
@@ -434,7 +462,7 @@ GString * qq_sendmsg_contents_tostring(QQSendMsg *msg)
 //
 // QQRecvMsg
 //
-QQRecvMsg* qq_recvmsg_new(QQInfo *info, const gchar *poll_type)
+QQRecvMsg* qq_recvmsg_new(QQInfo *info, QQMsgType type)
 {
     QQRecvMsg *msg = g_slice_new0(QQRecvMsg);
     if(msg == NULL){
@@ -442,8 +470,9 @@ QQRecvMsg* qq_recvmsg_new(QQInfo *info, const gchar *poll_type)
         return NULL;
     }
 
+    msg -> msg_type = type;
+
 #define NEW_STR(x, y) msg -> x = g_string_new(y)
-    NEW_STR(poll_type, poll_type);
     NEW_STR(msg_id, "");
     NEW_STR(msg_id2, "");
     NEW_STR(from_uin, "");
@@ -480,9 +509,7 @@ void qq_recvmsg_set(QQRecvMsg *msg, const gchar *name, const gchar *value)
     }
 #define SET_STR(x)  g_string_truncate(msg -> x, 0);\
                     g_string_append(msg -> x, value);
-    if(g_strcmp0(name, "poll_type") == 0){
-        SET_STR(poll_type);
-    }else if(g_strcmp0(name, "msg_id") == 0){
+    if(g_strcmp0(name, "msg_id") == 0){
         SET_STR(msg_id);
     }else if(g_strcmp0(name, "msg_id2") == 0){
         SET_STR(msg_id2);
@@ -520,7 +547,6 @@ void qq_recvmsg_free(QQRecvMsg *msg)
     }
 
 #define FREE_STR(x) g_string_free(msg -> x, TRUE)
-    FREE_STR(poll_type);
     FREE_STR(msg_id);
     FREE_STR(msg_id2);
     FREE_STR(from_uin);

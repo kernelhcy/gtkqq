@@ -22,12 +22,6 @@ struct __QQTrayClass{
 QQTray* qq_tray_new();
 GType qq_tray_get_type();
 
-//
-// Append the msg into the tray message queue
-// When no chat window for a message, add this message to the tray
-// message queue to wait for the chat window.
-//
-void qq_tray_add_msg(QQTray *tray, QQRecvMsg *msg);
 
 //
 // Blink the tray icon for the uin

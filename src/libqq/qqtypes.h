@@ -188,8 +188,10 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt);
 // Message type
 //
 enum _QQMsgType{
-    MSG_BUDDY_T = 128,
-    MSG_GROUP_T,
+    MSG_BUDDY_T = 128,      // buddy message
+    MSG_GROUP_T,            // group message
+    MSG_STATUS_CHANGED_T,   // buddy status changed
+    MSG_KICK_T,             // kick message. In other place logined
     MSG_UNKNOWN_T
 };
 //
@@ -222,24 +224,25 @@ GString * qq_sendmsg_contents_tostring(QQSendMsg *msg);
 //
 struct _QQRecvMsg{
     QQInfo *info;
+    QQMsgType msg_type;
     
-    GString *poll_type;
     GString *msg_id, *msg_id2;
     GString *from_uin, *to_uin;
-    QQMsgType msg_type;
     GString *reply_ip;
+
     GString *group_code;        // only group message
     GString *send_uin;          // only group message
     gint seq;                   // only group message
     GString *time;
     gint info_seq;              // only group message
+    gint type;
 
     GString *uin, *status, *client_type;       //only buddy status change
 
     GPtrArray *contents;
     GString *raw_content;       // the raw content.
 };
-QQRecvMsg* qq_recvmsg_new(QQInfo *info, const gchar *poll_type);
+QQRecvMsg* qq_recvmsg_new(QQInfo *info, QQMsgType type);
 void qq_recvmsg_set(QQRecvMsg *msg, const gchar *name, const gchar *value);
 void qq_recvmsg_add_content(QQRecvMsg *msg, QQMsgContent *content);
 void qq_recvmsg_free(QQRecvMsg *);

@@ -256,12 +256,18 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin); 
     if(cw != NULL){
         // We have open a window for this uin
+        g_object_set(cw, "uin", uin, NULL);
+        g_object_set(cw, "name", markname, NULL);
+        g_object_set(cw, "qqnumber", qqnum, NULL);
+        g_object_set(cw, "status", status, NULL);
+        g_object_set(cw, "lnick", lnick, NULL);
+        gtk_widget_show(cw);
         return;
     }
     
     g_debug("Create chat window for %s(%s, %d)", uin, __FILE__, __LINE__);
     cw = qq_chatwindow_new(uin, markname, qqnum, status, lnick);
-    gtk_widget_show_all(cw);
+    gtk_widget_show(cw);
     gqq_config_insert_ht(cfg, "chat_window_map", uin, cw);
     g_free(uin);
     g_free(markname);

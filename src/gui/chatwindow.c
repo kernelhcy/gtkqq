@@ -3,9 +3,13 @@
 #include <stdlib.h>
 #include <chattextview.h>
 #include <facepopupwindow.h>
+#include <tray.h>
+#include <msgloop.h>
 
 extern QQInfo *info;
 extern GQQConfig *cfg;
+extern QQTray *tray;
+extern GQQMessageLoop *send_loop;
 
 static void qq_chatwindow_init(QQChatWindow *win);
 static void qq_chatwindowclass_init(QQChatWindowClass *wc);
@@ -70,6 +74,26 @@ static void qq_chatwindow_on_close_clicked(GtkWidget *widget, gpointer  data)
 }
 
 //
+// Send message
+// Run in the send_loop
+//
+static void qq_chatwindow_send_msg_cb(GtkWidget *widget, QQSendMsg *msg)
+{
+    if(widget == NULL || msg == NULL){
+        return;
+    }
+    GError *err = NULL;
+    gint ret = qq_send_message(info, msg, &err);
+    if(ret != 0){
+        // send error
+        g_warning("Send message error!! %s (%s, %d)"
+                            , err == NULL ? "" : err -> message
+                            , __FILE__, __LINE__);
+        g_error_free(err);
+    }
+}
+
+//
 // Send button clicked handler
 //
 static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
@@ -79,22 +103,79 @@ static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
                                         , QQChatWindowPriv);
     GPtrArray *cs = g_ptr_array_new();
     qq_chat_textview_get_msg_contents(priv -> input_textview, cs); 
+    qq_chat_textview_clear(priv -> input_textview);
+
     QQSendMsg *msg = qq_sendmsg_new(info, MSG_BUDDY_T, priv -> uin);
     gint i;
     for(i = 0; i < cs -> len; ++i){
         qq_sendmsg_add_content(msg, g_ptr_array_index(cs, i));
     }
     g_ptr_array_free(cs, TRUE);
+
+    // font
+    gchar *name = NULL, *color = NULL, *sizestr = NULL;
+    gint size, a = 0, b = 0, c = 0;
+
+    name = gtk_combo_box_text_get_active_text(
+                        GTK_COMBO_BOX_TEXT(priv -> font_cb));
+    if(name == NULL){
+        name = "宋体";
+    }
+    GdkColor gc;
+    gtk_color_button_get_color(GTK_COLOR_BUTTON(priv -> color_btn), &gc);
+    color = gdk_color_to_string(&gc);
+    if(color == NULL){
+        color = g_strdup("#ffffff");
+    }
+
+    sizestr = gtk_combo_box_text_get_active_text(
+                        GTK_COMBO_BOX_TEXT(priv -> size_cb));
+    if(sizestr == NULL){
+        size = 11;
+    }else{
+        size = (gint)strtol(sizestr, NULL, 10);
+    }
+    if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(priv -> bold_btn))){
+        a = 1;
+    }
+    if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(priv -> italic_btn))){
+        b = 1;
+    }
+    if(gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(priv -> underline_btn))){
+        c = 1;
+    }
+    QQMsgContent *font = qq_msgcontent_new(QQ_MSG_CONTENT_FONT_T, name, size
+                                                , color + 1, a, b, c);
+    g_free(name);
+    g_free(color);
+    g_free(sizestr);
+    qq_sendmsg_add_content(msg, font);
+
+    qq_chat_textview_add_send_message(priv -> message_textview, msg);
+    gqq_mainloop_attach(send_loop, qq_chatwindow_send_msg_cb
+                                , 2, data, msg);
     return;
 }
 
 static gboolean qq_chatwindow_delete_event(GtkWidget *widget, GdkEvent *event
                                         , gpointer data)
 {
-    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
-                                        , qq_chatwindow_get_type()
-                                        , QQChatWindowPriv);
+    QQChatWindowPriv *priv = data;
     gqq_config_remove_ht(cfg, "chat_window_map", priv -> uin);
+    return FALSE;
+}
+
+//
+// Foucus in event
+// Stop blinking the tray
+//
+static gboolean qq_chatwindow_focus_in_event(GtkWidget *widget, GdkEvent *event
+                                                , gpointer data)
+{
+    QQChatWindowPriv *priv = data;
+    qq_tray_stop_blinking_for(tray, priv -> uin);
+    g_debug("Focus in chatwindow of %s (%s, %d)", priv -> uin
+                                    , __FILE__, __LINE__);
     return FALSE;
 }
 
@@ -167,7 +248,16 @@ static void face_tool_button_clicked(GtkToolButton *btn, gpointer data)
     qq_face_popup_window_popup(priv -> facepopupwindow, x, y);
 }
 
-
+//
+// Clear the message text view
+//
+static void clear_button_clicked(GtkToolButton *btn, gpointer data)
+{
+    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
+                                        , qq_chatwindow_get_type()
+                                        , QQChatWindowPriv);
+    qq_chat_textview_clear(priv -> message_textview);
+}
 //
 // font tool button func
 //
@@ -191,7 +281,7 @@ static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
                                         , qq_chatwindow_get_type()
                                         , QQChatWindowPriv);
-    gchar *name = NULL, *color = NULL, *sizestr = NULL;
+    gchar *name = NULL, *color, *sizestr = NULL;
     gint size, a = 0, b = 0, c = 0;
 
     name = gtk_combo_box_text_get_active_text(
@@ -199,12 +289,12 @@ static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
     if(name == NULL){
         return;
     }
+    
     GdkColor gc;
     gtk_color_button_get_color(GTK_COLOR_BUTTON(priv -> color_btn), &gc);
     color = gdk_color_to_string(&gc);
-    if(color == NULL){
-        goto out_label;
-    }
+    g_debug("Set text view color %s (%u,%u,%u)(%s, %d)", color, gc.red
+                                , gc.green, gc.blue, __FILE__, __LINE__);
 
     sizestr = gtk_combo_box_text_get_active_text(
                         GTK_COMBO_BOX_TEXT(priv -> size_cb));
@@ -379,6 +469,8 @@ static void qq_chatwindow_init(QQChatWindow *win)
     gtk_toolbar_insert(GTK_TOOLBAR(priv -> tool_bar), priv -> clear_item, -1);
     gtk_toolbar_insert(GTK_TOOLBAR(priv -> tool_bar)
                                 , gtk_separator_tool_item_new() , -1);
+    g_signal_connect(G_OBJECT(priv -> clear_item), "clicked",
+                             G_CALLBACK(clear_button_clicked), win);
 
     img = gtk_image_new_from_file(IMGDIR"/showhistory.png");
     priv -> history_item = gtk_tool_button_new(img, NULL);
@@ -418,16 +510,20 @@ static void qq_chatwindow_init(QQChatWindow *win)
     GtkWidget *w = GTK_WIDGET(win);
     //gtk_widget_set_size_request(w, 500, 500);
     gtk_window_resize(GTK_WINDOW(w), 500, 450);
-    g_signal_connect(G_OBJECT(w), "delete-event",
-                             G_CALLBACK(qq_chatwindow_delete_event), win);
+    g_signal_connect(G_OBJECT(w), "delete-event"
+                                , G_CALLBACK(qq_chatwindow_delete_event)
+                                , priv);
     gtk_container_add(GTK_CONTAINER(win), priv -> body_vbox);
 
-    gtk_widget_show_all(w);
+    gtk_widget_show_all(priv -> body_vbox);
     gtk_widget_grab_focus(priv -> input_textview);
 
     priv -> facepopupwindow = qq_face_popup_window_new();
     g_signal_connect(G_OBJECT(priv -> facepopupwindow), "face-clicked"
                                 , G_CALLBACK(qq_chatwindow_face_clicked)
+                                , priv);
+    g_signal_connect(G_OBJECT(w), "focus-in-event"
+                                , G_CALLBACK(qq_chatwindow_focus_in_event)
                                 , priv);
 }
 

@@ -134,6 +134,5 @@ v = (new Date()).getTime();
             p++;
             return v + p;
         };
-        
-        
+clientType: {1: "PC",2: "PC",3: "PC",4: "PC",5: "PC",6: "PC",10: "PC",21: "Phone",22: "Phone",23: "Phone",24: "Phone",41: "WebQQ",42: "PC",1E4: "PC"}
 

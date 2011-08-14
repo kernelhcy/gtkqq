@@ -30,6 +30,8 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
 {
     json_t *tmp = NULL;
     GString *utf8 = g_string_new("");
+    GString *tmpstring = g_string_new("");
+    gint i;
     tmp = json_find_first_label_all(json, "content");
     if(tmp == NULL){
         g_warning("No conent found!(%s, %d)", __FILE__, __LINE__);
@@ -43,8 +45,36 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
         if(ctent -> type == JSON_STRING){
             //String
             g_string_truncate(utf8, 0);
+            g_string_truncate(tmpstring, 0);
             ucs4toutf8(utf8, ctent -> text);
-            ct = qq_msgcontent_new(2, utf8 -> str); 
+            for(i = 0; i < utf8 -> len; ++i){
+                if(utf8 -> str[i] == '\\' && i + 1 < utf8 -> len){
+                    switch(utf8 -> str[i + 1])
+                    {
+                    case '\\':
+                        g_string_append_c(tmpstring, '\\');
+                        break;
+                    case 'n':
+                        g_string_append_c(tmpstring, '\n');
+                        break;
+                    case 'r':
+                        g_string_append_c(tmpstring, '\r');
+                        break;
+                    case 't':
+                        g_string_append_c(tmpstring, '\t');
+                        break;
+                    case '"':
+                        g_string_append_c(tmpstring, '"');
+                        break;
+                    default:
+                        break;
+                    }
+                    ++i;
+                }else{
+                    g_string_append_c(tmpstring, utf8 -> str[i]);
+                }
+            }
+            ct = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, tmpstring -> str); 
             qq_recvmsg_add_content(msg, ct);
             g_debug("Msg Content: string %s(%s, %d)", utf8 -> str
                             , __FILE__, __LINE__);
@@ -97,14 +127,15 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
                     stylestr = style -> text;
                     sc = (gint)strtol(stylestr, NULL, 10);
                 }
-                ct = qq_msgcontent_new(3, name, size, color, sa, sb, sc);
+                ct = qq_msgcontent_new(QQ_MSG_CONTENT_FONT_T, name, size
+                                                    , color, sa, sb, sc);
                 qq_recvmsg_add_content(msg, ct);
                 g_debug("Msg Content: font %s %d %s %d%d%d(%s, %d)", name
                         , size, color, sa, sb, sc, __FILE__, __LINE__);
             }else if(g_strcmp0(ctent -> child -> text, "face") == 0){
                 gint facenum = (gint)strtol(ctent -> child -> next -> text
                                                             , NULL, 10);
-                ct = qq_msgcontent_new(1, facenum);
+                ct = qq_msgcontent_new(QQ_MSG_CONTENT_FACE_T, facenum);
                 qq_recvmsg_add_content(msg, ct);
                 g_debug("Msg Content: face %d(%s, %d)", facenum
                                         , __FILE__, __LINE__);
@@ -114,12 +145,13 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
         }
     }
     g_string_free(utf8, TRUE);
+    g_string_free(tmpstring, TRUE);
 }
 
 
-static QQRecvMsg* create_message(QQInfo *info, json_t *json)
+static QQRecvMsg* create_buddy_message(QQInfo *info, json_t *json)
 {
-    QQRecvMsg *msg = qq_recvmsg_new(info, "message");
+    QQRecvMsg *msg = qq_recvmsg_new(info, MSG_BUDDY_T);
 #define SET_VALUE(x)    qq_recvmsg_set(msg, x, find_value(json, x))
     SET_VALUE("msg_id");
     SET_VALUE("from_uin");
@@ -131,7 +163,7 @@ static QQRecvMsg* create_message(QQInfo *info, json_t *json)
 #undef SET_VALUE
     const gchar *msg_type = find_value(json, "msg_type");
     gint mt = (gint)strtol(msg_type, NULL, 10);
-    msg -> msg_type = mt;
+    msg -> type = mt;
 
     parase_content(msg, json);
     return msg;
@@ -140,7 +172,7 @@ static QQRecvMsg* create_message(QQInfo *info, json_t *json)
 static QQRecvMsg* create_group_message(QQInfo *info, json_t *json)
 {
 
-    QQRecvMsg *msg = qq_recvmsg_new(info, "group_message");
+    QQRecvMsg *msg = qq_recvmsg_new(info, MSG_GROUP_T);
 #define SET_VALUE(x)    qq_recvmsg_set(msg, x, find_value(json, x))
     SET_VALUE("msg_id");
     SET_VALUE("from_uin");
@@ -159,7 +191,7 @@ static QQRecvMsg* create_group_message(QQInfo *info, json_t *json)
 
     const gchar *msg_type = find_value(json, "msg_type");
     gint mt = (gint)strtol(msg_type, NULL, 10);
-    msg -> msg_type = mt;
+    msg -> type = mt;
 
     const gchar *info_seq = find_value(json, "info_seqe");
     gint seq = (gint)strtol(info_seq, NULL, 10);
@@ -172,7 +204,7 @@ static QQRecvMsg* create_group_message(QQInfo *info, json_t *json)
 static QQRecvMsg* create_status_change_message(QQInfo *info, json_t *json)
 {
 
-    QQRecvMsg *msg = qq_recvmsg_new(info, "buddies_status_change");
+    QQRecvMsg *msg = qq_recvmsg_new(info, MSG_STATUS_CHANGED_T);
 #define SET_VALUE(x)    qq_recvmsg_set(msg, x, find_value(json, x))
     SET_VALUE("uin");
     SET_VALUE("status");
@@ -183,6 +215,25 @@ static QQRecvMsg* create_status_change_message(QQInfo *info, json_t *json)
                         , msg -> status -> str
                         , msg -> client_type -> str
                         , __FILE__, __LINE__);
+    return msg;
+}
+
+static QQRecvMsg* create_kick_message(QQInfo *info, json_t *json)
+{
+
+    QQRecvMsg *msg = qq_recvmsg_new(info, MSG_KICK_T);
+#define SET_VALUE(x)    qq_recvmsg_set(msg, x, find_value(json, x))
+    SET_VALUE("from_uin");
+    SET_VALUE("to_uin");
+#undef SET_VALUE
+    
+    GString *reason = g_string_new(NULL);
+    const gchar *rn = find_value(json, "reason");
+    ucs4toutf8(reason, rn);
+    QQMsgContent *cent = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T
+                            , reason -> str);
+    g_string_free(reason, TRUE);
+    qq_recvmsg_add_content(msg, cent);
     return msg;
 }
 
@@ -200,13 +251,16 @@ static QQRecvMsg* create_recvmsg(QQInfo *info, json_t *msg)
     const gchar *type = tmp -> child -> text;
     if(g_strcmp0(type, "message") == 0){
         //buddy message
-        return create_message(info, msg);
+        return create_buddy_message(info, msg);
     }else if(g_strcmp0(type, "buddies_status_change") == 0){
         //buddy status change
         return create_status_change_message(info, msg);
     }else if(g_strcmp0(type, "group_message") == 0){
         //group message
         return create_group_message(info, msg);
+    }else if(g_strcmp0(type, "kick_message") == 0){
+        //kick message
+        return create_kick_message(info, msg);
     }
     return NULL;
 }

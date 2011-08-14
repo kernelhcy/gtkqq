@@ -54,6 +54,8 @@ int main(int argc, char **argv)
 
     gtk_main();
 
+    g_object_unref(G_OBJECT(tray));
+
     qq_logout(info, NULL);
     gqq_msgloop_stop(get_info_loop);
     gqq_msgloop_stop(send_loop);
