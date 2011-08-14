@@ -3,11 +3,10 @@
 #include <msgloop.h>
 #include <qq.h>
 #include <buddytree.h>
+#include <tray.h>
 
-/*
- * The main event loop context of Gtk.
- */
 extern QQInfo *info;
+extern QQTray *tray;
 
 extern GQQMessageLoop *get_info_loop;
 extern GQQMessageLoop *send_loop;

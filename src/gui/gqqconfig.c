@@ -34,6 +34,8 @@ typedef struct{
     
     // the hash table of the string key hash table
     GHashTable *ht_ht;
+    // lock of previous hash table
+    GMutex *ht_lock;
 }GQQConfigPriv;
 
 //
@@ -247,6 +249,7 @@ static void gqq_config_init(GQQConfig *self)
     priv -> db_con = db_open();
     priv -> ht_ht = g_hash_table_new_full(g_str_hash, g_str_equal
                                                     , g_free, NULL);
+    priv -> ht_lock = g_mutex_new();
 
     if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS) 
                     && -1 == g_mkdir(CONFIGDIR, 0777)){
@@ -352,6 +355,7 @@ static void gqq_config_finalize(GObject *obj)
     db_close(priv -> db_con);
 
     g_hash_table_unref(priv -> ht_ht);
+    g_mutex_free(priv -> ht_lock);
 }
 
 gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
@@ -522,15 +526,18 @@ GHashTable* gqq_config_create_str_hash_table(GQQConfig *cfg, const gchar *name)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
+    g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht != NULL){
         g_warning("There already be one hash map named %s (%s, %d)", name
                                             , __FILE__, __LINE__);
+        g_mutex_unlock(priv -> ht_lock);
         return ht;
     }
 
     ht = g_hash_table_new_full(g_str_hash, g_str_equal, g_free, NULL);
     g_hash_table_insert(priv -> ht_ht, g_strdup(name), ht);
+    g_mutex_unlock(priv -> ht_lock);
     return ht;
 }
 
@@ -543,14 +550,17 @@ gint gqq_config_delete_ht_ht(GQQConfig *cfg, const gchar *name)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
+    g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht == NULL){
         g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        g_mutex_unlock(priv -> ht_lock);
         return -1;
     }
     g_hash_table_remove(priv -> ht_ht, name);
     g_hash_table_remove_all(ht);
     g_hash_table_unref(ht);
+    g_mutex_unlock(priv -> ht_lock);
     return 0;
 }
 gpointer gqq_config_lookup_ht(GQQConfig *cfg, const gchar *name
@@ -563,12 +573,16 @@ gpointer gqq_config_lookup_ht(GQQConfig *cfg, const gchar *name
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
+    g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht == NULL){
         g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        g_mutex_unlock(priv -> ht_lock);
         return NULL;
     }
-    return g_hash_table_lookup(ht, key);
+    gpointer re = g_hash_table_lookup(ht, key);
+    g_mutex_unlock(priv -> ht_lock);
+    return re;
 }
 gpointer gqq_config_remove_ht(GQQConfig *cfg, const gchar *name
                                             , const gchar *key)
@@ -580,13 +594,16 @@ gpointer gqq_config_remove_ht(GQQConfig *cfg, const gchar *name
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
+    g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht == NULL){
         g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        g_mutex_unlock(priv -> ht_lock);
         return NULL;
     }
     gpointer data = g_hash_table_lookup(ht, key); 
     g_hash_table_remove(ht, key);
+    g_mutex_unlock(priv -> ht_lock);
     return data;
 }
 
@@ -599,12 +616,15 @@ gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
+    g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht == NULL){
         g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        g_mutex_unlock(priv -> ht_lock);
         return -1;
     }
     g_hash_table_remove_all(ht);
+    g_mutex_unlock(priv -> ht_lock);
     return 0;
 }
 
@@ -619,11 +639,14 @@ gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                 cfg, gqq_config_get_type(), GQQConfigPriv);
 
+    g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht == NULL){
         g_warning("No hash map named %s (%s, %d)", name, __FILE__, __LINE__);
+        g_mutex_unlock(priv -> ht_lock);
         return -1;
     }
     g_hash_table_insert(ht, g_strdup(key), value);
+    g_mutex_unlock(priv -> ht_lock);
     return 0;
 }

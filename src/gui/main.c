@@ -8,11 +8,15 @@
 #include <gqqconfig.h>
 #include <msgloop.h>
 #include <chatwindow.h>
+#include <tray.h>
+
 /*
  * Global
  */
 QQInfo *info = NULL;
 GQQConfig *cfg = NULL;
+QQTray *tray = NULL;
+
 //
 // The main loop used to get information from the server.
 // Such as face images, buddy information.
@@ -45,6 +49,7 @@ int main(int argc, char **argv)
     }
 
     GtkWidget *win = qq_mainwindow_new();
+    tray = qq_tray_new();
     gtk_widget_show_all(win);
 
     gtk_main();
