@@ -96,6 +96,8 @@ static void qq_chatwindow_text_buffer_create_tags(GtkTextBuffer *textbuf)
 	gtk_text_buffer_create_tag(textbuf, "red", "foreground", "red", NULL);
 	gtk_text_buffer_create_tag(textbuf, "underline", "underline"
                                     , PANGO_UNDERLINE_SINGLE, NULL);
+    gtk_text_buffer_create_tag(textbuf, "left_margin1", "left_margin", 5, NULL);
+    gtk_text_buffer_create_tag(textbuf, "left_margin2", "left_margin", 20, NULL);
 }
 
 //
@@ -115,7 +117,6 @@ static void qq_chat_buffer_insert_text(GtkTextBuffer *textbuf
         gtk_text_buffer_apply_tag_by_name(textbuf, "underline", &start, &end);
     }
 }
-
 //
 // Add message 
 // @param uin : the uin
@@ -171,7 +172,7 @@ static void qq_chat_textview_add_message(QQChatTextview *view
     gtk_text_buffer_insert_with_tags_by_name(textbuf
                                 , &end_iter
                                 , head, head_len
-                                , color_tag, NULL);
+                                , color_tag, "left_margin1",  NULL);
 
     gint i;
     QQMsgContent *cent;
@@ -239,7 +240,6 @@ static void qq_chat_textview_init(QQChatTextview *view)
     QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
                                     view, qq_chat_textview_get_type()
                                     , QQChatTextviewPriv);
-
     GtkTextIter iter;
 	gtk_text_buffer_get_end_iter(textbuf, &iter);
 	priv -> end_mark = gtk_text_buffer_create_mark(textbuf, "scrollend"
@@ -317,6 +317,12 @@ void qq_chat_textview_add_face(GtkWidget *widget, gint face)
     gtk_text_buffer_get_end_iter(textbuf, &iter);
     mark -> end =  gtk_text_buffer_create_mark(textbuf, NULL, &iter, TRUE);
 
+    GtkTextIter start_iter, end_iter;
+    gtk_text_buffer_get_iter_at_mark(textbuf, &start_iter, mark -> begin);
+    gtk_text_buffer_get_iter_at_mark(textbuf, &end_iter, mark -> end);
+    gtk_text_buffer_apply_tag_by_name(textbuf, "left_margin2"
+                                    , &start_iter, &end_iter);
+
     QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
                                     widget, qq_chat_textview_get_type()
                                     , QQChatTextviewPriv);
@@ -335,7 +341,8 @@ void qq_chat_textview_add_string(GtkWidget *widget, const gchar *str, gint len)
     gtk_text_buffer_get_end_iter(textbuf, &end_iter);
     gtk_text_buffer_move_mark(textbuf, priv -> inserted_left_mark
                                         , &end_iter);
-    gtk_text_buffer_insert(textbuf, &end_iter, str, len);
+    gtk_text_buffer_insert_with_tags_by_name(textbuf, &end_iter, str, len
+                                                , "left_margin2", NULL);
     // apply font
     gchar tagname[100];
     if(priv -> cur_font_index >= 0){

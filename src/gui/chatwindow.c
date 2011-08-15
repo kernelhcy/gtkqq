@@ -5,6 +5,7 @@
 #include <facepopupwindow.h>
 #include <tray.h>
 #include <msgloop.h>
+#include <gdk/gdkkeysyms.h>
 
 extern QQInfo *info;
 extern GQQConfig *cfg;
@@ -67,6 +68,44 @@ typedef struct{
     
     GtkWidget *send_btn, *close_btn;
 }QQChatWindowPriv;
+
+GType qq_chatwindow_get_type()
+{
+    static GType t = 0;
+    if(!t){
+        const GTypeInfo info =
+        {
+            sizeof(QQChatWindowClass),
+            NULL,    /* base_init */
+            NULL,    /* base_finalize */
+            (GClassInitFunc)qq_chatwindowclass_init,
+            NULL,    /* class finalize*/
+            NULL,    /* class data */
+            sizeof(QQChatWindow),
+            0,    /* n pre allocs */
+            (GInstanceInitFunc)qq_chatwindow_init,
+            0
+        };
+
+        t = g_type_register_static(GTK_TYPE_WINDOW, "QQChatWindow"
+                    , &info, 0);
+    }
+    return t;
+}
+
+GtkWidget* qq_chatwindow_new(const gchar *uin, const gchar *name
+                            , const gchar *qqnumber, const gchar *status
+                            , const gchar *lnick)
+{
+    return GTK_WIDGET(g_object_new(qq_chatwindow_get_type()
+                                    , "type", GTK_WINDOW_TOPLEVEL
+                                    , "qqnumber", qqnumber
+                                    , "uin", uin
+                                    , "status", status
+                                    , "name", name
+                                    , "lnick", lnick
+                                    , NULL));
+}
 
 //
 // Close button clicked handler
@@ -131,7 +170,7 @@ static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
     }
     GdkColor gc;
     gtk_color_button_get_color(GTK_COLOR_BUTTON(priv -> color_btn), &gc);
-    g_snprintf(color, 20, "%2X%2X%2X", scale_255(gc.red), scale_255(gc.green)
+    g_snprintf(color, 20, "%02X%02X%02X", scale_255(gc.red), scale_255(gc.green)
                                     , scale_255(gc.blue));
 
     sizestr = gtk_combo_box_text_get_active_text(
@@ -182,44 +221,6 @@ static gboolean qq_chatwindow_focus_in_event(GtkWidget *widget, GdkEvent *event
     g_debug("Focus in chatwindow of %s (%s, %d)", priv -> uin
                                     , __FILE__, __LINE__);
     return FALSE;
-}
-
-GType qq_chatwindow_get_type()
-{
-    static GType t = 0;
-    if(!t){
-        const GTypeInfo info =
-        {
-            sizeof(QQChatWindowClass),
-            NULL,    /* base_init */
-            NULL,    /* base_finalize */
-            (GClassInitFunc)qq_chatwindowclass_init,
-            NULL,    /* class finalize*/
-            NULL,    /* class data */
-            sizeof(QQChatWindow),
-            0,    /* n pre allocs */
-            (GInstanceInitFunc)qq_chatwindow_init,
-            0
-        };
-
-        t = g_type_register_static(GTK_TYPE_WINDOW, "QQChatWindow"
-                    , &info, 0);
-    }
-    return t;
-}
-
-GtkWidget* qq_chatwindow_new(const gchar *uin, const gchar *name
-                            , const gchar *qqnumber, const gchar *status
-                            , const gchar *lnick)
-{
-    return GTK_WIDGET(g_object_new(qq_chatwindow_get_type()
-                                    , "type", GTK_WINDOW_TOPLEVEL
-                                    , "qqnumber", qqnumber
-                                    , "uin", uin
-                                    , "status", status
-                                    , "name", name
-                                    , "lnick", lnick
-                                    , NULL));
 }
 
 //
@@ -281,6 +282,41 @@ static void qq_chat_view_font_button_clicked(GtkToggleToolButton *btn, gpointer 
     }
 }
 
+//
+// Input text view key press
+//
+static gboolean qq_input_textview_key_press(GtkWidget *widget, GdkEvent *e
+                                            , gpointer data)
+{
+    GdkEventKey *event = (GdkEventKey*)e;
+    if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter
+                        || event -> keyval == GDK_ISO_Enter){
+        if((event -> state & GDK_CONTROL_MASK) != 0 
+                        || (event -> state & GDK_SHIFT_MASK) != 0){
+            return FALSE;
+        }
+        qq_chatwindow_on_send_clicked(NULL, data);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+//
+// Chat window key press
+//
+static gboolean qq_chatwindow_key_press(GtkWidget *widget, GdkEvent *e
+                                            , gpointer data)
+{
+    GdkEventKey *event = (GdkEventKey*)e;
+    if((event -> state & GDK_CONTROL_MASK) != 0 
+                    && (event -> keyval == GDK_w || event -> keyval == GDK_W)){
+        QQChatWindowPriv *priv = data;
+        gqq_config_remove_ht(cfg, "chat_window_map", priv -> uin);
+        gtk_widget_destroy(widget);
+    }
+    return FALSE;
+}
+
 static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
 {
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
@@ -297,7 +333,7 @@ static void qq_chat_window_font_changed(GtkWidget *widget, gpointer data)
     
     GdkColor gc;
     gtk_color_button_get_color(GTK_COLOR_BUTTON(priv -> color_btn), &gc);
-    g_snprintf(color, 20, "#%2X%2X%2X", scale_255(gc.red), scale_255(gc.green)
+    g_snprintf(color, 20, "#%02X%02X%02X", scale_255(gc.red), scale_255(gc.green)
                                     , scale_255(gc.blue));
     g_debug("Set text view color %s (%u,%u,%u)(%s, %d)", color, gc.red
                                 , gc.green, gc.blue, __FILE__, __LINE__);
@@ -485,6 +521,7 @@ static void qq_chatwindow_init(QQChatWindow *win)
 
     // input text view
     priv -> input_textview = qq_chat_textview_new(); 
+    gtk_text_view_set_indent(GTK_TEXT_VIEW(priv -> input_textview), 1);
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy (GTK_SCROLLED_WINDOW(scrolled_win),
                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
@@ -515,9 +552,6 @@ static void qq_chatwindow_init(QQChatWindow *win)
     GtkWidget *w = GTK_WIDGET(win);
     //gtk_widget_set_size_request(w, 500, 500);
     gtk_window_resize(GTK_WINDOW(w), 500, 450);
-    g_signal_connect(G_OBJECT(w), "delete-event"
-                                , G_CALLBACK(qq_chatwindow_delete_event)
-                                , priv);
     gtk_container_add(GTK_CONTAINER(win), priv -> body_vbox);
 
     gtk_widget_show_all(priv -> body_vbox);
@@ -527,9 +561,18 @@ static void qq_chatwindow_init(QQChatWindow *win)
     g_signal_connect(G_OBJECT(priv -> facepopupwindow), "face-clicked"
                                 , G_CALLBACK(qq_chatwindow_face_clicked)
                                 , priv);
-    g_signal_connect(G_OBJECT(w), "focus-in-event"
+
+    g_signal_connect(G_OBJECT(win), "delete-event"
+                                , G_CALLBACK(qq_chatwindow_delete_event)
+                                , priv);
+    g_signal_connect(G_OBJECT(win), "focus-in-event"
                                 , G_CALLBACK(qq_chatwindow_focus_in_event)
                                 , priv);
+    g_signal_connect(G_OBJECT(win), "key-press-event"
+                            , G_CALLBACK(qq_chatwindow_key_press), priv);
+
+    g_signal_connect(G_OBJECT(priv -> input_textview), "key-press-event"
+                            , G_CALLBACK(qq_input_textview_key_press), win);
 }
 
 /*
@@ -647,12 +690,31 @@ static void qq_chatwindow_setter(GObject *object, guint property_id,
     gtk_window_set_title(GTK_WINDOW(obj), buf);
 }
 
+//
+// Finalize
+// Free all the allocated memory
+//
+static void qq_chatwindow_finalize(GObject *obj)
+{
+    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                    obj, qq_chatwindow_get_type()
+                                    , QQChatWindowPriv);
+    g_string_free(priv -> name, TRUE);
+    g_string_free(priv -> lnick, TRUE);
+    
+    // chain up
+    GObjectClass *klass = (GObjectClass*)g_type_class_peek_parent(
+                                g_type_class_peek(qq_chatwindow_get_type()));
+    klass -> finalize(obj);
+}
+
 static void qq_chatwindowclass_init(QQChatWindowClass *wc)
 {
     g_type_class_add_private(wc, sizeof(QQChatWindowPriv));
 
     G_OBJECT_CLASS(wc) -> get_property = qq_chatwindow_getter;
     G_OBJECT_CLASS(wc) -> set_property = qq_chatwindow_setter;
+    G_OBJECT_CLASS(wc) -> finalize = qq_chatwindow_finalize;
 
     //install the uin property
     GParamSpec *pspec;

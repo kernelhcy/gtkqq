@@ -349,13 +349,16 @@ static GObject *gqq_config_contructor(GType type, guint n_pars
 //
 static void gqq_config_finalize(GObject *obj)
 {
-    GQQConfig *cfg = GQQ_CONFIG(obj);
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+                                    obj, gqq_config_get_type(), GQQConfigPriv);
     db_close(priv -> db_con);
 
     g_hash_table_unref(priv -> ht_ht);
     g_mutex_free(priv -> ht_lock);
+    // chain up
+    GObjectClass *klass = (GObjectClass*)g_type_class_peek_parent(
+                                g_type_class_peek(gqq_config_get_type()));
+    klass -> finalize(obj);
 }
 
 gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
