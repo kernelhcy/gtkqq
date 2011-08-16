@@ -492,6 +492,10 @@ gint qq_chat_textview_get_msg_contents(GtkWidget *widget, GPtrArray *contents)
                                     widget, qq_chat_textview_get_type()
                                     , QQChatTextviewPriv);
     GtkTextBuffer *textbuf = gtk_text_view_get_buffer(GTK_TEXT_VIEW(widget));
+    if(gtk_text_buffer_get_char_count(textbuf) <= 0){
+        // no input message
+        return 0;
+    }
     GtkTextIter start_iter, end_iter;
     gtk_text_buffer_get_start_iter(textbuf, &start_iter);
     gint i;

@@ -323,10 +323,10 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=10&"
+	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
 			"remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
 			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-			"&dumy=&fp=loginerroralert&mibao_css=m_webqq"
+			"&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
 			, info -> me -> uin -> str, p, info -> verify_code -> str
 			, LOGIN_S_URL);
 	request_set_uri(req, params);
@@ -375,43 +375,43 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	if(status == 0){
 		g_debug("Success.(%s, %d)", __FILE__, __LINE__);
 	}else if(status == 1){
-		g_debug("Server busy! Please try again.(%s, %d)"
+		g_warning("Server busy! Please try again.(%s, %d)"
 				, __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Server busy!");
 		goto error;
 	}else if(status == 2){
-		g_debug("Out of date QQ number!(%s, %d)"
+		g_warning("Out of date QQ number!(%s, %d)"
 				, __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Out of date QQ number.");
 		goto error;
 	}else if(status == 3){
-		g_debug("Wrong password!(%s, %d)", __FILE__, __LINE__);
+		g_warning("Wrong password!(%s, %d)", __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Wrong password.");
 		goto error;
 	}else if(status == 4){
-		g_debug("Wrong verify code!(%s, %d)", __FILE__, __LINE__);
+		g_warning("Wrong verify code!(%s, %d)", __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Wrong verify code.");
 		goto error;
 	}else if(status == 5){
-		g_debug("Verify failed!(%s, %d)", __FILE__, __LINE__);
+		g_warning("Verify failed!(%s, %d)", __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Verify failed.");
 		goto error;
 	}else if(status == 6){
-		g_debug("You may need to try login again.(%s, %d)", __FILE__
+		g_warning("You may need to try login again.(%s, %d)", __FILE__
 				, __LINE__);
 		//g_sprintf(info -> errmsg, "Please try again.");
 		goto error;
 	}else if(status == 7){
-		g_debug("Wrong input!(%s, %d)", __FILE__, __LINE__);
+		g_warning("Wrong input!(%s, %d)", __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Wrong input.");
 		goto error;
 	}else if(status == 8){
-		g_debug("Too many logins on this IP. Please try again.(%s, %d)"
+		g_warning("Too many logins on this IP. Please try again.(%s, %d)"
 				, __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Too many logins on this IP.");
 		goto error;
 	}else{
-		g_debug("Server response message:(%s, %d)\n\t%s"
+		g_warning("Server response message:(%s, %d)\n\t%s"
 				, __FILE__, __LINE__, rps -> msg -> str);
 		goto error;
 	}

@@ -53,6 +53,30 @@ QQTray* qq_tray_new()
 }
 
 //
+// Blinking uin's face image
+//
+static void qq_tray_blinking(QQTray *tray, const gchar *uin)
+{
+    gchar buf[500];
+    GdkPixbuf *pb;
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
+
+    // blinking
+    if(bdy == NULL){
+        g_snprintf(buf, 500, IMGDIR"/webqq_icon.png%s", "");
+    }else{
+        g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
+    }
+    pb = gdk_pixbuf_new_from_file(buf, NULL);
+    if(pb == NULL){
+        pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png", NULL);
+    }
+    gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
+    g_object_unref(pb);
+    gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), TRUE);
+}
+
+//
 // popup-menu event
 // Popup the menu
 //
@@ -76,7 +100,24 @@ static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
         return FALSE;
     }
     
-    g_debug("Tray button press (%s, %d)", __FILE__, __LINE__);
+    QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
+                                                    , QQTrayPriv);
+    gchar *uin = g_queue_pop_tail(priv -> blinking_queue);
+    if(uin == NULL){
+        return FALSE;
+    }
+    GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin);
+    if(cw != NULL){
+        gtk_widget_show(cw);
+    }
+    g_free(uin);
+
+    if(g_queue_is_empty(priv -> blinking_queue)){
+        qq_tray_blinking(QQ_TRAY(tray), "aaaaaaaaa!@#$aa");
+        gtk_status_icon_set_blinking(tray, FALSE);
+        return FALSE;
+    }
+    qq_tray_blinking(QQ_TRAY(tray), g_queue_peek_tail(priv -> blinking_queue));
     return FALSE;
 }
 
@@ -140,7 +181,7 @@ static void qq_tray_about_menu_item_activate(GtkMenuItem *item, gpointer data)
 static void qq_tray_quit_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     g_debug("Tray quit(%s, %d)", __FILE__, __LINE__);
-
+    gtk_main_quit();
 }
 
 static void qq_tray_init(QQTray *tray)
@@ -229,28 +270,6 @@ static void qq_tray_init(QQTray *tray)
 static void qq_trayclass_init(QQTrayClass *tc, gpointer data)
 {
     g_type_class_add_private(tc, sizeof(QQTrayPriv));
-}
-
-static void qq_tray_blinking(QQTray *tray, const gchar *uin)
-{
-    gchar buf[500];
-    GdkPixbuf *pb;
-    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
-    if(!gtk_status_icon_get_blinking(GTK_STATUS_ICON(tray))){
-        // blinking
-        if(bdy == NULL){
-            g_snprintf(buf, 500, IMGDIR"/webqq_icon.png%s", "");
-        }else{
-            g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
-        }
-        pb = gdk_pixbuf_new_from_file(buf, NULL);
-        if(pb == NULL){
-            pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png", NULL);
-        }
-        gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
-        g_object_unref(pb);
-        gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), TRUE);
-    }
 }
 
 void qq_tray_blinking_for(QQTray *tray, const gchar *uin)

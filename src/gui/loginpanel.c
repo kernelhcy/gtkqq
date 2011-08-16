@@ -230,8 +230,7 @@ static void run_login_state_machine(QQLoginPanel *panel)
 }
 
 // In libqq/qqutils.c
-extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
-                const gchar *path, const gchar *fname);
+extern gint save_img_to_file(const gchar *data, gint len, const gchar *path);
 //
 // Show the verify code input dialog
 // run in gtk main event loop.
@@ -251,8 +250,7 @@ static void read_verifycode(gpointer p)
     sprintf(fn, CONFIGDIR"verifycode.%s", info -> vc_image_type -> str);
     save_img_to_file(info -> vc_image_data -> str
                         , info -> vc_image_data -> len
-                        , info -> vc_image_type -> str
-                        , CONFIGDIR, "verifycode");
+                        , fn);
     GtkWidget *dialog = gtk_dialog_new_with_buttons("Information"
                             , GTK_WINDOW(w), GTK_DIALOG_MODAL
                             , GTK_STOCK_OK, GTK_RESPONSE_OK

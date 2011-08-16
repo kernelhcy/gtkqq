@@ -88,7 +88,7 @@ GType qq_chatwindow_get_type()
         };
 
         t = g_type_register_static(GTK_TYPE_WINDOW, "QQChatWindow"
-                    , &info, 0);
+                                        , &info, 0);
     }
     return t;
 }
@@ -150,6 +150,14 @@ static void qq_chatwindow_on_send_clicked(GtkWidget *widget, gpointer  data)
                                         , QQChatWindowPriv);
     GPtrArray *cs = g_ptr_array_new();
     qq_chat_textview_get_msg_contents(priv -> input_textview, cs); 
+    if(cs -> len <= 0){
+        // empty input text view
+        //
+        // Show warning message...
+        //
+        g_ptr_array_free(cs, TRUE);
+        return;
+    }
     qq_chat_textview_clear(priv -> input_textview);
 
     QQSendMsg *msg = qq_sendmsg_new(info, MSG_BUDDY_T, priv -> uin);
