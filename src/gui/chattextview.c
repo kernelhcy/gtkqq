@@ -263,7 +263,7 @@ void qq_chat_textview_add_send_message(GtkWidget *widget, QQSendMsg *msg)
     g_snprintf(buf, 100, "%ld", now.tv_sec);
     qq_chat_textview_add_message(QQ_CHAT_TEXTVIEW(widget)
                                 , info -> me -> nick -> str
-                                , msg -> contents, buf, "blue");
+                                , msg -> contents, buf, "green");
 }
 void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg)
 {
@@ -284,7 +284,7 @@ void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg)
     qq_chat_textview_add_message(QQ_CHAT_TEXTVIEW(widget)
                                 , name
                                 , msg -> contents, msg -> time -> str
-                                , "green");
+                                , "blue");
 }
 
 void qq_chat_textview_add_face(GtkWidget *widget, gint face)

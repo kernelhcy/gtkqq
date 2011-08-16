@@ -113,8 +113,11 @@ static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
     g_free(uin);
 
     if(g_queue_is_empty(priv -> blinking_queue)){
-        qq_tray_blinking(QQ_TRAY(tray), "aaaaaaaaa!@#$aa");
         gtk_status_icon_set_blinking(tray, FALSE);
+        GdkPixbuf *pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png"
+                                                    , NULL);
+        gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
+        g_object_unref(pb);
         return FALSE;
     }
     qq_tray_blinking(QQ_TRAY(tray), g_queue_peek_tail(priv -> blinking_queue));
