@@ -3,28 +3,28 @@
 #include <gtk/gtk.h>
 #include <qq.h>
 
-#define QQ_CHATWINDOW(obj)	    GTK_CHECK_CAST(obj, qq_chatwindow_get_type()\
-						                        , QQChatWindow)
-#define QQ_CHATWINDOWCLASS(c)	GTK_CHECK_CLASS_CAST(c\
-						                        , qq_chatwindow_get_type()\
-						                        , QQChatWindowClass)
-#define QQ_IS_CHATWINDOW(obj)	GTK_CHECK_TYPE(obj, qq_chatwindow_get_type())
+#define QQ_CHATWINDOW(obj)      GTK_CHECK_CAST(obj, qq_chatwindow_get_type()\
+                                                , QQChatWindow)
+#define QQ_CHATWINDOWCLASS(c)   GTK_CHECK_CLASS_CAST(c\
+                                                , qq_chatwindow_get_type()\
+                                                , QQChatWindowClass)
+#define QQ_IS_CHATWINDOW(obj)   GTK_CHECK_TYPE(obj, qq_chatwindow_get_type())
 
-typedef struct __QQChatWindow 		QQChatWindow;
-typedef struct __QQChatWindowClass	QQChatWindowClass;
+typedef struct __QQChatWindow         QQChatWindow;
+typedef struct __QQChatWindowClass    QQChatWindowClass;
 
 struct __QQChatWindow{
-	GtkWindow parent;
+    GtkWindow parent;
 
 };
 
 struct __QQChatWindowClass{
-	GtkWindowClass parent;
+    GtkWindowClass parent;
 };
 
 GtkWidget* qq_chatwindow_new(const gchar *uin, const gchar *name
-                            , const gchar *qqnumber, const gchar *status
-                            , const gchar *lnick);
+                                , const gchar *qqnumber, const gchar *status
+                                , const gchar *lnick);
 GType qq_chatwindow_get_type();
 
 //

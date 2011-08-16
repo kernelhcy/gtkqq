@@ -18,6 +18,7 @@ gtkqq_SOURCES=main.c \
           tray.c tray.h\
           facepopupwindow.c facepopupwindow.h\
           chatwindow.c chatwindow.h\
+          chatwidget.c chatwidget.h\
           chattextview.c chattextview.h\
           buddytree.c buddytree.h\
           loginpanel.c loginpanel.h \

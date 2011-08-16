@@ -3,6 +3,28 @@
 #include <gtk/gtk.h>
 #include <qq.h>
 
+//
+// The chat text view
+// The chat text view need to show the qq face images and show
+// the message like this:
+//
+// ------------------------------------------
+// |  kernel 2010-9-10 12:20:10             | <-- blue
+// |     hello!                             | <-- custom color
+// |                                        |
+// |  memory 2010-9-10 12:20:30             | <-- green
+// |     hello. Need help?                  | <-- custom color
+// |                                        |
+// |  kernel 2010-9-10 12:21:10             |
+// |     Yes. Give me more memory. Thanks.  |
+// |                                        |
+// |  memory 2010-9-10 12:22:30             |
+// |     Ok.                                |
+// |                                        |
+// |  ...  ...                              |
+// ------------------------------------------
+//
+
 #define QQ_CHAT_TEXTVIEW(obj)	    GTK_CHECK_CAST(obj\
                                                 , qq_chat_textview_get_type()\
 						                        , QQChatTextview)
