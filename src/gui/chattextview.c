@@ -119,18 +119,18 @@ static void qq_chat_buffer_insert_text(GtkTextBuffer *textbuf
 }
 //
 // Add message 
-// @param uin : the uin
+// @param name : the name of the sender
 // @param contents : QQMsgContent instance array
 // @param time : the time. ms
 // @param color_tag : the color tag name
 //
 static void qq_chat_textview_add_message(QQChatTextview *view
-                                , const gchar *uin
+                                , const gchar *name
                                 , GPtrArray *contents
                                 , const gchar *time
                                 , const gchar *color_tag)
 {
-    if(uin == NULL || contents == NULL || time == NULL){
+    if(name == NULL || contents == NULL || time == NULL){
         return;
     }
     QQChatTextviewPriv *priv  = G_TYPE_INSTANCE_GET_PRIVATE(
@@ -143,17 +143,6 @@ static void qq_chat_textview_add_message(QQChatTextview *view
     gint64 timev = (gint64)strtoll(time, NULL, 10);
     GDateTime *t = g_date_time_new_from_unix_local(timev);
     gchar head[500];
-    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
-    const gchar *name = NULL;
-    if(bdy == NULL){
-        name = uin;
-    }else{
-        name = bdy -> markname -> str;
-        if(bdy -> markname -> len <= 0){
-            name = bdy -> nick -> str;
-        }
-
-    }
     if(gtk_text_buffer_get_line_count(textbuf) > 1){
         // insert new line
         gtk_text_buffer_get_end_iter(textbuf, &end_iter);
@@ -273,7 +262,7 @@ void qq_chat_textview_add_send_message(GtkWidget *widget, QQSendMsg *msg)
     g_get_current_time(&now);
     g_snprintf(buf, 100, "%ld", now.tv_sec);
     qq_chat_textview_add_message(QQ_CHAT_TEXTVIEW(widget)
-                                , info -> me -> uin -> str
+                                , info -> me -> nick -> str
                                 , msg -> contents, buf, "blue");
 }
 void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg)
@@ -282,8 +271,18 @@ void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg)
         return;
     }
 
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, msg -> from_uin -> str);
+    const gchar *name = NULL;
+    if(bdy == NULL){
+        name = msg -> from_uin -> str;
+    }else{
+        name = bdy -> markname -> str;
+        if(bdy -> markname -> len <= 0){
+            name = bdy -> nick -> str;
+        }
+    }
     qq_chat_textview_add_message(QQ_CHAT_TEXTVIEW(widget)
-                                , msg -> from_uin -> str
+                                , name
                                 , msg -> contents, msg -> time -> str
                                 , "green");
 }

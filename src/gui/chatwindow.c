@@ -138,6 +138,7 @@ static void qq_chatwindow_send_msg_cb(GtkWidget *widget, QQSendMsg *msg)
                             , __FILE__, __LINE__);
         g_error_free(err);
     }
+    qq_sendmsg_free(msg);
 }
 
 //

@@ -194,6 +194,10 @@ static void login_state_machine(gpointer data)
             break;
         case LOGIN_SM_DONE:
             g_debug("Login done. show main panel!(%s, %d)", __FILE__, __LINE__);
+            //
+            // Start poll message
+            //
+            qq_start_poll(info, qq_poll_message_callback, &gtkloop, NULL);
             // update main panel
             gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
                                     , 1, QQ_MAINWINDOW(panel -> container) 
@@ -203,10 +207,6 @@ static void login_state_machine(gpointer data)
                                     , 1, panel -> container);
             update_details(info, panel);
 
-            //
-            // Start poll message
-            //
-            qq_start_poll(info, qq_poll_message_callback, &gtkloop, NULL);
             return;
         case LOGIN_SM_ERR:
             g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
