@@ -104,8 +104,9 @@ QQBuddy* qq_info_lookup_buddy_by_uin(QQInfo *info, const gchar *uin)
             bdy = (QQBuddy*)g_ptr_array_index(info -> buddies, i);
             if(g_strcmp0(uin, bdy -> uin -> str) == 0){
                 g_hash_table_insert(info -> buddies_ht, (gpointer)uin, bdy);
-                break;
+                return bdy;
             }
+            bdy = NULL;
         }
     }
 
@@ -122,8 +123,9 @@ QQBuddy* qq_info_lookup_buddy_by_number(QQInfo *info, const gchar *number)
             if(g_strcmp0(number, bdy -> qqnumber -> str) == 0){
                 g_hash_table_insert(info -> buddies_number_ht
                                     , (gpointer)number, bdy);
-                break;
+                return bdy;
             }
+            bdy = NULL;
         }
     }
 
@@ -139,8 +141,9 @@ QQGroup* qq_info_lookup_group_by_code(QQInfo *info, const gchar *code)
             grp = (QQGroup*)g_ptr_array_index(info -> groups, i);
             if(g_strcmp0(code, grp -> code -> str) == 0){
                 g_hash_table_insert(info -> groups_ht, (gpointer)code, grp);
-                break;
+                return grp;
             }
+            grp = NULL;
         }
     }
     return grp;
@@ -155,8 +158,9 @@ QQGroup* qq_info_lookup_group_by_number(QQInfo *info, const gchar *number)
             if(g_strcmp0(number, grp -> gnumber -> str) == 0){
                 g_hash_table_insert(info -> groups_number_ht
                                             , (gpointer)number, grp);
-                break;
+                return grp;
             }
+            grp = NULL;
         }
     }
     return grp;

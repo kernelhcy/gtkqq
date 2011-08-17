@@ -23,7 +23,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj);
 static void qq_loginpanel_destroy(GtkObject *obj);
 
 static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data);
-static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel);
+static void update_face_image(QQInfo *info, QQMainPanel *panel);
 static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel);
 /*
  * The main event loop context of Gtk.
@@ -142,9 +142,26 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
     update_buddy_qq_number(info
                         , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
                                                 -> main_panel);
-    // /update buddy face image
-    update_buddy_face_image(info
-                        , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+    // update group number
+    gint i;
+    QQGroup *grp;
+    gchar num[100];
+    for(i = 0; i < info -> groups -> len; ++i){
+        grp = g_ptr_array_index(info -> groups, i);
+        if(grp == NULL){
+            continue;
+        }
+        qq_get_qq_number(info, grp -> gid -> str, num, NULL);
+        qq_group_set(grp, "gnumber", num);
+    }
+    gqq_mainloop_attach(&gtkloop
+                        , qq_mainpanel_update_group_info 
+                        , 1
+                        , QQ_MAINWINDOW(panel -> container) -> main_panel);
+
+    //update face image
+    update_face_image(info
+                       , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
                                                 -> main_panel);
 }
 
@@ -565,10 +582,10 @@ static gpointer get_buddy_face_thread_func(gpointer data)
 }
 
 //
-// Get all buddies' face images
+// Get all buddies' and groups' face images
 // Run in get_info_loop.
 //
-static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel)
+static void update_face_image(QQInfo *info, QQMainPanel *panel)
 {
     if(info == NULL || panel == NULL){
         return;
@@ -577,13 +594,16 @@ static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel)
     GPtrArray *fimgs = g_ptr_array_new();
     gint i;
     QQBuddy *bdy = NULL;
+    QQGroup *grp = NULL;
     QQFaceImg *img = NULL;
 
+    // me
     img = qq_faceimg_new(); 
     qq_faceimg_set(img, "uin", info -> me -> uin);
     qq_faceimg_set(img, "num", info -> me  -> qqnumber);
     g_ptr_array_add(fimgs, img);
     
+    // buddies 
     for(i = 0; i < info -> buddies -> len; ++i){
         bdy = g_ptr_array_index(info -> buddies, i);
         if(bdy == NULL){
@@ -595,7 +615,19 @@ static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel)
         g_ptr_array_add(fimgs, img);
     }
 
-    gint t_num = 10;
+    // groups
+    for(i = 0; i < info -> groups -> len; ++i){
+        grp = g_ptr_array_index(info -> groups, i);
+        if(grp == NULL){
+            continue;
+        }
+        img = qq_faceimg_new(); 
+        qq_faceimg_set(img, "uin", grp -> gid);
+        qq_faceimg_set(img, "num", grp -> gnumber);
+        g_ptr_array_add(fimgs, img);
+    }
+
+    gint t_num = 2;
     GThread **threads = g_malloc(sizeof(GThread*) * t_num);
     GError *err = NULL;
     ThreadFuncPar *par = NULL;
@@ -625,5 +657,6 @@ static void update_buddy_face_image(QQInfo *info, QQMainPanel *panel)
 
     //update the buddy info
     gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_buddy_faceimg, 1, panel);
+    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_group_info, 1, panel);
 }
 

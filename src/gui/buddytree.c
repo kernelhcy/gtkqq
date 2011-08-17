@@ -5,13 +5,6 @@
 
 extern QQInfo *info;
 extern GQQConfig *cfg;
-//
-// The map between the QQBuddy uin and the tree row.
-//
-typedef struct{
-    GString *uin;
-    GtkTreeRowReference *row_ref;
-}QQTreeMap;
 
 enum{
     BDY_TYPE= 0,        //The client type
@@ -86,6 +79,7 @@ static void qq_buddy_tree_text_cell_data_func(GtkTreeViewColumn *col
         g_object_set(renderer, "text", text, NULL);
         g_free(name);
     }
+    gtk_tree_path_free(path);
 }
 
 //
@@ -225,7 +219,7 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
                                     , GtkTreeViewColumn  *col 
                                     , gpointer data)
 {
-    gchar *uin, *markname, *qqnum, *status, *lnick;
+    gchar *uin;
     GtkTreeModel *model = gtk_tree_view_get_model(tree); 
     if(gtk_tree_path_get_depth(path) < 2){
         return;
@@ -233,47 +227,22 @@ static void buddy_tree_on_double_click(GtkTreeView *tree
 
     GtkTreeIter iter;
     gtk_tree_model_get_iter(model, &iter, path);
-    gtk_tree_model_get(model, &iter
-                        , BDY_UIN, &uin
-                        , BDY_STATUS, &status
-                        , BDY_MARKNAME, &markname
-                        , BDY_QQNUMBER, &qqnum
-                        , BDY_LONGNICK, &lnick
-                        , -1);
-    if(strlen(markname) < 1){
-        // no markname
-        // use nick as the name
-        g_free(markname);
-        gtk_tree_model_get(model, &iter, BDY_NICK, &markname, -1);
-    }
-    if(strlen(markname) < 1){
-        // also no nick
-        // use qq number as the name
-        g_free(markname);
-        markname = g_strdup(qqnum);
-    }
+    gtk_tree_model_get(model, &iter, BDY_UIN, &uin, -1);
 
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin); 
     if(cw != NULL){
         // We have open a window for this uin
         g_object_set(cw, "uin", uin, NULL);
-        g_object_set(cw, "name", markname, NULL);
-        g_object_set(cw, "qqnumber", qqnum, NULL);
-        g_object_set(cw, "status", status, NULL);
-        g_object_set(cw, "lnick", lnick, NULL);
         gtk_widget_show(cw);
+        g_free(uin);
         return;
     }
     
     g_debug("Create chat window for %s(%s, %d)", uin, __FILE__, __LINE__);
-    cw = qq_chatwindow_new(uin, markname, qqnum, status, lnick);
+    cw = qq_chatwindow_new(uin);
     gtk_widget_show(cw);
     gqq_config_insert_ht(cfg, "chat_window_map", uin, cw);
     g_free(uin);
-    g_free(markname);
-    g_free(qqnum);
-    g_free(status);
-    g_free(lnick);
 }
 
 static gboolean buddy_tree_on_rightbutton_click(GtkWidget* tree
@@ -281,6 +250,15 @@ static gboolean buddy_tree_on_rightbutton_click(GtkWidget* tree
                                                 , gpointer data)
 {
     return FALSE;
+}
+
+static void tree_map_destroy_value(gpointer value)
+{
+    if(value == NULL){
+        return;
+    }
+    GtkTreeRowReference *ref = value;
+    gtk_tree_row_reference_free(ref);
 }
 
 GtkWidget* qq_buddy_tree_new()
@@ -336,7 +314,8 @@ GtkWidget* qq_buddy_tree_new()
 				   , G_CALLBACK(buddy_tree_on_double_click)
 				   , NULL);
 
-    tree_map = g_hash_table_new(g_str_hash, g_str_equal);
+    tree_map = g_hash_table_new_full(g_str_hash, g_str_equal, g_free
+                                        , tree_map_destroy_value);
 
     //create the chat window map
     gqq_config_create_str_hash_table(cfg, "chat_window_map");
@@ -346,12 +325,9 @@ GtkWidget* qq_buddy_tree_new()
 //
 // Create the QQTreeMap hash table.
 //
-void clear_treemap_ht(gpointer key, gpointer value, gpointer data)
+static gboolean clear_treemap_destroy(gpointer key, gpointer value, gpointer data)
 {
-    QQTreeMap *map = value;
-    g_string_free(map -> uin, TRUE);
-    gtk_tree_row_reference_free(map -> row_ref);
-    g_slice_free(QQTreeMap, map);
+    return TRUE;
 }
 
 static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTreeIter *iter)
@@ -371,11 +347,7 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
                             , BDY_QQNUMBER, bdy -> qqnumber -> str
                             , BDY_UIN, bdy -> uin -> str, -1);
     if(cw != NULL){
-        g_object_set(cw, "lnick", bdy -> lnick -> str
-                        , "status", bdy -> status -> str
-                        , "qqnumber", bdy -> qqnumber -> str
-                        , "uin", bdy -> qqnumber -> str 
-                        , NULL);
+        g_object_set(cw, "uin", bdy -> qqnumber -> str , NULL);
     }
 
     gchar buf[500];
@@ -423,10 +395,10 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
 //
 // Create the model of the contact tree
 //
-static GtkTreeModel* create_contact_model(QQInfo *info)
+static GtkTreeModel* create_model(QQInfo *info)
 {
     //Clear
-    g_hash_table_foreach(tree_map, clear_treemap_ht, NULL);
+    g_hash_table_foreach_remove(tree_map, clear_treemap_destroy, NULL);
 
     GtkTreeIter iter, child;
     GtkTreeStore *store = gtk_tree_store_new(COLUMNS
@@ -443,7 +415,6 @@ static GtkTreeModel* create_contact_model(QQInfo *info)
                                             , G_TYPE_INT
                                             , G_TYPE_INT);
     QQCategory *cate;
-    QQTreeMap *map;
     QQBuddy *bdy;
     GtkTreeRowReference *ref;
     GtkTreePath *path;
@@ -481,10 +452,7 @@ static GtkTreeModel* create_contact_model(QQInfo *info)
             gtk_tree_path_free(path);
 
             //create and add a tree map
-            map = g_slice_new0(QQTreeMap);
-            map -> uin = g_string_new(bdy -> uin -> str);
-            map -> row_ref = ref;
-            g_hash_table_insert(tree_map, bdy -> uin -> str, map);
+            g_hash_table_insert(tree_map, g_strdup(bdy -> uin -> str), ref);
         }
     }
 
@@ -502,17 +470,16 @@ static void update_face_image(GtkWidget *tree, QQInfo *info, const gchar *uin)
     }
 
     GtkTreeModel *model;
-    QQTreeMap *map;
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
-    map = (QQTreeMap*)g_hash_table_lookup(tree_map, uin);
-    if(map == NULL){
+    GtkTreeRowReference *ref = g_hash_table_lookup(tree_map, uin);
+    if(ref == NULL){
         g_warning("No TreeMap for %s(%s, %d)", uin, __FILE__, __LINE__);
         return;
     }
 
     GtkTreePath *path;
     GtkTreeIter iter;
-    path = gtk_tree_row_reference_get_path(map -> row_ref);
+    path = gtk_tree_row_reference_get_path(ref);
     gtk_tree_model_get_iter(model, &iter, path);
 
     GdkPixbuf *pb = create_face_image(bdy -> qqnumber -> str, 20, 20);
@@ -551,7 +518,7 @@ void qq_buddy_tree_update_model(GtkWidget *tree, QQInfo *info)
 {
     //update the contact tree
     gtk_tree_view_set_model(GTK_TREE_VIEW(tree)
-                            , create_contact_model(info));
+                            , create_model(info));
 }
 
 void qq_buddy_tree_update_online_buddies(GtkWidget *tree, QQInfo *info)
@@ -561,9 +528,19 @@ void qq_buddy_tree_update_online_buddies(GtkWidget *tree, QQInfo *info)
     GtkTreePath *path;
     GtkTreeIter iter, cate_iter;
     GtkTreeModel *model;
-    QQTreeMap *map;
+    GtkTreeRowReference *ref;
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
     GtkWidget *cw;
+
+    // clear the online count
+    QQCategory *cate;
+    for(i = 0; i < info -> categories -> len; ++i){
+        cate = g_ptr_array_index(info -> categories, i);
+        if(!get_category_iter_by_index(model, cate -> index, &cate_iter)){
+            continue;
+        }
+        gtk_tree_store_set(GTK_TREE_STORE(model), &cate_iter, CATE_CNT, 0, -1);
+    }
 
 #define MOVE_TO_FIRST(x) \
     for(i = 0; i < info -> buddies -> len; ++i){\
@@ -572,13 +549,13 @@ void qq_buddy_tree_update_online_buddies(GtkWidget *tree, QQInfo *info)
             continue;\
         }\
         if(g_strcmp0(bdy -> status -> str, x) == 0){\
-            map = (QQTreeMap*)g_hash_table_lookup(tree_map, bdy -> uin -> str);\
-            if(map == NULL){\
+            ref  = g_hash_table_lookup(tree_map, bdy -> uin -> str);\
+            if(ref == NULL){\
                 g_warning("No TreeMap for %s. We may need add it..(%s, %d)"\
                                     , bdy -> uin -> str, __FILE__, __LINE__);\
                 continue;\
             }\
-            path = gtk_tree_row_reference_get_path(map -> row_ref);\
+            path = gtk_tree_row_reference_get_path(ref);\
             gtk_tree_model_get_iter(model, &iter, path);\
             tree_store_set_buddy_info(GTK_TREE_STORE(model), bdy, &iter);\
             gtk_tree_path_free(path);\
@@ -615,7 +592,7 @@ void qq_buddy_tree_update_buddy_info(GtkWidget *tree, QQInfo *info)
     GtkTreePath *path;
     GtkTreeIter iter;
     GtkTreeModel *model;
-    QQTreeMap *map;
+    GtkTreeRowReference *ref;
     model = gtk_tree_view_get_model(GTK_TREE_VIEW(tree));
 
     for(i = 0; i < info -> buddies -> len; ++i){
@@ -623,13 +600,13 @@ void qq_buddy_tree_update_buddy_info(GtkWidget *tree, QQInfo *info)
         if(bdy == NULL){
             continue;
         }
-        map = (QQTreeMap*)g_hash_table_lookup(tree_map, bdy -> uin -> str);
-        if(map == NULL){
+        ref = g_hash_table_lookup(tree_map, bdy -> uin -> str);
+        if(ref == NULL){
             g_warning("No TreeMap for %s. We may need add it..(%s, %d)"
                                     , bdy -> uin -> str, __FILE__, __LINE__);
             continue;
         }
-        path = gtk_tree_row_reference_get_path(map -> row_ref);
+        path = gtk_tree_row_reference_get_path(ref);
         gtk_tree_model_get_iter(model, &iter, path);
         tree_store_set_buddy_info(GTK_TREE_STORE(model), bdy, &iter);
         gtk_tree_path_free(path);

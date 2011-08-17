@@ -4,6 +4,7 @@
 #include <qq.h>
 #include <buddytree.h>
 #include <tray.h>
+#include <buddylist.h>
 
 extern QQInfo *info;
 extern QQTray *tray;
@@ -156,8 +157,8 @@ static void qq_mainpanel_init(QQMainPanel *panel)
     gtk_box_pack_start(GTK_BOX(panel), panel -> notebook, TRUE, TRUE, 3);
 
     panel -> buddy_tree= qq_buddy_tree_new();
-    panel -> group_list = gtk_tree_view_new();
-    panel -> recent_list = gtk_tree_view_new();
+    panel -> group_list = qq_buddy_list_new();
+    panel -> recent_list = qq_buddy_list_new();
 
     GtkWidget *scrolled_win; 
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);
@@ -241,6 +242,8 @@ void qq_mainpanel_update(QQMainPanel *panel)
     qq_mainpanel_update_my_info(panel);
     // Update buddy tree
     qq_buddy_tree_update_model(panel -> buddy_tree, info);
+    // update group list
+    qq_buddy_list_add_groups(panel -> group_list, info -> groups);
 }
 
 void qq_mainpanel_update_buddy_info(QQMainPanel *panel)
@@ -254,6 +257,10 @@ void qq_mainpanel_update_buddy_faceimg(QQMainPanel *panel)
 void qq_mainpanel_update_online_buddies(QQMainPanel *panel)
 {
     qq_buddy_tree_update_online_buddies(panel -> buddy_tree, info);
+}
+void qq_mainpanel_update_group_info(QQMainPanel *panel)
+{
+    qq_buddy_list_update_groups_info(panel -> group_list, info -> groups);
 }
 //
 // click the long nick label, replace it with the gtkentry.

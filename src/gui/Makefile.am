@@ -21,6 +21,7 @@ gtkqq_SOURCES=main.c \
           chatwidget.c chatwidget.h\
           chattextview.c chattextview.h\
           buddytree.c buddytree.h\
+          buddylist.c buddylist.h\
           loginpanel.c loginpanel.h \
           mainpanel.h mainpanel.c\
           mainwindow.h mainwindow.c \

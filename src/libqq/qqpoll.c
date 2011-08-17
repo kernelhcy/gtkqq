@@ -222,11 +222,6 @@ static QQRecvMsg* create_kick_message(QQInfo *info, json_t *json)
 {
 
     QQRecvMsg *msg = qq_recvmsg_new(info, MSG_KICK_T);
-#define SET_VALUE(x)    qq_recvmsg_set(msg, x, find_value(json, x))
-    SET_VALUE("from_uin");
-    SET_VALUE("to_uin");
-#undef SET_VALUE
-    
     GString *reason = g_string_new(NULL);
     const gchar *rn = find_value(json, "reason");
     ucs4toutf8(reason, rn);

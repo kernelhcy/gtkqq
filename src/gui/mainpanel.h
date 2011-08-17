@@ -70,4 +70,6 @@ void qq_mainpanel_update_my_info(QQMainPanel *panel);
 void qq_mainpanel_update_buddy_info(QQMainPanel *panel);
 void qq_mainpanel_update_buddy_faceimg(QQMainPanel *panel);
 void qq_mainpanel_update_online_buddies(QQMainPanel *panel);
+
+void qq_mainpanel_update_group_info(QQMainPanel *panel);
 #endif

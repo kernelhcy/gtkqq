@@ -22,7 +22,7 @@ typedef struct __GQQLoginUser{
                                             , GQQ_TYPE_CONFIG\
                                             , GQQConfig))
 #define GQQ_IS_CONFIG(obj)          (G_TYPE_CHECK_INSTANCE_TYPE((obj\
-                                            , GQQ_IS_CONFIG)))
+                                            , GQQ_TYPE_CONFIG)))
 #define GQQ_CONFIG_CLASS(klass)     (G_TYPE_CHECK_CLASS_CAST((klass)\
                                             , GQQ_TYPE_CONFIG\
                                             , GQQConfigClass))

@@ -102,9 +102,9 @@ gint qq_get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
     }else{
         g_warning("%s (%s, %d)", rps -> msg -> str, __FILE__, __LINE__);
     }
+    json_free_value(&json);
 
 error:
-    json_free_value(&json);
     request_del(req);
     response_del(rps);
     return ret_code;

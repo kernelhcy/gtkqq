@@ -16,14 +16,7 @@ static void qq_poll_dispatch_buddy_msg(QQRecvMsg *msg)
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map"
                                             , msg -> from_uin -> str);
     if(cw == NULL){
-        const gchar *uin = msg -> from_uin -> str;
-        QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, uin);
-        cw = qq_chatwindow_new(uin, bdy -> markname -> len <=0 ? 
-                                        bdy -> nick -> str 
-                                        : bdy -> markname -> str
-                                , bdy -> qqnumber -> str
-                                , bdy -> status -> str
-                                , bdy -> lnick -> str);
+        cw = qq_chatwindow_new(msg -> from_uin -> str); 
         // not show it
         gtk_widget_hide(cw);
         gqq_config_insert_ht(cfg, "chat_window_map"

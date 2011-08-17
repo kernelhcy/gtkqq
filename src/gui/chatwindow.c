@@ -17,10 +17,6 @@ static void qq_chatwindowclass_init(QQChatWindowClass *wc);
 
 enum{
     QQ_CHATWINDOW_PROPERTY_UIN = 1,
-    QQ_CHATWINDOW_PROPERTY_NAME,
-    QQ_CHATWINDOW_PROPERTY_QQNUMBER,
-    QQ_CHATWINDOW_PROPERTY_LNICK,
-    QQ_CHATWINDOW_PROPERTY_STATUS,
     QQ_CHATWINDOW_PROPERTY_UNKNOWN
 };
 
@@ -29,10 +25,6 @@ enum{
 //
 typedef struct{
     gchar uin[100];
-    gchar status[100];
-    gchar qqnumber[100];
-    GString *name, *lnick;
-
     GtkWidget *body_vbox;
 
     GtkWidget *faceimage;
@@ -67,17 +59,11 @@ GType qq_chatwindow_get_type()
     return t;
 }
 
-GtkWidget* qq_chatwindow_new(const gchar *uin, const gchar *name
-                            , const gchar *qqnumber, const gchar *status
-                            , const gchar *lnick)
+GtkWidget* qq_chatwindow_new(const gchar *uin)
 {
     return GTK_WIDGET(g_object_new(qq_chatwindow_get_type()
                                     , "type", GTK_WINDOW_TOPLEVEL
-                                    , "qqnumber", qqnumber
                                     , "uin", uin
-                                    , "status", status
-                                    , "name", name
-                                    , "lnick", lnick
                                     , NULL));
 }
 
@@ -216,21 +202,20 @@ static void qq_chatwindow_init(QQChatWindow *win)
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(win
                                         , qq_chatwindow_get_type()
                                         , QQChatWindowPriv);
-    priv -> name = g_string_new(NULL);
-    priv -> lnick = g_string_new(NULL);
-
     gchar buf[500];
     priv -> body_vbox = gtk_vbox_new(FALSE, 0);
 
     GtkWidget *header_hbox = gtk_hbox_new(FALSE, 0);
     GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
 
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, priv -> uin);
     GdkPixbuf *pb = NULL;
     g_snprintf(buf, 500, IMGDIR"%s", "avatar.gif");
     pb = gdk_pixbuf_new_from_file(buf, NULL);
     gtk_window_set_icon(GTK_WINDOW(win), pb);
     g_object_unref(pb);
-    g_snprintf(buf, 500, "Talking with %s", priv -> qqnumber);
+    g_snprintf(buf, 500, "Talking with %s", bdy == NULL ? priv -> uin 
+                                                    : bdy -> nick -> str);
     gtk_window_set_title(GTK_WINDOW(win), buf);
 
     //create header
@@ -309,18 +294,6 @@ static void qq_chatwindow_getter(GObject *object, guint property_id,
     case QQ_CHATWINDOW_PROPERTY_UIN:
         g_value_set_string(value, priv -> uin);
         break;
-    case QQ_CHATWINDOW_PROPERTY_QQNUMBER:
-        g_value_set_string(value, priv -> qqnumber);
-        break;
-    case QQ_CHATWINDOW_PROPERTY_STATUS:
-        g_value_set_string(value, priv -> status);
-        break;
-    case QQ_CHATWINDOW_PROPERTY_NAME:
-        g_value_set_string(value, priv -> name -> str);
-        break;
-    case QQ_CHATWINDOW_PROPERTY_LNICK:
-        g_value_set_string(value, priv -> lnick -> str);
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
         break;
@@ -346,29 +319,21 @@ static void qq_chatwindow_setter(GObject *object, guint property_id,
     case QQ_CHATWINDOW_PROPERTY_UIN:
         g_stpcpy(priv -> uin, g_value_get_string(value));
         break;
-    case QQ_CHATWINDOW_PROPERTY_STATUS:
-        g_stpcpy(priv -> status, g_value_get_string(value));
-        break;
-    case QQ_CHATWINDOW_PROPERTY_QQNUMBER:
-        g_stpcpy(priv -> qqnumber, g_value_get_string(value));
-        break;
-    case QQ_CHATWINDOW_PROPERTY_NAME:
-        g_string_truncate(priv -> name, 0);
-        g_string_append(priv -> name, g_value_get_string(value));
-        break;
-    case QQ_CHATWINDOW_PROPERTY_LNICK:
-        g_string_truncate(priv -> lnick, 0);
-        g_string_append(priv -> lnick, g_value_get_string(value));
-        break;
     default:
         G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
         break;
     }
+
+    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, priv -> uin);
+    gchar *name = priv -> uin;
+    if(bdy == NULL){
+        return;
+    }
     // set lnick
-    g_snprintf(buf, 500, "<b>%s</b>", priv -> lnick -> str);
+    g_snprintf(buf, 500, "<b>%s</b>", bdy -> lnick -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> lnick_label), buf);
     // set face image
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", priv -> qqnumber);
+    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
     pb= gdk_pixbuf_new_from_file_at_size(buf, 35, 35, NULL);
     if(pb == NULL){
         pb= gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"
@@ -378,43 +343,31 @@ static void qq_chatwindow_setter(GObject *object, guint property_id,
     // window icon
     gtk_window_set_icon(GTK_WINDOW(object), pb);
     g_object_unref(pb);
+
+    if(bdy -> markname == NULL || bdy -> markname -> len <= 0){
+        name = bdy -> nick -> str;
+    }else{
+        name = bdy -> markname -> str;
+    }
     // set status and name
-    if(g_strcmp0("online", priv -> status) == 0 
-                    || g_strcmp0("away", priv -> status) == 0
-                    || g_strcmp0("busy", priv -> status) == 0
-                    || g_strcmp0("silent", priv -> status) == 0
-                    || g_strcmp0("callme", priv -> status) == 0){
+    if(g_strcmp0("online", bdy -> status -> str) == 0 
+                    || g_strcmp0("away", bdy -> status -> str) == 0
+                    || g_strcmp0("busy", bdy -> status -> str) == 0
+                    || g_strcmp0("silent", bdy -> status -> str) == 0
+                    || g_strcmp0("callme", bdy -> status -> str) == 0){
         gtk_widget_set_sensitive(priv -> faceimage, TRUE);
         g_snprintf(buf, 500, "<b>%s</b><span color='blue'>[%s]</span>"
-                                            , priv -> name -> str
-                                            , priv -> status);
+                                            , name
+                                            , bdy -> status -> str);
     }else{
         gtk_widget_set_sensitive(priv -> faceimage, FALSE);
-        g_snprintf(buf, 500, "<b>%s</b>", priv -> name -> str);
+        g_snprintf(buf, 500, "<b>%s</b>", name);
     }
     gtk_label_set_markup(GTK_LABEL(priv -> name_label), buf);
 
     // window title
-    g_snprintf(buf, 500, "Talking with %s", priv -> name -> str);
+    g_snprintf(buf, 500, "Talking with %s", name);
     gtk_window_set_title(GTK_WINDOW(object), buf);
-}
-
-//
-// Finalize
-// Free all the allocated memory
-//
-static void qq_chatwindow_finalize(GObject *obj)
-{
-    QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    obj, qq_chatwindow_get_type()
-                                    , QQChatWindowPriv);
-    g_string_free(priv -> name, TRUE);
-    g_string_free(priv -> lnick, TRUE);
-    
-    // chain up
-    GObjectClass *klass = (GObjectClass*)g_type_class_peek_parent(
-                                g_type_class_peek(qq_chatwindow_get_type()));
-    klass -> finalize(obj);
 }
 
 static void qq_chatwindowclass_init(QQChatWindowClass *wc)
@@ -423,7 +376,6 @@ static void qq_chatwindowclass_init(QQChatWindowClass *wc)
 
     G_OBJECT_CLASS(wc) -> get_property = qq_chatwindow_getter;
     G_OBJECT_CLASS(wc) -> set_property = qq_chatwindow_setter;
-    G_OBJECT_CLASS(wc) -> finalize = qq_chatwindow_finalize;
 
     //install the uin property
     GParamSpec *pspec;
@@ -434,38 +386,6 @@ static void qq_chatwindowclass_init(QQChatWindowClass *wc)
                                 , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(wc)
                                     , QQ_CHATWINDOW_PROPERTY_UIN, pspec);
-    //status
-    pspec = g_param_spec_string("status"
-                                , "QQ status"
-                                , "qq status"
-                                , "offline"
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
-    g_object_class_install_property(G_OBJECT_CLASS(wc)
-                                    , QQ_CHATWINDOW_PROPERTY_STATUS, pspec);
-    //qq number
-    pspec = g_param_spec_string("qqnumber"
-                                , "QQ number"
-                                , "qq number"
-                                , ""
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
-    g_object_class_install_property(G_OBJECT_CLASS(wc)
-                                    , QQ_CHATWINDOW_PROPERTY_QQNUMBER, pspec);
-    // name
-    pspec = g_param_spec_string("name"
-                                , "QQ mark name"
-                                , "qq mark name or the nick name"
-                                , ""
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
-    g_object_class_install_property(G_OBJECT_CLASS(wc)
-                                    , QQ_CHATWINDOW_PROPERTY_NAME, pspec);
-    //long nick
-    pspec = g_param_spec_string("lnick"
-                                , "QQ lnick"
-                                , "qq lnick"
-                                , ""
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
-    g_object_class_install_property(G_OBJECT_CLASS(wc)
-                                    , QQ_CHATWINDOW_PROPERTY_LNICK, pspec);
 }
 
 
