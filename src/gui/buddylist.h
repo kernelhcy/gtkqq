@@ -22,6 +22,22 @@
                                                     , QQ_TYPE_BUDDY_LIST\
                                                     , QQBuddyListClass))
 
+//
+// List store columns
+//
+enum{
+    BDY_LIST_TYPE = 0,      // GDK_TYPE_PIXBUF, client type image
+    BDY_LIST_IMG,           // GDK_TYPE_PIXBUF, face image
+    BDY_LIST_UIN,           // G_TYPE_STRING, buddy uin or group code
+    BDY_LIST_CLASS,         // G_TYPE_INT, buddy or group. 1: buddy, 2:group
+                            // 3: group member
+    BDY_LIST_NAME,          // G_TYPE_STRING, buddy markname or group name
+    BDY_LIST_LNICK,         // G_TYPE_STRING, buddy long nick 
+    BDY_LIST_NUMBER,        // G_TYPE_STRING, qq number of the group number
+                            // or group fingermemo
+    BDY_LIST_COLUMNS        // column number
+};
+
 typedef struct __QQBuddyList            QQBuddyList;
 typedef struct __QQBuddyListClass       QQBuddyListClass;
 
@@ -37,26 +53,31 @@ GType qq_buddy_list_get_type();
 GtkWidget * qq_buddy_list_new();
 
 //
-// Add qq buddy and qq group
+// Add qq buddy , qq group and qq group member
 //
 void qq_buddy_list_add_buddy(GtkWidget *widget, QQBuddy *bdy);
 void qq_buddy_list_add_group(GtkWidget *widget, QQGroup *grp);
+void qq_buddy_list_add_group_member(GtkWidget *widget, QQGMember *gm);
 
 //
-// Add multiple buddies and groups
+// Add multiple buddies and groups and group members
 //
 void qq_buddy_list_add_buddies(GtkWidget *widget, GPtrArray *bdies);
 void qq_buddy_list_add_groups(GtkWidget *widget, GPtrArray *grps);
+void qq_buddy_list_add_group_members(GtkWidget *widget, GPtrArray *gms);
 
 //
-// Update the information of the qq buddy and qq group
+// Update the information of the qq buddy and qq group and member
 //
 void qq_buddy_list_update_buddy_info(GtkWidget *widget, QQBuddy *bdy);
 void qq_buddy_list_update_group_info(GtkWidget *widget, QQGroup *grp);
+void qq_buddy_list_update_group_member_info(GtkWidget *widget, QQGMember *gm);
 
 //
-// Update buddies and groups info
+// Update buddies and groups info and group members
 //
 void qq_buddy_list_update_buddies_info(GtkWidget *widget, GPtrArray *bdies);
 void qq_buddy_list_update_groups_info(GtkWidget *widget, GPtrArray *grps);
+void qq_buddy_list_update_group_members_info(GtkWidget *widget
+                                                , GPtrArray *gms);
 #endif

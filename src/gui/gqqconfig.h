@@ -59,12 +59,7 @@ GType gqq_config_get_type();
 //
 gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum);
 //
-// Save all the configuration into the configuration files.
-// Contains:
-//      QQGroup
-//      QQBuddy
-//      QQCategory
-//      other config.
+// Save all the configuration items
 //
 gint gqq_config_save(GQQConfig *cfg);
 
@@ -93,6 +88,22 @@ gint gqq_config_get_bool(GQQConfig *cfg, const gchar *key, gboolean *value);
 gint gqq_config_set_str(GQQConfig *cfg, const gchar *key, const gchar *value);
 gint gqq_config_set_int(GQQConfig *cfg, const gchar *key, gint value);
 gint gqq_config_set_bool(GQQConfig *cfg, const gchar *key, gboolean value);
+
+//
+// Save buddy and group into db
+// @return 0 for success of -1 for failed
+//
+gint gqq_config_save_buddy(GQQConfig *cfg, QQBuddy *bdy);
+gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp);
+
+//
+// Get buddy and group from the db
+// @return 0 : success but find no recoder
+//         > 0 : the recoders which are found. Set the LAST one to bdy
+//         < 0 : failed
+//
+gint gqq_config_get_buddy(GQQConfig *cfg, QQBuddy *bdy);
+gint gqq_config_get_group(GQQConfig *cfg, QQGroup *grp);
 
 //
 // The string key hash table.

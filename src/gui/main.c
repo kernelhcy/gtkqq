@@ -7,7 +7,7 @@
 #include <log.h>
 #include <gqqconfig.h>
 #include <msgloop.h>
-#include <chatwindow.h>
+#include <groupchatwindow.h>
 #include <tray.h>
 
 /*
@@ -52,6 +52,7 @@ int main(int argc, char **argv)
     tray = qq_tray_new();
     gtk_widget_show_all(win);
 
+    gtk_widget_show(qq_group_chatwindow_new("1234345"));
     gtk_main();
 
     g_object_unref(G_OBJECT(tray));

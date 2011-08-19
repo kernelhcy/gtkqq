@@ -20,6 +20,7 @@ img_DATA=\
 	webqq_icon.png\
 	avatar.gif\
 	phone.png\
+	group.png\
 	webqq.png\
 	sendfile.png selectfont.png selectface.png sendpic.png\
 	showhistory.png clearscreen.png\

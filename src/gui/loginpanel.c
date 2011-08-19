@@ -527,7 +527,7 @@ static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel)
     }
 
     gint i;
-    gint t_num = 10;
+    gint t_num = 6;
     GThread **threads = g_malloc(sizeof(GThread*) * t_num);
     GError *err = NULL;
     ThreadFuncPar *par = NULL;
@@ -594,7 +594,6 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
     GPtrArray *fimgs = g_ptr_array_new();
     gint i;
     QQBuddy *bdy = NULL;
-    QQGroup *grp = NULL;
     QQFaceImg *img = NULL;
 
     // me
@@ -614,19 +613,20 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
         qq_faceimg_set(img, "num", bdy -> qqnumber);
         g_ptr_array_add(fimgs, img);
     }
-
+#if 0
     // groups
+    QQGroup *grp = NULL;
     for(i = 0; i < info -> groups -> len; ++i){
         grp = g_ptr_array_index(info -> groups, i);
         if(grp == NULL){
             continue;
         }
         img = qq_faceimg_new(); 
-        qq_faceimg_set(img, "uin", grp -> gid);
+        qq_faceimg_set(img, "uin", grp -> code);
         qq_faceimg_set(img, "num", grp -> gnumber);
         g_ptr_array_add(fimgs, img);
     }
-
+#endif
     gint t_num = 2;
     GThread **threads = g_malloc(sizeof(GThread*) * t_num);
     GError *err = NULL;

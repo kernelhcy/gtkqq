@@ -366,24 +366,11 @@ gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     cfg, gqq_config_get_type(), GQQConfigPriv);
     QQInfo *info = priv -> info; 
-    db_get_categories(priv -> db_con, qqnum, info);
-    db_get_buddies(priv -> db_con, qqnum, info);
-    gint i;
-    QQBuddy *me;
-    for(i = 0; i < info -> buddies -> len; ++i){
-        me = g_ptr_array_index(info -> buddies, i);
-        if(me == NULL){
-            continue;
-        }
-        if(g_strcmp0(qqnum, me -> qqnumber -> str) == 0){
-            qq_buddy_set(me, "status", info -> me -> status -> str);
-            qq_buddy_copy(me, info -> me);
-            qq_buddy_set(info -> me, "qqnumber", priv -> qqnum -> str);
-            qq_buddy_set(info -> me, "uin", priv -> qqnum -> str);
-            break;
-        }
-    }
-    db_get_groups(priv -> db_con, qqnum, info);
+
+    // get my info from the db
+    qq_buddy_set(info -> me, "uin", qqnum);
+    qq_buddy_set(info -> me, "qqnumber", qqnum);
+    db_get_buddy(priv -> db_con, priv -> qqnum -> str, info -> me, NULL);
     return 0;
 }
 
@@ -652,4 +639,63 @@ gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
     g_hash_table_insert(ht, g_strdup(key), value);
     g_mutex_unlock(priv -> ht_lock);
     return 0;
+}
+
+gint gqq_config_save_buddy(GQQConfig *cfg, QQBuddy *bdy)
+{
+    if(cfg == NULL || bdy == NULL){
+        return -1;
+    }
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+    gint cnt = 0;
+    if(db_get_buddy(priv -> db_con, priv -> qqnum -> str, bdy, &cnt) 
+                                            != SQLITE_ERROR){
+        return cnt;
+    }
+    return -1;
+}
+
+gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp)
+{
+    if(cfg == NULL || grp == NULL){
+        return -1;
+    }
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+    gint cnt = 0;
+    if(db_get_group(priv -> db_con, priv -> qqnum -> str, grp, &cnt) 
+                                            != SQLITE_ERROR){
+        return cnt;
+    }
+    return -1;
+
+}
+
+gint gqq_config_get_buddy(GQQConfig *cfg, QQBuddy *bdy)
+{
+    if(cfg == NULL || bdy == NULL){
+        return -1;
+    }
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+    if(db_buddy_save(priv -> db_con, priv -> qqnum -> str, bdy) == SQLITE_OK){
+        return 0;
+    }
+
+    return -1;
+}
+
+gint gqq_config_get_group(GQQConfig *cfg, QQGroup *grp)
+{
+    if(cfg == NULL || grp == NULL){
+        return -1;
+    }
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+                                cfg, gqq_config_get_type(), GQQConfigPriv);
+    if(db_group_save(priv -> db_con, priv -> qqnum -> str, grp) == SQLITE_OK){
+        return 0;
+    }
+
+    return -1;
 }

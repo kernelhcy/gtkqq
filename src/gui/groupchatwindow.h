@@ -25,8 +25,7 @@ struct __QQGroupChatWindowClass{
     GtkWindowClass parent;
 };
 
-GtkWidget* qq_group_chatwindow_new(const gchar *uin, const gchar *name
-                                    , const gchar *grpnumber);
+GtkWidget* qq_group_chatwindow_new(const gchar *code);
 GType qq_group_chatwindow_get_type();
 
 //

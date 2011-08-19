@@ -55,16 +55,18 @@ gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
 //
 gint db_config_save(sqlite3 *db, const gchar *owner
                             , const gchar *key, const gchar *value);
+
 //
-// Store buddy, group, category into db
+// Store buddy, group into db
 //
+
+// Just create the sql statement
 void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy);
 gint db_buddy_save(sqlite3 *db, const gchar *owner, QQBuddy *bdy);
+
+// Just create the sql statement
 void db_group_save_sql_append(GString *sql, const gchar *owner, QQGroup *grp);
 gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp);
-void db_category_save_sql_append(GString *sql, const gchar *owner
-                                        , QQCategory *cate);
-gint db_category_save(sqlite3 *db, const gchar *owner, QQCategory *cate);
 
 //
 // Get key:value
@@ -72,12 +74,11 @@ gint db_category_save(sqlite3 *db, const gchar *owner, QQCategory *cate);
 gint db_config_get(sqlite3 *db, const gchar *owner
                             , const gchar *key, gchar **value);
 //
-// Get all the buddies, groups and categories.
-// Result is stored in info
+// Get the buddy and group.
+// @param cnt : the number of the recoders found in the db
 //
-gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info);
-gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info);
-gint db_get_categories(sqlite3 *db, const gchar *owner, QQInfo *info);
+gint db_get_buddy(sqlite3 *db, const gchar *owner, QQBuddy *bdy, gint *cnt);
+gint db_get_group(sqlite3 *db, const gchar *owner, QQGroup *grp, gint *cnt);
 
 //
 // Execute the sql

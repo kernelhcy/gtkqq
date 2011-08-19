@@ -29,34 +29,23 @@ int fcprintf(int fd, FgColor fc, BgColor bc, Ptype t
 int fvcprintf(int fd, FgColor fc, BgColor bc, Ptype t
 		, const char *fmt, va_list ap)
 {
-	char nfmt[500];
+	char nfmt[5000];
 	int idx = 0;
 	
 	if(fc != UNSET_F){
-		idx += snprintf(nfmt + idx, 500 - idx, FMTMARK, fc);
+		idx += snprintf(nfmt + idx, 5000 - idx, FMTMARK, fc);
 	}
 	
 	if(bc != UNSET_B){
-		idx += snprintf(nfmt + idx, 500 -idx, FMTMARK, bc);
+		idx += snprintf(nfmt + idx, 5000 -idx, FMTMARK, bc);
 	}
 	
 	if(t != UNSET_T){
-		idx += snprintf(nfmt + idx, 500 -idx, FMTMARK, t);
+		idx += snprintf(nfmt + idx, 5000 -idx, FMTMARK, t);
 	}
 	
-	idx += snprintf(nfmt + idx, 500 - idx, "%s", fmt);
-	snprintf(nfmt + idx, 500 - idx, "\e[0m");
+	idx += snprintf(nfmt + idx, 5000 - idx, "%s", fmt);
+	snprintf(nfmt + idx, 5000 - idx, "\e[0m");
 	
-	char str[5000];
-	/*
-	 * print the new fmt
-	 */
-	int strlen = vsnprintf(str, 5000, nfmt, ap);
-	
-	int rt = -1;
-	if(-1 == (rt = write(fd, str, strlen))){
-		return -1;
-	}
-	
-	return rt;
+	return vprintf(nfmt, ap);
 }

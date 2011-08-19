@@ -9,7 +9,6 @@
 #define TABLE_BDY   "buddies"
 #define TABLE_GRP   "groups"
 #define TABLE_GMEM  "gmembers"
-#define TABLE_CATE  "categories"
 
 static const gchar table_sql[] = 
         "create table if not exists config("
@@ -24,7 +23,6 @@ static const gchar table_sql[] =
         "   country, province, city, gender, face, flag, birthday_y, "
         "   birthday_m, birthday_d, blood, shengxiao, constel, phone,"
         "   mobile, email, occupation, college, homepage, personal, lnick,"
-        "   cate_idx,"
         "   foreign key(owner) references qquser(qqnumber) "
         "   on delete cascade );"
         "create table if not exists groups("
@@ -37,12 +35,7 @@ static const gchar table_sql[] =
         "   id primary key,"
         "   gnumber, qqnumber, nick, flag, card, "
         "   foreign key(gnumber) references groups(gnumber) "
-        "   on delete cascade);"
-        "create table if not exists categories("
-        "   id primary key,"
-        "   owner, idx, name,"
-        "   foreign key(owner) references qquser(qqnumber) "
-        "   on delete cascade );";
+        "   on delete cascade);";
 
 //
 // Test if we have tables in the databases
@@ -63,7 +56,6 @@ static gint create_tables(sqlite3 *db)
 {
     // Try to drop all tables
     sqlite3_exec(db, "drop table if exists "TABLE_CONF, NULL, NULL, NULL);
-    sqlite3_exec(db, "drop table if exists "TABLE_CATE, NULL, NULL, NULL);
     sqlite3_exec(db, "drop table if exists "TABLE_GMEM, NULL, NULL, NULL);
     sqlite3_exec(db, "drop table if exists "TABLE_GRP, NULL, NULL, NULL);
     sqlite3_exec(db, "drop table if exists "TABLE_BDY, NULL, NULL, NULL);
@@ -289,8 +281,8 @@ void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy)
                         "country, province, city, gender,"
                         "face, flag, birthday_y, birthday_m, birthday_d,"
                         "blood, shengxiao, constel, phone, mobile, email,"
-                        "occupation, college, homepage, personal, lnick, "
-                        "cate_idx) values (");
+                        "occupation, college, homepage, personal, lnick"
+                        ") values (");
     g_string_append_printf(sql, "'%s',", owner);
     g_string_append_printf(sql, "'%s',", bdy -> qqnumber -> str);
     g_string_append_printf(sql, "%d,", bdy -> vip_info);
@@ -316,7 +308,6 @@ void db_buddy_save_sql_append(GString *sql, const gchar *owner, QQBuddy *bdy)
     g_string_append_printf(sql, "'%s',", bdy -> homepage -> str);
     g_string_append_printf(sql, "'%s',", bdy -> personal -> str);
     g_string_append_printf(sql, "'%s',", bdy -> lnick-> str);
-    g_string_append_printf(sql, "%d);", bdy -> cate_index);
 
 }
 gint db_buddy_save(sqlite3 *db, const gchar *owner, QQBuddy *bdy)
@@ -394,36 +385,6 @@ gint db_group_save(sqlite3 *db, const gchar *owner, QQGroup *grp)
 }
 
 
-void db_category_save_sql_append(GString *sql, const gchar *owner
-                                            , QQCategory *cate)
-{
-    if(sql == NULL || owner == NULL || cate == NULL){
-        return;
-    }
-
-    static const gchar *sql_fmt = "insert or replace into categories (id, "
-                                    "owner, idx, name) values "
-                                    "('%s%d', '%s', %d, '%s')";
-    gchar buf[1000];
-    // Use owner qq number and the index as the key
-    g_snprintf(buf, 1000, sql_fmt, owner, cate -> index, owner
-                                , cate -> index, cate -> name -> str);
-    
-    g_string_append(sql, buf);
-}
-
-gint db_category_save(sqlite3 *db, const gchar *owner, QQCategory *cate)
-{
-    if(db == NULL || owner == NULL || cate == NULL){
-        return SQLITE_ERROR;
-    }
-    GString *sql = g_string_new(NULL);
-    db_category_save_sql_append(sql, owner, cate);
-    gint retcode = db_exec_sql(db, sql -> str);
-    g_string_free(sql, TRUE);
-    return retcode;
-}
-
 //
 // Get key:value
 //
@@ -469,21 +430,22 @@ out_label:
     return retcode;
 }
 
-gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info)
+gint db_get_buddy(sqlite3 *db, const gchar *owner, QQBuddy *bdy, gint *cnt)
 {
-    if(db == NULL || owner == NULL || info == NULL){
+    if(db == NULL || owner == NULL || bdy == NULL){
         return SQLITE_ERROR;
     }
     GString *sql = g_string_sized_new(500);
     g_string_append(sql, "select "
-                        "qqnumber, vip_info, nick, markname,"
+                        "vip_info, nick, markname,"
                         "country, province, city, gender,"
                         "face, flag,"
                         "blood, shengxiao, constel, phone, mobile, email,"
                         "occupation, college, homepage, personal, lnick, "
-                        "cate_idx, birthday_y, birthday_m, birthday_d "
+                        "birthday_y, birthday_m, birthday_d "
                         "from buddies where owner=");
-    g_string_append_printf(sql, "'%s';", owner);
+    g_string_append_printf(sql, "'%s' and qqnumber='%s';"
+                                    , owner, bdy -> qqnumber -> str);
 
     sqlite3_stmt *stmt = NULL;
     if(sqlite3_prepare_v2(db, sql -> str, 500, &stmt, NULL) != SQLITE_OK){
@@ -495,53 +457,40 @@ gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info)
     g_string_free(sql, TRUE);
 
     gint retcode = SQLITE_OK;
-    QQBuddy *bdy = NULL;
-    QQCategory *cate = NULL;
-    gint cate_idx, y, m, d, i;
+    gint idx, y, m, d;
+    gint num = 0;
     while(TRUE){
         retcode = sqlite3_step(stmt);
         switch(retcode)
         {
         case SQLITE_ROW:
             bdy = qq_buddy_new();
-            qq_buddy_set(bdy, "qqnumber", (const gchar *)sqlite3_column_text(stmt, 0));
-            qq_buddy_set(bdy, "vip_info", sqlite3_column_int(stmt, 1));
-            qq_buddy_set(bdy, "nick", (const gchar *)sqlite3_column_text(stmt, 2));
-            qq_buddy_set(bdy, "markname", (const gchar *)sqlite3_column_text(stmt, 3));
-            qq_buddy_set(bdy, "country", (const gchar *)sqlite3_column_text(stmt, 5));
-            qq_buddy_set(bdy, "province", (const gchar *)sqlite3_column_text(stmt, 6));
-            qq_buddy_set(bdy, "city", (const gchar *)sqlite3_column_text(stmt, 7));
-            qq_buddy_set(bdy, "gender", (const gchar *)sqlite3_column_text(stmt, 8));
-            qq_buddy_set(bdy, "face", (const gchar *)sqlite3_column_text(stmt, 9));
-            qq_buddy_set(bdy, "flag", (const gchar *)sqlite3_column_text(stmt, 10));
-            qq_buddy_set(bdy, "blood", sqlite3_column_int(stmt, 11));
-            qq_buddy_set(bdy, "shengxiao", sqlite3_column_int(stmt, 12));
-            qq_buddy_set(bdy, "constel", sqlite3_column_int(stmt, 13));
-            qq_buddy_set(bdy, "phone", (const gchar *)sqlite3_column_text(stmt, 14));
-            qq_buddy_set(bdy, "mobile", (const gchar *)sqlite3_column_text(stmt,15));
-            qq_buddy_set(bdy, "email", (const gchar *)sqlite3_column_text(stmt, 16));
-            qq_buddy_set(bdy, "occupation", (const gchar *)sqlite3_column_text(stmt, 17));
-            qq_buddy_set(bdy, "college", (const gchar *)sqlite3_column_text(stmt, 18));
-            qq_buddy_set(bdy, "homepage", (const gchar *)sqlite3_column_text(stmt, 19));
-            qq_buddy_set(bdy, "personal", (const gchar *)sqlite3_column_text(stmt, 20));
-            qq_buddy_set(bdy, "lnick", (const gchar *)sqlite3_column_text(stmt, 21));
-            cate_idx = sqlite3_column_int(stmt, 22);
-            qq_buddy_set(bdy, "cate_index", cate_idx);
-            y = sqlite3_column_int(stmt, 23);
-            m = sqlite3_column_int(stmt, 24);
-            d = sqlite3_column_int(stmt, 25);
+            idx = -1;
+            qq_buddy_set(bdy, "vip_info", sqlite3_column_int(stmt, ++idx));
+            qq_buddy_set(bdy, "nick", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "markname", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "country", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "province", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "city", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "gender", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "face", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "flag", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "blood", sqlite3_column_int(stmt, ++idx));
+            qq_buddy_set(bdy, "shengxiao", sqlite3_column_int(stmt, ++idx));
+            qq_buddy_set(bdy, "constel", sqlite3_column_int(stmt, ++idx));
+            qq_buddy_set(bdy, "phone", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "mobile", (const gchar *)sqlite3_column_text(stmt,++idx));
+            qq_buddy_set(bdy, "email", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "occupation", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "college", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "homepage", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "personal", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            qq_buddy_set(bdy, "lnick", (const gchar *)sqlite3_column_text(stmt, ++idx));
+            y = sqlite3_column_int(stmt, ++idx);
+            m = sqlite3_column_int(stmt, ++idx);
+            d = sqlite3_column_int(stmt, ++idx);
             qq_buddy_set(bdy, "birthday", y, m, d);
-            for(i = 0; i < info -> categories -> len; ++i){
-                cate = (QQCategory*)g_ptr_array_index(info -> categories ,i); 
-                if(cate == NULL){
-                    continue;
-                }
-                if(cate -> index == cate_idx){
-                    g_ptr_array_add(cate -> members, bdy);
-                    break;
-                }
-            }
-            g_ptr_array_add(info -> buddies, bdy);
+            ++num;
             break;
         case SQLITE_DONE:
             retcode = SQLITE_OK;
@@ -555,6 +504,9 @@ gint db_get_buddies(sqlite3 *db, const gchar *owner, QQInfo *info)
     }
 
 out_label:
+    if(cnt != NULL){
+        *cnt = num;
+    }
     sqlite3_finalize(stmt);
     return retcode;
 }
@@ -562,9 +514,9 @@ out_label:
 //
 // Get all the group members
 //
-static gint db_get_group_members(sqlite3 *db, QQGroup *grp, QQInfo *info)
+static gint db_get_group_members(sqlite3 *db, QQGroup *grp)
 {
-    if(db == NULL || grp == NULL || info == NULL){
+    if(db == NULL || grp == NULL){
         return SQLITE_ERROR;
     }
 
@@ -611,16 +563,17 @@ out_label:
 }
 
 
-gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info)
+gint db_get_group(sqlite3 *db, const gchar *owner, QQGroup *grp, gint *cnt)
 {
-    if(db == NULL || owner == NULL || info == NULL){
+    if(db == NULL || owner == NULL || grp == NULL){
         return SQLITE_ERROR;
     }
 
     gchar sql[500];
     g_snprintf(sql, 500, "select gnumber, name, code, flag, creator, mark, mask, "
                     "opt, createtime, gclass, glevel, face, memo, fingermemo"
-                    " from groups where owner='%s';", owner);
+                    " from groups where owner='%s' and gnumber = '%s';"
+                                    , owner, grp -> gnumber -> str);
 
     sqlite3_stmt *stmt = NULL;
     if(sqlite3_prepare_v2(db, sql, 500, &stmt, NULL) != SQLITE_OK){
@@ -629,8 +582,8 @@ gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info)
         return SQLITE_ERROR;
     }
 
-    QQGroup *grp = NULL;
     gint retcode = SQLITE_OK;
+    gint num = 0;
     while(TRUE){
         retcode = sqlite3_step(stmt);
         switch(retcode)
@@ -651,9 +604,9 @@ gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info)
             qq_group_set(grp, "face", sqlite3_column_int(stmt, 11));
             qq_group_set(grp, "memo", (const gchar *)sqlite3_column_text(stmt, 12));
             qq_group_set(grp, "fingermemo", (const gchar *)sqlite3_column_text(stmt, 13));
-            g_ptr_array_add(info -> groups, grp);
             //get group members
-            db_get_group_members(db, grp, info);
+            db_get_group_members(db, grp);
+            ++num;
             break;
         case SQLITE_DONE:
             retcode = SQLITE_OK;
@@ -667,51 +620,9 @@ gint db_get_groups(sqlite3 *db, const gchar *owner, QQInfo *info)
     }
 
 out_label:
-    sqlite3_finalize(stmt);
-    return retcode;
-}
-
-gint db_get_categories(sqlite3 *db, const gchar *owner, QQInfo *info)
-{
-    if(db == NULL || owner == NULL || info == NULL){
-        return SQLITE_ERROR;
+    if(cnt != NULL){
+        *cnt = num;
     }
-
-    gchar sql[500];
-    g_snprintf(sql, 500, "select idx,name from categories where owner='%s';"
-                                    , owner);
-    sqlite3_stmt *stmt = NULL;
-    if(sqlite3_prepare_v2(db, sql, 500, &stmt, NULL) != SQLITE_OK){
-        g_warning("prepare sql error. SQL(%s) (%s, %d)", sql
-                        , __FILE__, __LINE__);
-        return SQLITE_ERROR;
-    }
-    
-    QQCategory *cate = NULL;
-    gint retcode;
-    while(TRUE){
-        retcode = sqlite3_step(stmt);
-        switch(retcode)
-        {
-        case SQLITE_ROW:
-            cate = qq_category_new();
-            qq_category_set(cate, "index", sqlite3_column_int(stmt, 0));
-            qq_category_set(cate, "name"
-                            , (const gchar *)sqlite3_column_text(stmt, 1));
-            g_ptr_array_add(info -> categories, cate);
-            break;
-        case SQLITE_DONE:
-            retcode = SQLITE_OK;
-            goto out_label;
-            break;
-        default:
-            g_warning("sqlite3_step error!(%s, %d)", __FILE__, __LINE__);
-            goto out_label;
-            break;
-        }
-    }
-
-out_label:
     sqlite3_finalize(stmt);
     return retcode;
 }

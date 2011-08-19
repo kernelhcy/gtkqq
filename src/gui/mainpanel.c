@@ -5,9 +5,12 @@
 #include <buddytree.h>
 #include <tray.h>
 #include <buddylist.h>
+#include <groupchatwindow.h>
+#include <gqqconfig.h>
 
 extern QQInfo *info;
 extern QQTray *tray;
+extern GQQConfig *cfg;
 
 extern GQQMessageLoop *get_info_loop;
 extern GQQMessageLoop *send_loop;
@@ -62,6 +65,92 @@ GtkWidget* qq_mainpanel_new(GtkWidget *container)
 
     return GTK_WIDGET(panel);
 }
+
+static void qq_group_list_on_double_click(GtkTreeView *tree
+                                    , GtkTreePath *path 
+                                    , GtkTreeViewColumn  *col 
+                                    , gpointer data)
+{
+    gchar *code;
+    GtkTreeModel *model = gtk_tree_view_get_model(tree); 
+
+    GtkTreeIter iter;
+    gtk_tree_model_get_iter(model, &iter, path);
+    gtk_tree_model_get(model, &iter, BDY_LIST_UIN, &code, -1);
+
+    GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", code); 
+    if(cw != NULL){
+        // We have open a window for this group
+        g_object_set(cw, "code", code, NULL);
+        gtk_widget_show(cw);
+        g_free(code);
+        return;
+    }
+    
+    g_debug("Create group chat window for %s(%s, %d)", code
+                                        , __FILE__, __LINE__);
+    cw = qq_group_chatwindow_new(code);
+    gtk_widget_show(cw);
+    gqq_config_insert_ht(cfg, "chat_window_map", code, cw);
+    g_free(code);
+}
+
+//
+// Group list tool tip
+//
+static gboolean qq_group_list_on_show_tooltip(GtkWidget* widget
+                                            , int x
+                                            , int y
+                                            , gboolean keybord_mode
+                                            , GtkTooltip* tip
+                                            , gpointer data)
+{
+    gchar *name, *code;
+	GtkTreeView *tree = GTK_TREE_VIEW(widget);
+    GtkTreeModel *model = gtk_tree_view_get_model(tree); 
+    GtkTreePath *path;
+    GtkTreeIter iter;
+
+	if(!gtk_tree_view_get_tooltip_context(tree , &x , &y , keybord_mode
+						, &model , &path , &iter)){
+		return FALSE;
+    }
+    gtk_tree_model_get(model, &iter
+                        , BDY_LIST_NAME, &name
+                        , BDY_LIST_UIN, &code
+                        , -1);
+    QQGroup *grp = qq_info_lookup_group_by_code(info, code);
+    if(grp == NULL){
+        gtk_tree_path_free(path);
+        g_free(name);
+        g_free(code);
+        return FALSE;
+    }
+
+    gchar buf[100];
+    const gchar *levelstr = NULL;
+    switch(grp -> level)
+    {
+    case 0:
+        levelstr = "普通群";
+        break;
+    case 1:
+        levelstr = "高级群";
+        break;
+    default:
+        levelstr = "";
+        break;
+    }
+    g_snprintf(buf, 100, "%s - %s", name, levelstr);
+    gtk_tooltip_set_markup(tip, buf);
+    gtk_tree_view_set_tooltip_row(tree, tip, path);
+
+    gtk_tree_path_free(path);
+    g_free(name);
+    g_free(code);
+    return TRUE;
+}
+
 
 static void qq_mainpanel_init(QQMainPanel *panel)
 {
@@ -159,6 +248,14 @@ static void qq_mainpanel_init(QQMainPanel *panel)
     panel -> buddy_tree= qq_buddy_tree_new();
     panel -> group_list = qq_buddy_list_new();
     panel -> recent_list = qq_buddy_list_new();
+
+	g_signal_connect(panel -> group_list
+				   , "row-activated"
+				   , G_CALLBACK(qq_group_list_on_double_click)
+				   , NULL);
+    gtk_widget_set_has_tooltip(panel -> group_list, TRUE);
+	g_signal_connect(panel -> group_list, "query-tooltip"
+                        , G_CALLBACK(qq_group_list_on_show_tooltip) , NULL);
 
     GtkWidget *scrolled_win; 
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);

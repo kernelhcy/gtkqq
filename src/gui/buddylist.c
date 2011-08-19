@@ -1,24 +1,11 @@
 #include <buddylist.h>
 
+extern QQInfo *info;
+
 static void qq_buddy_list_init(QQBuddyList *self);
 static void qq_buddy_list_class_init(QQBuddyListClass *klass, gpointer data);
 
 static void qq_buddy_list_finalize(GObject *obj);
-
-//
-// List store columns
-//
-enum{
-    BDY_LIST_TYPE = 0,      // GDK_TYPE_PIXBUF, client type image
-    BDY_LIST_IMG,           // GDK_TYPE_PIXBUF, face image
-    BDY_LIST_UIN,           // G_TYPE_STRING, buddy uin or group uin
-    BDY_LIST_CLASS,         // G_TYPE_INT, buddy or group. 1: buddy, 2:group
-    BDY_LIST_NAME,          // G_TYPE_STRING, buddy markname or group name
-    BDY_LIST_LNICK,         // G_TYPE_STRING, buddy long nick 
-    BDY_LIST_NUMBER,        // G_TYPE_STRING, qq number of the group number
-                            // or group fingermemo
-    BDY_LIST_COLUMNS        // column number
-};
 
 //
 // map between the uin and row reference
@@ -87,7 +74,7 @@ static void qq_buddy_list_text_cell_data_func(GtkTreeViewColumn *col
     gtk_tree_model_get(model, iter
                             , BDY_LIST_NAME, &name
                             , BDY_LIST_LNICK, &lnick, -1);
-    g_snprintf(text, 500, "<b>%s</b>  <span color='grey'>%s</span>"
+    g_snprintf(text, 500, "<b>%s</b>  <span color='#808080'>%s</span>"
                                     , name, lnick);
     g_object_set(renderer, "markup", text, NULL);
     g_free(name);
@@ -103,23 +90,6 @@ static void qq_buddy_list_pixbuf_cell_data_func(GtkTreeViewColumn *col
                                             , GtkTreeModel *model
                                             , GtkTreeIter *iter
                                             , gpointer data)
-{
-}
-
-static gboolean qq_buddy_list_on_show_tooltip(GtkWidget* widget
-                                            , int x
-                                            , int y
-                                            , gboolean keybord_mode
-                                            , GtkTooltip* tip
-                                            , gpointer data)
-{
-    return TRUE;
-}
-
-static void qq_buddy_list_on_double_click(GtkTreeView *tree
-                                    , GtkTreePath *path 
-                                    , GtkTreeViewColumn  *col 
-                                    , gpointer data)
 {
 }
 
@@ -181,15 +151,6 @@ static void qq_buddy_list_init(QQBuddyList *self)
                                             , G_TYPE_STRING); 
     gtk_tree_view_set_model(GTK_TREE_VIEW(self), GTK_TREE_MODEL(store));
 
-    gtk_widget_set_has_tooltip(GTK_WIDGET(self), TRUE);
-	g_signal_connect(self, "query-tooltip"
-                        , G_CALLBACK(qq_buddy_list_on_show_tooltip) , NULL);
-
-	g_signal_connect(self
-				   , "row-activated"
-				   , G_CALLBACK(qq_buddy_list_on_double_click)
-				   , NULL);
-
     QQBuddyListPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(self
                                                 , qq_buddy_list_get_type()
                                                 , QQBuddyListPriv); 
@@ -248,7 +209,7 @@ static void qq_buddy_list_set_buddy(GtkListStore *store, GtkTreeIter *iter
     g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
     pb = gdk_pixbuf_new_from_file_at_size(buf, 22, 22, NULL);
     if(pb == NULL){
-        pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"
+        pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/group.png"
                                                     , 22, 22, NULL);
     }
     gtk_list_store_set(store, iter, BDY_LIST_IMG, pb, -1);
@@ -286,7 +247,7 @@ static void qq_buddy_list_set_group(GtkListStore *store, GtkTreeIter *iter
 {
     gtk_list_store_set(store, iter
                         , BDY_LIST_NUMBER, grp -> gnumber -> str
-                        , BDY_LIST_UIN, grp -> gid -> str
+                        , BDY_LIST_UIN, grp -> code -> str
                         , BDY_LIST_CLASS, 2
                         , BDY_LIST_NAME, grp -> name -> str
                         , BDY_LIST_LNICK, grp -> fingermemo -> str
@@ -296,7 +257,7 @@ static void qq_buddy_list_set_group(GtkListStore *store, GtkTreeIter *iter
     g_snprintf(buf, 500, CONFIGDIR"/faces/%s", grp -> gnumber -> str);
     pb = gdk_pixbuf_new_from_file_at_size(buf, 22, 22, NULL);
     if(pb == NULL){
-        pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif", 22, 22, NULL);
+        pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/group.png", 22, 22, NULL);
     }
     gtk_list_store_set(store, iter, BDY_LIST_IMG, pb, -1);
 }
@@ -422,3 +383,82 @@ void qq_buddy_list_update_groups_info(GtkWidget *widget, GPtrArray *grps)
     }
 }
 
+//
+// Set the group memeber info
+//
+static void qq_buddy_list_set_group_member(GtkListStore *store
+                                            , GtkTreeIter *iter
+                                            , QQGMember *gm)
+{
+    g_debug("Add group member: %s %s %s (%s, %d)", gm -> nick -> str
+                        , gm -> card -> str, gm -> qqnumber -> str
+                        , __FILE__, __LINE__);
+    gchar *name;
+    if(gm -> card == NULL || gm -> card  -> len <= 0){
+        name = gm -> nick -> str;
+    }else{
+        name = gm -> card -> str;
+    }
+
+    gtk_list_store_set(store, iter
+                        , BDY_LIST_UIN, gm -> uin -> str
+                        , BDY_LIST_CLASS, 3
+                        , BDY_LIST_NAME, name
+                        , BDY_LIST_LNICK, ""
+                        , BDY_LIST_NUMBER, gm -> qqnumber -> str
+                        , -1);
+    gchar buf[500];
+    GdkPixbuf *pb = NULL;
+    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", gm -> qqnumber -> str);
+    pb = gdk_pixbuf_new_from_file_at_size(buf, 22, 22, NULL);
+    if(pb == NULL){
+        pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"
+                                                    , 22, 22, NULL);
+    }
+    gtk_list_store_set(store, iter, BDY_LIST_IMG, pb, -1);
+}
+
+void qq_buddy_list_add_group_member(GtkWidget *widget, QQGMember *gm)
+{
+    if(widget == NULL || gm == NULL){
+        return;
+    }
+
+    GtkTreeView *view = GTK_TREE_VIEW(widget);
+    GtkListStore *store = GTK_LIST_STORE(gtk_tree_view_get_model(view));
+    GtkTreeIter iter;
+    gtk_list_store_append(store, &iter);
+    qq_buddy_list_set_group_member(store, &iter, gm);
+    
+    // add reference map
+    GtkTreePath *path = gtk_tree_model_get_path(GTK_TREE_MODEL(store), &iter);
+    GtkTreeRowReference *ref = gtk_tree_row_reference_new(GTK_TREE_MODEL(store)
+                                                            , path);
+    gtk_tree_path_free(path);
+    QQBuddyListPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(widget
+                                                , qq_buddy_list_get_type()
+                                                , QQBuddyListPriv); 
+    g_hash_table_insert(priv -> row_map, g_strdup(gm -> uin -> str), ref);
+    return;
+}
+void qq_buddy_list_add_group_members(GtkWidget *widget, GPtrArray *gms)
+{
+    if(widget == NULL || gms == NULL){
+        return;
+    }
+    gint i;
+    QQGMember *gm;
+    for(i = 0; i < gms -> len; ++i){
+        gm = g_ptr_array_index(gms, i);
+        qq_buddy_list_add_group_member(widget, gm);
+    }
+}
+void qq_buddy_list_update_group_member_info(GtkWidget *widget, QQGMember *gm)
+{
+
+}
+void qq_buddy_list_update_group_members_info(GtkWidget *widget
+                                                , GPtrArray *gms)
+{
+
+}

@@ -805,6 +805,7 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
                 if(g_strcmp0(bdy -> uin -> str, uin) == 0){
                     break;
                 }
+                bdy = NULL;
             }
             if(bdy != NULL){
                 /*
@@ -1228,6 +1229,8 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
         z = tmp -> child -> text;\
     }else{\
         z = "";\
+        g_warning("No member named %s found!!(%s, %d)"\
+                                    , y, __FILE__, __LINE__);\
     }\
 
     val = json_find_first_label_all(json, "members");
@@ -1270,13 +1273,11 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
                     continue;
                 }
                 if(g_strcmp0(gmem -> uin -> str, uin) == 0){
+                    qq_gmember_set(gmem, "nick", utf8 -> str);
+                    g_debug("Group memeber. uin %s, nick %s (%s, %d)"
+                            , uin, utf8 -> str, __FILE__, __LINE__);
                     break;
                 }
-            }
-            if(gmem != NULL){
-                qq_gmember_set(gmem, "nick", utf8 -> str);
-                g_debug("Group memeber. uin %s, nick %s (%s, %d)"
-                            , uin, nick, __FILE__, __LINE__);
             }
         } 
     }else{
@@ -1300,14 +1301,12 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
                     continue;
                 }
                 if(g_strcmp0(gmem -> uin -> str, uin) == 0){
+                    qq_gmember_set(gmem, "status", status);
+                    qq_gmember_set(gmem, "client_type", client_type);
+                    g_debug("Group memeber. uin %s, status %s (%s, %d)"
+                            , uin, status, __FILE__, __LINE__);
                     break;
                 }
-            }
-            if(gmem != NULL){
-                qq_gmember_set(gmem, "status", status);
-                qq_gmember_set(gmem, "client_type", client_type);
-                g_debug("Group memeber. uin %s, status %s (%s, %d)"
-                            , uin, status, __FILE__, __LINE__);
             }
         } 
 
@@ -1323,23 +1322,23 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
         QQGMember *gmem = NULL;
         gint i;
         for(;val != NULL; val = val -> next){
-            FIND_VAL(val, "uin", uin);
+            FIND_VAL(val, "muin", uin);
             FIND_VAL(val, "card", card);
             g_string_truncate(utf8, 0);
             ucs4toutf8(utf8, card);
+            g_debug("Find %s %s (%s, %d)", uin, utf8 -> str
+                                    , __FILE__, __LINE__);
             for(i = 0; i < grp -> members -> len; ++i){
                 gmem = (QQGMember*)g_ptr_array_index(grp -> members, i);
                 if(gmem == NULL){
                     continue;
                 }
                 if(g_strcmp0(gmem -> uin -> str, uin) == 0){
+                    qq_gmember_set(gmem, "card", utf8 -> str);
+                    g_debug("Group memeber. uin %s, card %s (%s, %d)"
+                            , uin, utf8 -> str, __FILE__, __LINE__);
                     break;
                 }
-            }
-            if(gmem != NULL){
-                qq_gmember_set(gmem, "card", utf8 -> str);
-                g_debug("Group memeber. uin %s, card %s (%s, %d)"
-                            , uin, card, __FILE__, __LINE__);
             }
         } 
     }else{
