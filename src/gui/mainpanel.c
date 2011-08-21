@@ -7,6 +7,7 @@
 #include <buddylist.h>
 #include <groupchatwindow.h>
 #include <gqqconfig.h>
+#include <stdlib.h>
 
 extern QQInfo *info;
 extern QQTray *tray;
@@ -129,7 +130,8 @@ static gboolean qq_group_list_on_show_tooltip(GtkWidget* widget
 
     gchar buf[100];
     const gchar *levelstr = NULL;
-    switch(grp -> level)
+    gint tmpint = (gint)strtol(grp -> level -> str, NULL, 10);
+    switch(tmpint)
     {
     case 0:
         levelstr = "普通群";

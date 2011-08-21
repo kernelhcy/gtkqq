@@ -27,7 +27,7 @@ static const gchar table_sql[] =
         "   on delete cascade );"
         "create table if not exists groups("
         "   gnumber primary key,"
-        "   owner, name, code, flag, creator, mark, mask, opt, createtime,"
+        "   owner, name, flag, creator, mark, mask, opt, createtime,"
         "   gclass, glevel, face, memo, fingermemo, "
         "   foreign key(owner) references qquser(qqnumber) "
         "   on delete cascade);"
@@ -330,23 +330,22 @@ void db_group_save_sql_append(GString *sql, const gchar *owner, QQGroup *grp)
     }
 
     g_string_append(sql, "insert or replace into groups ("
-                    "gnumber, owner, name, code, flag, creator, mark, mask, "
+                    "gnumber, owner, name, flag, creator, mark, mask, "
                     "opt, createtime, gclass, glevel, face, memo, fingermemo"
                     ") values (");
 
-    g_string_append_printf(sql, "'%s',", grp -> gnumber -> str);
-    g_string_append_printf(sql, "'%s',", owner);
+    g_string_append_printf(sql, "'%s', ", grp -> gnumber -> str);
+    g_string_append_printf(sql, "'%s', ", owner);
     g_string_append_printf(sql, "'%s', ", grp -> name -> str);
-    g_string_append_printf(sql, "'%s', ", grp -> code -> str);
     g_string_append_printf(sql, "'%s', ", grp -> flag -> str);
     g_string_append_printf(sql, "'%s', ", grp -> owner -> str);
     g_string_append_printf(sql, "'%s', ", grp -> mark -> str);
     g_string_append_printf(sql, "'%s', ", grp -> mask -> str);
-    g_string_append_printf(sql, "%d,", grp -> option);
+    g_string_append_printf(sql, "'%s', ", grp -> option -> str);
     g_string_append_printf(sql, "'%s', ", grp -> createtime -> str);
-    g_string_append_printf(sql, "%d,", grp -> gclass);
-    g_string_append_printf(sql, "%d,", grp -> level);
-    g_string_append_printf(sql, "%d,", grp -> face);
+    g_string_append_printf(sql, "'%s', ", grp -> gclass -> str);
+    g_string_append_printf(sql, "'%s', ", grp -> level -> str);
+    g_string_append_printf(sql, "'%s', ", grp -> face -> str);
     g_string_append_printf(sql, "'%s', ", grp -> memo -> str);
     g_string_append_printf(sql, "'%s');", grp -> fingermemo -> str);
     
@@ -570,11 +569,12 @@ gint db_get_group(sqlite3 *db, const gchar *owner, QQGroup *grp, gint *cnt)
     }
 
     gchar sql[500];
-    g_snprintf(sql, 500, "select gnumber, name, code, flag, creator, mark, mask, "
+    g_snprintf(sql, 500, "select name, flag, creator, mark, mask, "
                     "opt, createtime, gclass, glevel, face, memo, fingermemo"
                     " from groups where owner='%s' and gnumber = '%s';"
                                     , owner, grp -> gnumber -> str);
 
+    g_debug("Run sql : %s (%s, %d)", sql, __FILE__, __LINE__);
     sqlite3_stmt *stmt = NULL;
     if(sqlite3_prepare_v2(db, sql, 500, &stmt, NULL) != SQLITE_OK){
         g_warning("prepare sql error. SQL(%s) (%s, %d)", sql
@@ -589,21 +589,18 @@ gint db_get_group(sqlite3 *db, const gchar *owner, QQGroup *grp, gint *cnt)
         switch(retcode)
         {
         case SQLITE_ROW:
-            grp = qq_group_new();
-            qq_group_set(grp, "gnumber", (const gchar *)sqlite3_column_text(stmt, 0));
-            qq_group_set(grp, "name", (const gchar *)sqlite3_column_text(stmt, 1));
-            qq_group_set(grp, "code", (const gchar *)sqlite3_column_text(stmt, 2));
-            qq_group_set(grp, "flag", (const gchar *)sqlite3_column_text(stmt, 3));
-            qq_group_set(grp, "owner", (const gchar *)sqlite3_column_text(stmt, 4));
-            qq_group_set(grp, "mark", (const gchar *)sqlite3_column_text(stmt, 5));
-            qq_group_set(grp, "mask", (const gchar *)sqlite3_column_text(stmt, 6));
-            qq_group_set(grp, "option", sqlite3_column_int(stmt, 7));
-            qq_group_set(grp, "createtime", (const gchar *)sqlite3_column_text(stmt, 8));
-            qq_group_set(grp, "gclass", sqlite3_column_int(stmt, 9));
-            qq_group_set(grp, "level", sqlite3_column_int(stmt, 10));
-            qq_group_set(grp, "face", sqlite3_column_int(stmt, 11));
-            qq_group_set(grp, "memo", (const gchar *)sqlite3_column_text(stmt, 12));
-            qq_group_set(grp, "fingermemo", (const gchar *)sqlite3_column_text(stmt, 13));
+            qq_group_set(grp, "name", (const gchar *)sqlite3_column_text(stmt, 0));
+            qq_group_set(grp, "flag", (const gchar *)sqlite3_column_text(stmt, 1));
+            qq_group_set(grp, "owner", (const gchar *)sqlite3_column_text(stmt, 2));
+            qq_group_set(grp, "mark", (const gchar *)sqlite3_column_text(stmt, 3));
+            qq_group_set(grp, "mask", (const gchar *)sqlite3_column_text(stmt, 4));
+            qq_group_set(grp, "option", (const gchar *)sqlite3_column_text(stmt, 5));
+            qq_group_set(grp, "createtime", (const gchar *)sqlite3_column_text(stmt, 6));
+            qq_group_set(grp, "gclass", (const gchar *)sqlite3_column_text(stmt, 7));
+            qq_group_set(grp, "level", (const gchar *)sqlite3_column_text(stmt, 8));
+            qq_group_set(grp, "face", (const gchar *)sqlite3_column_text(stmt, 9));
+            qq_group_set(grp, "memo", (const gchar *)sqlite3_column_text(stmt, 10));
+            qq_group_set(grp, "fingermemo", (const gchar *)sqlite3_column_text(stmt, 11));
             //get group members
             db_get_group_members(db, grp);
             ++num;

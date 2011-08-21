@@ -333,11 +333,11 @@ struct _QQGroup{
     GString *owner;
     GString *mark;
     GString *mask;
-    gint option;
+    GString *option;
     GString *createtime;
-    gint gclass;
-    gint level;
-    gint face;
+    GString *gclass;
+    GString *level;
+    GString *face;
 
     GString *memo;
     GString *fingermemo;

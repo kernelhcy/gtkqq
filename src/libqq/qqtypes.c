@@ -843,6 +843,10 @@ QQGroup* qq_group_new()
     NEW_STR(mask);
     NEW_STR(memo);
     NEW_STR(fingermemo);
+    NEW_STR(option);
+    NEW_STR(gclass);
+    NEW_STR(face);
+    NEW_STR(level);
 #undef NEW_STR
     return grp;
 }
@@ -864,6 +868,10 @@ void qq_group_free(QQGroup *grp)
     FREE_STR(mask);
     FREE_STR(memo);
     FREE_STR(fingermemo);
+    FREE_STR(option);
+    FREE_STR(face);
+    FREE_STR(gclass);
+    FREE_STR(level);
 #undef FREE_STR
 
     gint i;
@@ -886,7 +894,9 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
     const gchar *strvalue;
 #define SET_STR(x)  g_string_truncate(grp -> x, 0);\
                     strvalue = va_arg(ap, const gchar *);\
-                    g_string_append(grp -> x, strvalue)
+                    g_string_append(grp -> x, strvalue);\
+                    g_debug("Group set %s=%s (%s, %d)", #x, grp -> x -> str\
+                                        , __FILE__, __LINE__)
     if(g_strcmp0("name", name) == 0){
         SET_STR(name);
     }else if(g_strcmp0("gid", name) == 0){
@@ -910,13 +920,13 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...)
     }else if(g_strcmp0("fingermemo", name) == 0){
         SET_STR(fingermemo);
     }else if(g_strcmp0("option", name) == 0){
-        grp -> option = va_arg(ap, gint);
+        SET_STR(option);
     }else if(g_strcmp0("gclass", name) == 0){
-        grp -> gclass= va_arg(ap, gint);
+        SET_STR(gclass);
     }else if(g_strcmp0("level", name) == 0){
-        grp -> level = va_arg(ap, gint);
+        SET_STR(level);
     }else if(g_strcmp0("face", name) == 0){
-        grp -> face = va_arg(ap, gint);
+        SET_STR(face);
     }
 #undef SET_STR
     va_end(ap);

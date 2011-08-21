@@ -641,7 +641,7 @@ gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
     return 0;
 }
 
-gint gqq_config_save_buddy(GQQConfig *cfg, QQBuddy *bdy)
+gint gqq_config_get_buddy(GQQConfig *cfg, QQBuddy *bdy)
 {
     if(cfg == NULL || bdy == NULL){
         return -1;
@@ -656,7 +656,7 @@ gint gqq_config_save_buddy(GQQConfig *cfg, QQBuddy *bdy)
     return -1;
 }
 
-gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp)
+gint gqq_config_get_group(GQQConfig *cfg, QQGroup *grp)
 {
     if(cfg == NULL || grp == NULL){
         return -1;
@@ -672,7 +672,7 @@ gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp)
 
 }
 
-gint gqq_config_get_buddy(GQQConfig *cfg, QQBuddy *bdy)
+gint gqq_config_save_buddy(GQQConfig *cfg, QQBuddy *bdy)
 {
     if(cfg == NULL || bdy == NULL){
         return -1;
@@ -686,7 +686,7 @@ gint gqq_config_get_buddy(GQQConfig *cfg, QQBuddy *bdy)
     return -1;
 }
 
-gint gqq_config_get_group(GQQConfig *cfg, QQGroup *grp)
+gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp)
 {
     if(cfg == NULL || grp == NULL){
         return -1;

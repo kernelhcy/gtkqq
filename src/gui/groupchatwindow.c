@@ -119,6 +119,14 @@ static gboolean qq_member_list_on_show_tooltip(GtkWidget* widget
     return TRUE;
 }
 
+static gboolean qq_group_chatwindow_delete_event(GtkWidget *widget, GdkEvent *event
+                                        , gpointer data)
+{
+    QQGroupChatWindowPriv *priv = data;
+    gqq_config_remove_ht(cfg, "chat_window_map", priv -> code);
+    return FALSE;
+}
+
 
 //
 // Remove the spinner and show the memo text view
@@ -224,11 +232,32 @@ static void qq_group_chatwindow_show_member_spinner(QQGroupChatWindow *win)
 //
 static void qq_group_chatwindow_get_info(QQGroupChatWindow *win, QQGroup *grp)
 {
-    qq_get_group_info(info, grp, NULL);
+    gboolean update_info = TRUE;
+    if(grp -> gnumber -> len <= 0){
+        // get group number
+        gchar gnumber[100];
+        qq_get_qq_number(info, grp -> code -> str, gnumber, NULL);
+        qq_group_set(grp, "gnumber", gnumber);
+    }
+
+    if(gqq_config_get_group(cfg, grp) <= 0 ){
+        //
+        // No recoder found. Get from the server.
+        //
+        update_info = FALSE;
+        qq_get_group_info(info, grp, NULL);
+    }
 
     // update the UI
     gqq_mainloop_attach(&gtkloop, qq_group_chatwindow_update
                                     , 1, win);
+
+    // update the group info
+    if(update_info){
+        qq_get_group_info(info, grp, NULL);
+    }
+    // save group info into db
+    gqq_config_save_group(cfg, grp);
 }
 
 static void qq_group_chatwindow_start_update_info(QQGroupChatWindow *win)
@@ -238,6 +267,12 @@ static void qq_group_chatwindow_start_update_info(QQGroupChatWindow *win)
                                         , QQGroupChatWindowPriv);
     QQGroup *grp = qq_info_lookup_group_by_code(info, priv -> code);
     if(grp == NULL){
+        return;
+    }
+
+    if(grp -> members -> len > 0){
+        // We have all the group information. Just update the UI.
+        qq_group_chatwindow_update(win);
         return;
     }
 
@@ -369,6 +404,9 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
     gtk_widget_grab_focus(qq_chatwidget_get_input_textview(
                                             priv -> chatwidget));
 
+    g_signal_connect(G_OBJECT(win), "delete-event"
+                                , G_CALLBACK(qq_group_chatwindow_delete_event)
+                                , priv);
     // show spinner
     qq_group_chatwindow_show_memo_spinner(win);
     qq_group_chatwindow_show_member_spinner(win);

@@ -151,7 +151,7 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
         if(grp == NULL){
             continue;
         }
-        qq_get_qq_number(info, grp -> gid -> str, num, NULL);
+        qq_get_qq_number(info, grp -> code -> str, num, NULL);
         qq_group_set(grp, "gnumber", num);
     }
     gqq_mainloop_attach(&gtkloop
