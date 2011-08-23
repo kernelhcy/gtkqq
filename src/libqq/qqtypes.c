@@ -941,6 +941,26 @@ gint qq_group_add(QQGroup *grp, QQGMember *m)
     g_ptr_array_add(grp -> members, m);
     return 0;
 }
+
+QQGMember* qq_group_lookup_member_by_uin(QQGroup *grp, const gchar *uin)
+{
+    if(grp == NULL || uin == NULL){
+        return NULL;
+    }
+    gint i;
+    QQGMember *gmem;
+    for(i = 0; i < grp -> members -> len; ++i){
+        gmem = g_ptr_array_index(grp -> members, i);
+        if(gmem){
+            continue;
+        }
+        if(g_strcmp0(uin, gmem -> uin -> str) == 0){
+            return gmem;
+        }
+    }
+    return NULL;
+}
+
 //
 // QQCategory
 //

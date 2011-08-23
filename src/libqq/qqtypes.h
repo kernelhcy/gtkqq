@@ -352,6 +352,10 @@ void qq_group_set(QQGroup *grp, const gchar *name, ...);
 // Return the index or -1 for failed
 //
 gint qq_group_add(QQGroup *grp, QQGMember *m);
+//
+// Lookup the group member by the uin
+//
+QQGMember* qq_group_lookup_member_by_uin(QQGroup *grp, const gchar *uin);
 
 struct _QQCategory{
     GString *name;

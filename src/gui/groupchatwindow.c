@@ -175,12 +175,12 @@ static void qq_group_chatwindow_update(QQGroupChatWindow *win)
     // update header
     g_snprintf(buf, 500, "<b>%s</b>", grp -> name -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> name_label), buf); 
-    g_snprintf(buf, 500, "<span color='grey'>%s</span>"
+    g_snprintf(buf, 500, "<span color='#808080'>%s</span>"
                                     , grp -> fingermemo -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> fingermemo_label), buf);
 
     // update memo
-    g_snprintf(buf, 500, "<b>%s</b>", grp -> memo -> str);
+    g_snprintf(buf, 500, "%s", grp -> memo -> str);
     GtkTextBuffer *buffer = gtk_text_view_get_buffer(
                                     GTK_TEXT_VIEW(priv -> memo_textview));
     gtk_text_buffer_set_text(buffer, buf, -1);
@@ -306,7 +306,11 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
     priv -> fingermemo_label = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(header_hbox), priv -> faceimage
                                         , FALSE, FALSE, 5); 
-    gtk_box_pack_start(GTK_BOX(vbox), priv -> name_label, FALSE, FALSE, 0); 
+    GtkWidget *name_hbox = gtk_hbox_new(FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(name_hbox), priv -> name_label
+                                            , FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), name_hbox, FALSE, FALSE, 0); 
+
     gtk_box_pack_start(GTK_BOX(vbox), priv -> fingermemo_label
                                             , FALSE, FALSE, 0); 
     gtk_box_pack_start(GTK_BOX(header_hbox), vbox, FALSE, FALSE, 5); 
