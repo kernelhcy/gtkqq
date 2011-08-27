@@ -180,7 +180,7 @@ static QQRecvMsg* create_group_message(QQInfo *info, json_t *json)
     SET_VALUE("msg_id2");
     SET_VALUE("reply_ip");
     SET_VALUE("time");
-    SET_VALUE("raw_content");
+//    SET_VALUE("raw_content");
     SET_VALUE("group_code");
     SET_VALUE("send_uin");
 #undef SET_VALUE
@@ -193,7 +193,7 @@ static QQRecvMsg* create_group_message(QQInfo *info, json_t *json)
     gint mt = (gint)strtol(msg_type, NULL, 10);
     msg -> type = mt;
 
-    const gchar *info_seq = find_value(json, "info_seqe");
+    const gchar *info_seq = find_value(json, "info_seq");
     gint seq = (gint)strtol(info_seq, NULL, 10);
     msg -> info_seq = seq;
 

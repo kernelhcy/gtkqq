@@ -15,6 +15,7 @@ extern QQTray *tray;
 
 extern GQQMessageLoop *send_loop;
 extern GQQMessageLoop *get_info_loop;
+//extern GQQMessageLoop *get_number_faceimg_loop;
 
 static GQQMessageLoop gtkloop;
 static void qq_group_chatwindow_init(QQGroupChatWindow *win);
@@ -280,6 +281,139 @@ static void qq_group_chatwindow_start_update_info(QQGroupChatWindow *win)
     gqq_mainloop_attach(get_info_loop, qq_group_chatwindow_get_info
                                         , 2, win, grp);
 }
+//
+// Close button clicked handler
+//
+static void qq_group_chatwindow_on_close_clicked(GtkWidget *widget
+                                                    , gpointer  data)
+{
+    QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
+                                        , qq_group_chatwindow_get_type()
+                                        , QQGroupChatWindowPriv);
+    gqq_config_remove_ht(cfg, "chat_window_map", priv -> code);
+    gtk_widget_destroy(data);
+    return;
+}
+
+//
+// Send message
+// Run in the send_loop
+//
+static void qq_group_chatwindow_send_msg_cb(GtkWidget *widget
+                                                , QQSendMsg *msg)
+{
+    if(widget == NULL || msg == NULL){
+        return;
+    }
+    GError *err = NULL;
+    gint ret = qq_send_message(info, msg, &err);
+    if(ret != 0){
+        // send error
+        g_warning("Send message error!! %s (%s, %d)"
+                            , err == NULL ? "" : err -> message
+                            , __FILE__, __LINE__);
+        g_error_free(err);
+    }
+    qq_sendmsg_free(msg);
+}
+
+//
+// Send button clicked handler
+//
+static void qq_group_chatwindow_on_send_clicked(GtkWidget *widget
+                                                    , gpointer  data)
+{
+    QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(data
+                                        , qq_group_chatwindow_get_type()
+                                        , QQGroupChatWindowPriv);
+    QQGroup *grp = qq_info_lookup_group_by_code(info, priv -> code);
+    if(grp == NULL){
+        g_warning("No group! code : %s (%s,%d)", priv -> code
+                                                , __FILE__, __LINE__);
+        return;
+    }
+    GPtrArray *cs = g_ptr_array_new();
+    qq_chat_textview_get_msg_contents(qq_chatwidget_get_input_textview(
+                                            priv -> chatwidget), cs);
+    if(cs -> len <= 0){
+        // empty input text view
+        //
+        // Show warning message...
+        //
+        g_ptr_array_free(cs, TRUE);
+        return;
+    }
+    qq_chat_textview_clear(qq_chatwidget_get_input_textview(
+                                            priv -> chatwidget));
+
+    QQSendMsg *msg = qq_sendmsg_new(info, MSG_GROUP_T, grp -> gid -> str);
+    gint i;
+    for(i = 0; i < cs -> len; ++i){
+        qq_sendmsg_add_content(msg, g_ptr_array_index(cs, i));
+    }
+    g_ptr_array_free(cs, TRUE);
+
+    QQMsgContent *font = qq_chatwidget_get_font(priv -> chatwidget);
+    qq_sendmsg_add_content(msg, font);
+
+    qq_chatwidget_add_send_message(priv -> chatwidget, msg);
+    gqq_mainloop_attach(send_loop, qq_group_chatwindow_send_msg_cb
+                                , 2, data, msg);
+    return;
+}
+
+//
+// Foucus in event
+// Stop blinking the tray
+//
+static gboolean qq_group_chatwindow_focus_in_event(GtkWidget *widget
+                                                    , GdkEvent *event
+                                                    , gpointer data)
+{
+    QQGroupChatWindowPriv *priv = data;
+    qq_tray_stop_blinking_for(tray, priv -> code);
+    g_debug("Focus in chatwindow of %s (%s, %d)", priv -> code
+                                    , __FILE__, __LINE__);
+    return FALSE;
+}
+
+//
+// Input text view key press
+//
+static gboolean qq_input_textview_key_press(GtkWidget *widget
+                                                , GdkEvent *e
+                                                , gpointer data)
+{
+    GdkEventKey *event = (GdkEventKey*)e;
+    if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter
+                        || event -> keyval == GDK_ISO_Enter){
+        if((event -> state & GDK_CONTROL_MASK) != 0 
+                        || (event -> state & GDK_SHIFT_MASK) != 0){
+            return FALSE;
+        }
+        qq_group_chatwindow_on_send_clicked(NULL, data);
+        return TRUE;
+    }
+    return FALSE;
+}
+
+//
+// Chat window key press
+//
+static gboolean qq_group_chatwindow_key_press(GtkWidget *widget
+                                                , GdkEvent *e
+                                                , gpointer data)
+{
+    GdkEventKey *event = (GdkEventKey*)e;
+    if((event -> state & GDK_CONTROL_MASK) != 0 
+                    && (event -> keyval == GDK_w || event -> keyval == GDK_W)){
+        QQGroupChatWindowPriv *priv = data;
+        gqq_config_remove_ht(cfg, "chat_window_map", priv -> code);
+        gtk_widget_destroy(widget);
+    }
+    return FALSE;
+}
+
 
 static void qq_group_chatwindow_init(QQGroupChatWindow *win)
 {
@@ -391,11 +525,11 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
     gtk_button_box_set_layout(GTK_BUTTON_BOX(buttonbox), GTK_BUTTONBOX_END);
     gtk_box_set_spacing(GTK_BOX(buttonbox), 5);
     priv -> close_btn = gtk_button_new_with_label("Close");
-    //g_signal_connect(G_OBJECT(priv -> close_btn), "clicked",
-    //                         G_CALLBACK(qq_chatwindow_on_close_clicked), win);
+    g_signal_connect(G_OBJECT(priv -> close_btn), "clicked",
+                             G_CALLBACK(qq_group_chatwindow_on_close_clicked), win);
     priv -> send_btn = gtk_button_new_with_label("Send");
-    //g_signal_connect(G_OBJECT(priv -> send_btn), "clicked",
-    //                         G_CALLBACK(qq_chatwindow_on_send_clicked), win);
+    g_signal_connect(G_OBJECT(priv -> send_btn), "clicked",
+                             G_CALLBACK(qq_group_chatwindow_on_send_clicked), win);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> close_btn);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> send_btn);
     gtk_box_pack_start(GTK_BOX(body_vbox), buttonbox, FALSE, FALSE, 3); 
@@ -411,6 +545,15 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
     g_signal_connect(G_OBJECT(win), "delete-event"
                                 , G_CALLBACK(qq_group_chatwindow_delete_event)
                                 , priv);
+    g_signal_connect(G_OBJECT(win), "focus-in-event"
+                                , G_CALLBACK(qq_group_chatwindow_focus_in_event)
+                                , priv);
+    g_signal_connect(G_OBJECT(win), "key-press-event"
+                            , G_CALLBACK(qq_group_chatwindow_key_press), priv);
+    g_signal_connect(G_OBJECT(qq_chatwidget_get_input_textview(
+                                                priv -> chatwidget))
+                            , "key-press-event"
+                            , G_CALLBACK(qq_input_textview_key_press), win);
     // show spinner
     qq_group_chatwindow_show_memo_spinner(win);
     qq_group_chatwindow_show_member_spinner(win);
@@ -503,11 +646,39 @@ static void qq_group_chatwindowclass_init(QQGroupChatWindowClass *wc)
                                 , "QQ group code"
                                 , "qq code"
                                 , ""
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
+                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT 
+                                        | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(wc)
-                                    , QQ_GROUP_CHATWINDOW_PROPERTY_CODE, pspec);
+                                    , QQ_GROUP_CHATWINDOW_PROPERTY_CODE
+                                    , pspec);
 
     gtkloop.ctx = g_main_context_default();
     gtkloop.name = "MainPanel Gtk";
 }
 
+void qq_group_chatwindow_add_send_message(GtkWidget *widget, QQSendMsg *msg)
+{
+    if(widget == NULL || msg == NULL){
+        return;
+    }
+
+    QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(widget
+                                        , qq_group_chatwindow_get_type()
+                                        , QQGroupChatWindowPriv);
+
+    GtkWidget *mt = qq_chatwidget_get_message_textview(priv -> chatwidget);
+    qq_chat_textview_add_send_message(mt, msg);
+}
+
+void qq_group_chatwindow_add_recv_message(GtkWidget *widget, QQRecvMsg *msg)
+{
+    if(widget == NULL || msg == NULL){
+        return;
+    }
+
+    QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(widget
+                                        , qq_group_chatwindow_get_type()
+                                        , QQGroupChatWindowPriv);
+    GtkWidget *mt = qq_chatwidget_get_message_textview(priv -> chatwidget);
+    qq_chat_textview_add_recv_message(mt, msg);
+}

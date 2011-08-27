@@ -1,6 +1,7 @@
 #include <msgdispacher.h>
 #include <gqqconfig.h>
 #include <chatwindow.h>
+#include <groupchatwindow.h>
 #include <tray.h>
 #include <msgloop.h>
 
@@ -29,6 +30,18 @@ static void qq_poll_dispatch_buddy_msg(QQRecvMsg *msg)
 
 static void qq_poll_dispatch_group_msg(QQRecvMsg *msg)
 {
+    GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map"
+                                            , msg -> group_code -> str);
+    if(cw == NULL){
+        cw = qq_group_chatwindow_new(msg -> group_code -> str); 
+        // not show it
+        gtk_widget_hide(cw);
+        gqq_config_insert_ht(cfg, "chat_window_map"
+                                , msg -> group_code -> str, cw);
+    }
+    qq_group_chatwindow_add_recv_message(cw, msg);
+    qq_tray_blinking_for(tray, msg -> group_code -> str);
+    qq_recvmsg_free(msg);
 
 }
 

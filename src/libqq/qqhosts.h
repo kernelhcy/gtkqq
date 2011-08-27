@@ -48,7 +48,7 @@
 
 #define MSGHOST             PSIDHOST
 #define MSGFRIPATH          "/channel/send_buddy_msg2"
-#define MSGGRPPATH          "/channel/send_group_msg2"
+#define MSGGRPPATH          "/channel/send_qun_msg2"
 
 #define POLLHOST            PSIDHOST
 #define POLLPATH            "/channel/poll2"

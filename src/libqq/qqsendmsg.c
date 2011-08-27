@@ -15,7 +15,7 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     gchar params[3000];
     g_debug("Send msg to %s!(%s, %d)", uin -> str, __FILE__, __LINE__);
     const gchar *path;
-    path = msg -> type == 0 ? MSGFRIPATH : MSGGRPPATH;
+    path = msg -> type == MSG_BUDDY_T ? MSGFRIPATH : MSGGRPPATH;
 
     Request *req = request_new();
     Response *rps = NULL;
@@ -31,7 +31,7 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     request_add_header(req, "Referer"
             , "http://"MSGHOST"/proxy.html?v=20101025002&callback=2");
     GString *content;
-    if(msg -> type == 0){
+    if(msg -> type == MSG_BUDDY_T){
         content = qq_sendmsg_contents_tostring(msg);
         g_snprintf(params, 3000, "r={\"to\":%s,\"face\":%s,"
                 "%s,\"msg_id\":%s,"
@@ -47,8 +47,11 @@ static gint do_send_msg(QQInfo *info, QQSendMsg *msg, GError **err)
         g_snprintf(params, 3000, "r={\"group_uin\":\"%s\","
                 "%s,\"msg_id\":%s,"
                 "\"clientid\":\"%s\",\"psessionid\":\"%s\"}"
+                "&clientid=%s&psessionid=%s"
                 , uin -> str, content -> str
                 , msg -> msg_id -> str
+                , info -> clientid -> str
+                , info -> psessionid -> str
                 , info -> clientid -> str
                 , info -> psessionid -> str);
         g_string_free(content, TRUE);
