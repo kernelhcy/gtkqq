@@ -152,3 +152,21 @@ vfwebqq=22fdebbc54acc776b2912f7c81e7a75f51f433a0842e324f0fe7b1bb30d4d3da17142c2a
 Host: face2.qun.qq.com
 Referer: http://web2.qq.com/
 
+
+POST /channel/send_qun_msg2 HTTP/1.1
+Host: d.web2.qq.com
+User-Agent: Mozilla/5.0 (X11; Linux i686; rv:6.0) Gecko/20100101 Firefox/6.0
+Accept: text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8
+Accept-Language: en-us,en;q=0.5
+Accept-Encoding: gzip, deflate
+Accept-Charset: GB2312,utf-8;q=0.7,*;q=0.7
+Connection: keep-alive
+Content-Type: application/x-www-form-urlencoded; charset=UTF-8
+Referer: http://d.web2.qq.com/proxy.html?v=20110331002&callback=2
+Content-Length: 892
+Cookie: pgv_pvid=8027906167; pt2gguin=o0494498045; pvid=970962480; pgv_r_cookie=11726588601; o_cookie=494498045; ptui_loginuin=494498045; pgv_info=pgvReferrer=&ssid=s2037959920; ptisp=cnc; show_id=; verifysession=h000391d4d3c8523a908b214d37c8276d0d5fef94a2c104454fec280d6f260dd7e28db9d58ba3a4089a; uin=o0494498045; skey=@e3W9QfXQ4; ptwebqq=192bce4eaa2ec8c9edb01753b3355e1d654f207bcfce964fe8ce7c78198fbc91
+Pragma: no-cache
+Cache-Control: no-cache
+
+r=%7B%22group_uin%22%3A1132588836%2C%22content%22%3A%22%5B%5C%22test%5C%22%2C%5B%5C%22face%5C%22%2C13%5D%2C%5C%22%5C%22%2C%5B%5C%22font%5C%22%2C%7B%5C%22name%5C%22%3A%5C%22%E5%AE%8B%E4%BD%93%5C%22%2C%5C%22size%5C%22%3A%5C%2212%5C%22%2C%5C%22style%5C%22%3A%5B0%2C0%2C0%5D%2C%5C%22color%5C%22%3A%5C%22000000%5C%22%7D%5D%5D%22%2C%22msg_id%22%3A17520003%2C%22clientid%22%3A%2254752229%22%2C%22psessionid%22%3A%228368046764001d636f6e6e7365727665725f77656271714031302e3133342e362e313338000001090000008b036e0400fd70791d6d0000000a406533573951665851346d00000028484de89672d3daf8fe5273dc81a429019c8a5a4426f3c11127ee35a45dd0602828e06b259125fb4e%22%7D&clientid=54752229&psessionid=8368046764001d636f6e6e7365727665725f77656271714031302e3133342e362e313338000001090000008b036e0400fd70791d6d0000000a406533573951665851346d00000028484de89672d3daf8fe5273dc81a429019c8a5a4426f3c11127ee35a45dd0602828e06b259125fb4e
+
