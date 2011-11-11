@@ -52,7 +52,7 @@ enum{
 static void gqq_config_init(GQQConfig *self);
 static void gqq_config_class_init(GQQConfigClass *klass, gpointer data);
 static GObject *gqq_config_contructor(GType type, guint n_pars
-                                            , GObjectConstructParam *pars);
+                                      , GObjectConstructParam *pars);
 static void gqq_config_finalize(GObject *obj);
 
 GType gqq_config_get_type()
@@ -60,29 +60,29 @@ GType gqq_config_get_type()
     static volatile gsize g_define_type_id__volatile = 0;
     static GType type_id = 0;
     if (g_once_init_enter(&g_define_type_id__volatile)) {
-            if(type_id == 0){
-                    GTypeInfo type_info={
-                            sizeof(GQQConfigClass),     /* class size */
-                            NULL,                       /* base init*/
-                            NULL,                       /* base finalize*/
-                            /* class init */
-                            (GClassInitFunc)gqq_config_class_init,
-                            NULL,                       /* class finalize */
-                            NULL,                       /* class data */
+        if(type_id == 0){
+            GTypeInfo type_info={
+                sizeof(GQQConfigClass),     /* class size */
+                NULL,                       /* base init*/
+                NULL,                       /* base finalize*/
+                /* class init */
+                (GClassInitFunc)gqq_config_class_init,
+                NULL,                       /* class finalize */
+                NULL,                       /* class data */
                                 
-                            sizeof(GQQConfig),          /* instance size */
-                            0,                          /* prealloc bytes */
-                            /* instance init */
-                            (GInstanceInitFunc)gqq_config_init,
-                            NULL                        /* value table */
-                    };
-                    type_id = g_type_register_static(
-                                G_TYPE_OBJECT,
-                                "GQQConfig",
-                                &type_info,
-                                0);
-            }
-            g_once_init_leave(&g_define_type_id__volatile, type_id);
+                sizeof(GQQConfig),          /* instance size */
+                0,                          /* prealloc bytes */
+                /* instance init */
+                (GInstanceInitFunc)gqq_config_init,
+                NULL                        /* value table */
+            };
+            type_id = g_type_register_static(
+                G_TYPE_OBJECT,
+                "GQQConfig",
+                &type_info,
+                0);
+        }
+        g_once_init_leave(&g_define_type_id__volatile, type_id);
     }
     return type_id;
 }
@@ -102,20 +102,20 @@ GQQConfig* gqq_config_new(QQInfo *info)
  * The getter.
  */
 static void gqq_config_getter(GObject *object, guint property_id,  
-                                    GValue *value, GParamSpec *pspec)
+                              GValue *value, GParamSpec *pspec)
 {
-        if(object == NULL || value == NULL || property_id < 0){
-                return;
-        }
+    if(object == NULL || value == NULL || property_id < 0){
+        return;
+    }
         
-        g_debug("GQQConfig getter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
-        GQQConfig *obj = G_TYPE_CHECK_INSTANCE_CAST(
-                                        object, gqq_config_get_type(), GQQConfig);
-        GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    obj, gqq_config_get_type(), GQQConfigPriv);
+    g_debug("GQQConfig getter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
+    GQQConfig *obj = G_TYPE_CHECK_INSTANCE_CAST(
+        object, gqq_config_get_type(), GQQConfig);
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+        obj, gqq_config_get_type(), GQQConfigPriv);
         
-        switch (property_id)
-        {
+    switch (property_id)
+    {
         case GQQ_CONFIG_PROPERTY_INFO:
             g_value_set_pointer(value, priv -> info);
             break;
@@ -131,25 +131,25 @@ static void gqq_config_getter(GObject *object, guint property_id,
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
             break;
-        }
+    }
 }
 
 /*
  * The setter.
  */
 static void gqq_config_setter(GObject *object, guint property_id,  
-                                 const GValue *value, GParamSpec *pspec)
+                              const GValue *value, GParamSpec *pspec)
 {
-        if(object == NULL || value == NULL || property_id < 0){
-                return;
-        }
-        g_debug("GQQConfig setter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
-        GQQConfig *obj = GQQ_CONFIG(object);
-        GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    obj, gqq_config_get_type(), GQQConfigPriv);
+    if(object == NULL || value == NULL || property_id < 0){
+        return;
+    }
+    g_debug("GQQConfig setter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
+    GQQConfig *obj = GQQ_CONFIG(object);
+    GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+        obj, gqq_config_get_type(), GQQConfigPriv);
         
-        switch (property_id)
-        {
+    switch (property_id)
+    {
         case GQQ_CONFIG_PROPERTY_INFO:
             priv -> info = g_value_get_pointer(value);
             break;
@@ -168,7 +168,7 @@ static void gqq_config_setter(GObject *object, guint property_id,
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
             break;
-        }
+    }
 }
 
 #ifdef G_ENABLE_DEBUG
@@ -184,38 +184,38 @@ static void gqq_config_setter(GObject *object, guint property_id,
 //                      , gpointer user_data)
 //
 static void g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
-                                              GValue       *return_value G_GNUC_UNUSED,
-                                              guint         n_param_values,
-                                              const GValue *param_values,
-                                              gpointer      invocation_hint G_GNUC_UNUSED,
-                                              gpointer      marshal_data)
+                                                         GValue       *return_value G_GNUC_UNUSED,
+                                                         guint         n_param_values,
+                                                         const GValue *param_values,
+                                                         gpointer      invocation_hint G_GNUC_UNUSED,
+                                                         gpointer      marshal_data)
 {
-  typedef void (*GMarshalFunc_VOID__STRING_STRING)(gpointer     data1,
-                                                   gpointer     arg_1,
-                                                   gpointer     arg_2,
-                                                   gpointer     data2);
-  register GMarshalFunc_VOID__STRING_STRING callback;
-  register GCClosure *cc = (GCClosure*) closure;
-  register gpointer data1, data2;
+    typedef void (*GMarshalFunc_VOID__STRING_STRING)(gpointer     data1,
+                                                     gpointer     arg_1,
+                                                     gpointer     arg_2,
+                                                     gpointer     data2);
+    register GMarshalFunc_VOID__STRING_STRING callback;
+    register GCClosure *cc = (GCClosure*) closure;
+    register gpointer data1, data2;
 
-  g_return_if_fail (n_param_values == 3);
+    g_return_if_fail (n_param_values == 3);
 
-  if (G_CCLOSURE_SWAP_DATA (closure))
+    if (G_CCLOSURE_SWAP_DATA (closure))
     {
-      data1 = closure->data;
-      data2 = g_value_peek_pointer (param_values + 0);
+        data1 = closure->data;
+        data2 = g_value_peek_pointer (param_values + 0);
     }
-  else
+    else
     {
-      data1 = g_value_peek_pointer (param_values + 0);
-      data2 = closure->data;
+        data1 = g_value_peek_pointer (param_values + 0);
+        data2 = closure->data;
     }
-  callback = (GMarshalFunc_VOID__STRING_STRING)(marshal_data ? marshal_data : cc->callback);
+    callback = (GMarshalFunc_VOID__STRING_STRING)(marshal_data ? marshal_data : cc->callback);
 
-  callback (data1,
-            g_marshal_value_peek_string(param_values + 1),
-            g_marshal_value_peek_string(param_values + 2),
-            data2);
+    callback (data1,
+              g_marshal_value_peek_string(param_values + 1),
+              g_marshal_value_peek_string(param_values + 2),
+              data2);
 }
 
 //
@@ -223,17 +223,28 @@ static void g_cclosure_user_marshal_VOID__STRING_STRING (GClosure     *closure,
 // Just do nothing.
 //
 static void signal_default_handler(gpointer instance
-                                    , const gchar *key
-                                    , const GVariant *value
-                                    , gpointer usr_data)
+                                   , const gchar *key
+                                   , const GVariant *value
+                                   , gpointer usr_data)
 {
     //do nothing.
     return;
 }
 static void gqq_config_init(GQQConfig *self)
 {
+
+    if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS) 
+       && -1 == g_mkdir(CONFIGDIR, 0777)){
+        g_error("Create config dir %s error!(%s, %d)"
+                , CONFIGDIR, __FILE__, __LINE__);
+    }
+    if(!g_file_test(CONFIGDIR"/faces", G_FILE_TEST_EXISTS) 
+       && -1 == g_mkdir(CONFIGDIR"/faces", 0777)){
+        g_error("Create config dir %s error!(%s, %d)"
+                , CONFIGDIR"/faces", __FILE__, __LINE__);
+    }
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(self
-                                        , GQQ_TYPE_CONFIG, GQQConfigPriv);
+                                                      , GQQ_TYPE_CONFIG, GQQConfigPriv);
 
     //
     // Store the configuration items.
@@ -241,26 +252,17 @@ static void gqq_config_init(GQQConfig *self)
     // The value is GVariant type.
     //
     priv -> ht = g_hash_table_new_full(g_str_hash, g_str_equal
-                                , (GDestroyNotify)g_free
-                                , (GDestroyNotify)g_free);
+                                       , (GDestroyNotify)g_free
+                                       , (GDestroyNotify)g_free);
     priv -> passwd = g_string_new(NULL);
     priv -> qqnum = g_string_new(NULL);
     priv -> status = g_string_new(NULL);
     priv -> db_con = db_open();
     priv -> ht_ht = g_hash_table_new_full(g_str_hash, g_str_equal
-                                                    , g_free, NULL);
+                                          , g_free, NULL);
     priv -> ht_lock = g_mutex_new();
 
-    if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS) 
-                    && -1 == g_mkdir(CONFIGDIR, 0777)){
-        g_error("Create config dir %s error!(%s, %d)"
-                        , CONFIGDIR, __FILE__, __LINE__);
-    }
-    if(!g_file_test(CONFIGDIR"/faces", G_FILE_TEST_EXISTS) 
-                    && -1 == g_mkdir(CONFIGDIR"/faces", 0777)){
-        g_error("Create config dir %s error!(%s, %d)"
-                        , CONFIGDIR"/faces", __FILE__, __LINE__);
-    }
+
  
 }
 
@@ -279,21 +281,21 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
     //install the 'gtkqq-config-changed' signal
     klass -> signal_default_handler = signal_default_handler;
     klass -> changed_signal_id = 
-            g_signal_new("gtkqq-config-changed"
-                , G_TYPE_FROM_CLASS(klass) 
-                , G_SIGNAL_RUN_LAST     //run after the default handler
-                , G_STRUCT_OFFSET(GQQConfigClass, signal_default_handler)
-                , NULL, NULL            //no used
-                , g_cclosure_user_marshal_VOID__STRING_STRING
-                , G_TYPE_NONE
-                , 2, G_TYPE_STRING, G_TYPE_STRING
-                );
+        g_signal_new("gtkqq-config-changed"
+                     , G_TYPE_FROM_CLASS(klass) 
+                     , G_SIGNAL_RUN_LAST     //run after the default handler
+                     , G_STRUCT_OFFSET(GQQConfigClass, signal_default_handler)
+                     , NULL, NULL            //no used
+                     , g_cclosure_user_marshal_VOID__STRING_STRING
+                     , G_TYPE_NONE
+                     , 2, G_TYPE_STRING, G_TYPE_STRING
+            );
     //install the info property
     GParamSpec *pspec;
     pspec = g_param_spec_pointer("info"
-                                , "QQInfo"
-                                , "The pointer to the global instance of QQInfo"
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
+                                 , "QQInfo"
+                                 , "The pointer to the global instance of QQInfo"
+                                 , G_PARAM_READABLE | G_PARAM_CONSTRUCT | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_INFO, pspec);
 
@@ -331,7 +333,7 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
 // Only one instance of QQConfig will exist.
 //
 static GObject *gqq_config_contructor(GType type, guint n_pars
-                                            , GObjectConstructParam *pars)
+                                      , GObjectConstructParam *pars)
 {
     GObject *obj;
     if(!singleton){
@@ -350,21 +352,21 @@ static GObject *gqq_config_contructor(GType type, guint n_pars
 static void gqq_config_finalize(GObject *obj)
 {
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    obj, gqq_config_get_type(), GQQConfigPriv);
+        obj, gqq_config_get_type(), GQQConfigPriv);
     db_close(priv -> db_con);
 
     g_hash_table_unref(priv -> ht_ht);
     g_mutex_free(priv -> ht_lock);
     // chain up
     GObjectClass *klass = (GObjectClass*)g_type_class_peek_parent(
-                                g_type_class_peek(gqq_config_get_type()));
+        g_type_class_peek(gqq_config_get_type()));
     klass -> finalize(obj);
 }
 
 gint gqq_config_load(GQQConfig *cfg, const gchar *qqnum)
 {
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     QQInfo *info = priv -> info; 
 
     // get my info from the db
@@ -379,14 +381,14 @@ static void save_ht(gpointer key, gpointer value, gpointer usr_data)
     gchar *k = (gchar *)key;
     gchar *v = (gchar *)value;
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    usr_data, gqq_config_get_type(), GQQConfigPriv);
+        usr_data, gqq_config_get_type(), GQQConfigPriv);
     db_config_save(priv -> db_con, priv -> qqnum -> str, k, v);
 }
 
 gint gqq_config_save(GQQConfig *cfg)
 {
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     //Save configuration items
     g_hash_table_foreach(priv -> ht, save_ht, cfg);
     return 0;
@@ -395,12 +397,12 @@ gint gqq_config_save(GQQConfig *cfg)
 gint gqq_config_save_last_login_user(GQQConfig *cfg)
 {
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                    cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     //Save the last login user.
     if(priv -> qqnum -> len > 0){
         db_update_all(priv -> db_con, "qquser", "last", "0");
         db_qquser_save(priv -> db_con, priv -> qqnum -> str, priv -> passwd -> str
-                                    , priv -> status -> str, 1); 
+                       , priv -> status -> str, 1); 
     }
     return 0;
 }
@@ -412,7 +414,7 @@ gint gqq_config_get_str(GQQConfig *cfg, const gchar *key, const gchar **value)
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
         
     const gchar *v = (const gchar *)g_hash_table_lookup(priv -> ht, key);
     *value = v;
@@ -461,7 +463,7 @@ gint gqq_config_set_str(GQQConfig *cfg, const gchar *key, const gchar *value)
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
         
     g_hash_table_replace(priv -> ht, g_strdup(key), g_strdup(value));
     g_signal_emit_by_name(cfg, "gtkqq-config-changed", key, value);
@@ -496,7 +498,7 @@ GPtrArray* gqq_config_get_all_login_user(GQQConfig *cfg)
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
         
     GPtrArray *result = NULL;
     gint recode = db_get_all_users(priv -> db_con, &result);
@@ -514,13 +516,13 @@ GHashTable* gqq_config_create_str_hash_table(GQQConfig *cfg, const gchar *name)
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
 
     g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
     if(ht != NULL){
         g_warning("There already be one hash map named %s (%s, %d)", name
-                                            , __FILE__, __LINE__);
+                  , __FILE__, __LINE__);
         g_mutex_unlock(priv -> ht_lock);
         return ht;
     }
@@ -538,7 +540,7 @@ gint gqq_config_delete_ht_ht(GQQConfig *cfg, const gchar *name)
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
 
     g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
@@ -554,14 +556,14 @@ gint gqq_config_delete_ht_ht(GQQConfig *cfg, const gchar *name)
     return 0;
 }
 gpointer gqq_config_lookup_ht(GQQConfig *cfg, const gchar *name
-                                            , const gchar *key)
+                              , const gchar *key)
 {
     if(cfg == NULL || name == NULL){
         return NULL;
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
 
     g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
@@ -575,14 +577,14 @@ gpointer gqq_config_lookup_ht(GQQConfig *cfg, const gchar *name
     return re;
 }
 gpointer gqq_config_remove_ht(GQQConfig *cfg, const gchar *name
-                                            , const gchar *key)
+                              , const gchar *key)
 {
     if(cfg == NULL || name == NULL){
         return NULL;
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
 
     g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
@@ -604,7 +606,7 @@ gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name)
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
 
     g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
@@ -619,15 +621,15 @@ gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name)
 }
 
 gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
-                                            , gchar *key
-                                            , gpointer value)
+                          , gchar *key
+                          , gpointer value)
 {
     if(cfg == NULL || name == NULL){
         return -1;
     }
 
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
 
     g_mutex_lock(priv -> ht_lock);
     GHashTable *ht = g_hash_table_lookup(priv -> ht_ht, name);
@@ -647,10 +649,10 @@ gint gqq_config_get_buddy(GQQConfig *cfg, QQBuddy *bdy)
         return -1;
     }
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     gint cnt = 0;
     if(db_get_buddy(priv -> db_con, priv -> qqnum -> str, bdy, &cnt) 
-                                            != SQLITE_ERROR){
+       != SQLITE_ERROR){
         return cnt;
     }
     return -1;
@@ -662,10 +664,10 @@ gint gqq_config_get_group(GQQConfig *cfg, QQGroup *grp)
         return -1;
     }
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     gint cnt = 0;
     if(db_get_group(priv -> db_con, priv -> qqnum -> str, grp, &cnt) 
-                                            != SQLITE_ERROR){
+       != SQLITE_ERROR){
         return cnt;
     }
     return -1;
@@ -678,7 +680,7 @@ gint gqq_config_save_buddy(GQQConfig *cfg, QQBuddy *bdy)
         return -1;
     }
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     if(db_buddy_save(priv -> db_con, priv -> qqnum -> str, bdy) == SQLITE_OK){
         return 0;
     }
@@ -692,7 +694,7 @@ gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp)
         return -1;
     }
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
-                                cfg, gqq_config_get_type(), GQQConfigPriv);
+        cfg, gqq_config_get_type(), GQQConfigPriv);
     if(db_group_save(priv -> db_con, priv -> qqnum -> str, grp) == SQLITE_OK){
         return 0;
     }
