@@ -3,6 +3,7 @@
 #include <string.h>
 #include <log.h>
 #include <stdio.h>
+#include <assert.h>
 
 extern gint save_img_to_file(const gchar *data, gint len, const gchar *ext, 
                 const gchar *path, const gchar *fname);
@@ -23,7 +24,8 @@ int main(int argc, char **argv)
                         , "/home/hcy/tmp/gtkqq/"
                         , "vc");    
         printf("Input verify code : ");
-        scanf("%s", vc);
+        int ret = scanf("%s", vc);
+	assert(ret > 0 );
         info -> verify_code = g_string_new(vc);
     }
 
@@ -48,7 +50,8 @@ int main(int argc, char **argv)
     gchar buf[500];
     while(1){
         printf("MSG:");
-        scanf("%s", buf);
+        int ret = scanf("%s", buf);
+	assert( ret > 0 );
         if(g_strcmp0("quit", buf) == 0){
             break;
         }
