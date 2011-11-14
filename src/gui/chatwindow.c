@@ -96,7 +96,8 @@ static void qq_chatwindow_send_msg_cb(GtkWidget *widget, QQSendMsg *msg)
         g_warning("Send message error!! %s (%s, %d)"
                             , err == NULL ? "" : err -> message
                             , __FILE__, __LINE__);
-        g_error_free(err);
+        if (err)
+            g_error_free(err);
     }
     qq_sendmsg_free(msg);
 }

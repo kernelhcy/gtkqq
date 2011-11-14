@@ -389,6 +389,9 @@ QQSendMsg* qq_sendmsg_new(QQInfo *info, QQMsgType type, const gchar *to_uin)
     }
     gchar buf[20];
     g_snprintf(buf, 20, "%ld", ++(info -> msg_id));
+
+    msg->type = type;
+    
 #define NEW_STR(x, y) msg -> x = g_string_new(y)
     NEW_STR(to_uin, to_uin);
     NEW_STR(face, info -> me -> face -> str);

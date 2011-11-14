@@ -1,12 +1,13 @@
+*.in
+*.lo
+*.log
+*.o
 *.out
 *.swp
 *~
 .deps/
 .libs/
-*.o
-*.lo
-*.log
+/eproject.cfg
 Makefile
-*.in
 aclocal.m4
 autom4te.cache
