@@ -27,7 +27,7 @@ static gint do_send_buddy_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     request_add_header(req, "Content-Type", 
             "application/x-www-form-urlencoded");
     request_add_header(req, "Referer"
-            , "http://"MSGHOST"/proxy.html?v=20101025002&callback=2");
+            , "http://"MSGHOST"/proxy.html?v=20110331002&callback=2");
     GString *content;
     content = qq_sendmsg_contents_tostring(msg);
     g_snprintf(params, 3000, "r={\"to\":%s,\"face\":%s,"
