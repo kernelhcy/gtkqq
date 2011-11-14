@@ -25,7 +25,7 @@ int main(int argc, char **argv)
                         , "vc");    
         printf("Input verify code : ");
         int ret = scanf("%s", vc);
-	assert(ret > 0 );
+        assert( ret > 0 );
         info -> verify_code = g_string_new(vc);
     }
 
