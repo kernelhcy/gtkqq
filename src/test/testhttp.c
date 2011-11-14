@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 "Connection: Close\r\n"
 "Content-Type: application/x-javascript; charset=utf-8\r\n";
 	Response* rps = response_new_parse(g_string_new(s));
-	g_printf(response_tostring(rps) -> str);
+	g_printf("%s\n",response_tostring(rps) -> str);
 	g_printf("\n\n");
 	print_raw(rps -> reason);
 	print_raw(rps -> msg);
