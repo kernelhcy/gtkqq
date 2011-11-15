@@ -159,7 +159,7 @@ static QQRecvMsg* create_buddy_message(QQInfo *info, json_t *json)
     SET_VALUE("msg_id2");
     SET_VALUE("reply_ip");
     SET_VALUE("time");
-    SET_VALUE("raw_content");
+//    SET_VALUE("raw_content");
 #undef SET_VALUE
     const gchar *msg_type = find_value(json, "msg_type");
     gint mt = (gint)strtol(msg_type, NULL, 10);
