@@ -1,4 +1,4 @@
 #!/bin/bash
 make distclean
-rm aclocal.m4 autom4te.cache/ config.h.in -rf
+rm aclocal.m4 autom4te.cache/ config.h.in m4 -rf
 rm configure
