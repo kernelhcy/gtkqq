@@ -7,6 +7,7 @@
  */
 extern QQInfo *info;
 extern GQQConfig *cfg;
+extern GtkWidget *main_win;
 
 //
 // Private members
@@ -90,15 +91,15 @@ static void qq_tray_popup_menu(GtkStatusIcon *tray, guint button
                             , NULL, button, active_time);
 }
 
-
 static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
                                     , gpointer data)
 {
     GdkEventButton *buttonevent = (GdkEventButton*)event;
-    if(buttonevent -> button != 1 || buttonevent -> type != GDK_BUTTON_PRESS){
-        // not the left button press.
-        return FALSE;
-    }
+
+	/* Left double-clicked, show the main window. */
+	if(buttonevent -> button == 1 && buttonevent -> type == GDK_2BUTTON_PRESS){
+		gtk_widget_show_all(main_win);
+	}
     
     QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
                                                     , QQTrayPriv);

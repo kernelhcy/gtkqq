@@ -11,6 +11,7 @@
  */
 extern QQInfo *info;
 extern GQQConfig *cfg;
+extern GtkWidget *main_win;
 
 static void qq_mainwindow_init(QQMainWindow *win);
 static void qq_mainwindowclass_init(QQMainWindowClass *wc);
@@ -18,13 +19,14 @@ static void qq_mainwindowclass_init(QQMainWindowClass *wc);
 /*
  * The handler of "destroy" singal
  */
+#if 0
 static void destroy_handler(GtkWidget *widget, gpointer  data)
 {
     gtk_main_quit();
     g_debug("Destroy window.(%s, %d)", __FILE__, __LINE__);
     return;
 }
-
+#endif 
 GType qq_mainwindow_get_type()
 {
     static GType t = 0;
@@ -63,9 +65,8 @@ static void qq_mainwindow_init(QQMainWindow *win)
     gtk_window_resize(GTK_WINDOW(w), 250, 550);
 
 //    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
-    g_signal_connect(G_OBJECT(w), "destroy",
-                             G_CALLBACK(destroy_handler), NULL);
-    
+    g_signal_connect(w, "delete-event",
+					 G_CALLBACK(gtk_widget_hide_on_delete), NULL);
     win -> login_panel = qq_loginpanel_new(w);
     win -> splash_panel = qq_splashpanel_new();
     win -> main_panel = qq_mainpanel_new(w);
