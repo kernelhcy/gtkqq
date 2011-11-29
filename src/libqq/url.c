@@ -386,8 +386,9 @@ gint rcv_response(Connection *con, Response **rp)
                         break;
                     }
                 }else{
+					/* Format data->len so that it can be compiled on x86-64 machine */
                     g_debug("More chunks... Begin %d len %d %s(%s, %d)"
-                                        , chunkbegin, data -> len
+										, chunkbegin, (int)data -> len
                                         , data -> str + chunkbegin
                                         , __FILE__, __LINE__);
                     break;

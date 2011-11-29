@@ -16,7 +16,7 @@ static const gchar table_sql[] =
         "   owner, key, value);"
         "create table if not exists qquser("
         "   qqnumber primary key ,"
-        "   passwd, status, last);"
+        "   passwd, status, last, rempw);"
         "create table if not exists buddies("
         "   qqnumber primary key,"
         "   owner,vip_info, nick, markname, "
@@ -110,7 +110,7 @@ gint db_get_all_users(sqlite3 *db, GPtrArray **result)
     if(db == NULL || result == NULL){
         return SQLITE_ERROR;
     }
-    static const gchar *sql = "select qqnumber,last,passwd,status from qquser;";
+    static const gchar *sql = "select qqnumber,last,passwd,status,rempw from qquser;";
     sqlite3_stmt *stmt = NULL;
     if(sqlite3_prepare_v2(db, sql, 500, &stmt, NULL) != SQLITE_OK){
         g_warning("prepare sql error. SQL(%s) (%s, %d)", sql
@@ -132,6 +132,7 @@ gint db_get_all_users(sqlite3 *db, GPtrArray **result)
             g_strlcpy(usr -> qqnumber
                         , (const gchar *)sqlite3_column_text(stmt, 0), 100);
             usr -> last = sqlite3_column_int(stmt, 1);
+			usr -> rempw = sqlite3_column_int(stmt, 4);
             decode_passwed = (gchar *)g_base64_decode(
                                 (const gchar *)sqlite3_column_text(stmt, 2)
                                 , &out_len);
@@ -204,7 +205,7 @@ gint db_clear_table(sqlite3 *db, const gchar *table
 }
 
 gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
-                                , const gchar *status, gint last)
+					, const gchar *status, gint last, gint rempw)
 {
     if(db == NULL || qqnum == NULL){
         return SQLITE_ERROR;
@@ -213,8 +214,8 @@ gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
                                                 , (gsize)strlen(passwd));
     gchar sql[500];
     g_snprintf(sql, 500, "insert or replace into qquser (qqnumber, last, "
-                        "passwd, status)values('%s', %d, '%s', '%s');"
-                        , qqnum, last, encoded_passwd, status);
+			   "passwd, status, rempw)values('%s', %d, '%s', '%s', '%d');"
+			   , qqnum, last, encoded_passwd, status, rempw);
     gchar *err = NULL;
     sqlite3_exec(db, sql, NULL, NULL, &err);
     if(err != NULL){
