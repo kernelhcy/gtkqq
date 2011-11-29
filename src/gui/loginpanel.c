@@ -305,10 +305,12 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     QQLoginPanel *panel = QQ_LOGINPANEL(data);
     GtkWidget *win = panel -> container;
     qq_mainwindow_show_splashpanel(win);
+		
 
     panel -> uin = qq_loginpanel_get_uin(panel);
     panel -> passwd = qq_loginpanel_get_passwd(panel);
     panel -> status = qq_loginpanel_get_status(panel);
+	panel -> rempw = qq_loginpanel_get_rempw(panel);
 
     g_debug("Start login... qqnum: %s, status: %s (%s, %d)", panel -> uin
                                         , panel -> status, __FILE__, __LINE__);
@@ -321,6 +323,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     g_object_set(cfg, "qqnum", panel -> uin, NULL);
     g_object_set(cfg, "passwd", panel -> passwd, NULL);
     g_object_set(cfg, "status", panel -> status, NULL);
+	g_object_set(cfg, "rempw", panel -> rempw, NULL);
 
     qq_buddy_set(info -> me, "qqnumber", panel -> uin);
     qq_buddy_set(info -> me, "uin", panel -> uin);
@@ -366,7 +369,8 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     obj -> passwd_entry = gtk_entry_new();
     if(login_users -> len > 0){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
-        gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
+		if (usr->rempw)
+			gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
     }
     g_signal_connect(G_OBJECT(obj -> uin_entry), "changed"
                         , G_CALLBACK(qqnumber_combox_changed), obj);
@@ -398,6 +402,12 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 
     //rember password check box
     obj -> rempwcb = gtk_check_button_new_with_label("Remeber Password");
+	if(login_users -> len > 0){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
+		gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(obj -> rempwcb), usr->rempw);
+    }
+    /* g_signal_connect(G_OBJECT(obj -> rempwcb), "toggled" */
+    /*                     , G_CALLBACK(qqnumber_combox_changed), obj); */
     GtkWidget *hbox4 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox4), obj -> rempwcb, TRUE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox4, FALSE, TRUE, 2);
@@ -486,6 +496,11 @@ const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 {
     return qq_statusbutton_get_status_string(loginpanel -> status_comb);
+}
+
+gint qq_loginpanel_get_rempw(QQLoginPanel *loginpanel)
+{
+	return  gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(loginpanel->rempwcb));
 }
 
 typedef struct{

@@ -37,6 +37,7 @@ gint qq_get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
     }
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[300];
     g_debug("Get qq number.(%s, %d)", __FILE__, __LINE__);
 
@@ -66,10 +67,15 @@ gint qq_get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
 
     send_request(con, req);
     response_del(rps);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*

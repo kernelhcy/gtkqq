@@ -40,6 +40,7 @@ struct _QQLoginPanel{
     GtkWidget *login_btn, *status_comb;
 
     const gchar *uin, *passwd, *status;
+	gint rempw;
 
     GtkWidget *container;
 
@@ -66,4 +67,5 @@ GtkType qq_loginpanel_get_type();
 const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel);
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel  *loginpanel);
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel);
+gint qq_loginpanel_get_rempw(QQLoginPanel *loginpanel);
 #endif

@@ -16,6 +16,7 @@
 QQInfo *info = NULL;
 GQQConfig *cfg = NULL;
 QQTray *tray = NULL;
+GtkWidget *main_win = NULL;
 
 //
 // The main loop used to get information from the server.
@@ -57,9 +58,9 @@ int main(int argc, char **argv)
         return -1;
     }
 
-    GtkWidget *win = qq_mainwindow_new();
+	main_win = qq_mainwindow_new();
     tray = qq_tray_new();
-    gtk_widget_show_all(win);
+    gtk_widget_show_all(main_win);
 
     gtk_main();
 
