@@ -5,5 +5,4 @@ aclocal 					\
 && libtoolize 	--copy --force --automake 	\
 && autoreconf --install				\
 && [ -d usr ] || mkdir usr			\
-&& ./configure --prefix=`pwd`/usr/
-
+&& ./configure --enable-debug --prefix=`pwd`/usr/
