@@ -15,6 +15,7 @@ typedef struct __GQQLoginUser{
     gchar passwd[100];
     gchar status[100];
     gint last;
+	gint rempw;
 }GQQLoginUser;
 
 #define GQQ_TYPE_CONFIG             (gqq_config_get_type())

@@ -29,6 +29,7 @@ typedef struct{
     GString *passwd;    //stored password
     GString *qqnum;     //current user's qq number
     GString *status;    //current user's status
+	gint rempw;		//whether remember password
 
     sqlite3 *db_con;    //database connection
     
@@ -47,6 +48,7 @@ enum{
     GQQ_CONFIG_PROPERTY_PASSWD,
     GQQ_CONFIG_PROPERTY_UIN,
     GQQ_CONFIG_PROPERTY_STATUS,
+	GQQ_CONFIG_PROPERTY_REMPW,
 };
 
 static void gqq_config_init(GQQConfig *self);
@@ -113,7 +115,7 @@ static void gqq_config_getter(GObject *object, guint property_id,
         object, gqq_config_get_type(), GQQConfig);
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
         obj, gqq_config_get_type(), GQQConfigPriv);
-        
+
     switch (property_id)
     {
         case GQQ_CONFIG_PROPERTY_INFO:
@@ -127,6 +129,9 @@ static void gqq_config_getter(GObject *object, guint property_id,
             break;
         case GQQ_CONFIG_PROPERTY_UIN:
             g_value_set_static_string(value, priv -> qqnum -> str);
+            break;
+		case GQQ_CONFIG_PROPERTY_REMPW:
+			priv -> rempw = g_value_get_int(value);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -143,11 +148,10 @@ static void gqq_config_setter(GObject *object, guint property_id,
     if(object == NULL || value == NULL || property_id < 0){
         return;
     }
-    g_debug("GQQConfig setter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__); 
+    g_debug("GQQConfig setter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__);
     GQQConfig *obj = GQQ_CONFIG(object);
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
         obj, gqq_config_get_type(), GQQConfigPriv);
-        
     switch (property_id)
     {
         case GQQ_CONFIG_PROPERTY_INFO:
@@ -165,11 +169,14 @@ static void gqq_config_setter(GObject *object, guint property_id,
             g_string_truncate(priv -> qqnum , 0);
             g_string_append(priv -> qqnum , g_value_get_string(value));
             break;
+		case GQQ_CONFIG_PROPERTY_REMPW:
+			priv -> rempw = g_value_get_int(value);
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
             break;
     }
-}
+} 
 
 #ifdef G_ENABLE_DEBUG
 #define g_marshal_value_peek_string(v)   (char*) g_value_get_string (v)
@@ -257,6 +264,7 @@ static void gqq_config_init(GQQConfig *self)
     priv -> passwd = g_string_new(NULL);
     priv -> qqnum = g_string_new(NULL);
     priv -> status = g_string_new(NULL);
+	priv -> rempw = 0;
     priv -> db_con = db_open();
     priv -> ht_ht = g_hash_table_new_full(g_str_hash, g_str_equal
                                           , g_free, NULL);
@@ -325,6 +333,17 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
                                 , G_PARAM_READABLE | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_STATUS, pspec);
+
+	//install the rempw property
+    pspec = g_param_spec_int("rempw"
+                                , "rempw"
+                                , "Whather remember the password."
+                                , 0
+							 	, 1
+							 	, 0
+                                , G_PARAM_READABLE | G_PARAM_WRITABLE);
+    g_object_class_install_property(G_OBJECT_CLASS(klass)
+                                    , GQQ_CONFIG_PROPERTY_REMPW, pspec);
 
 }
 
@@ -398,11 +417,10 @@ gint gqq_config_save_last_login_user(GQQConfig *cfg)
 {
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
         cfg, gqq_config_get_type(), GQQConfigPriv);
-    //Save the last login user.
     if(priv -> qqnum -> len > 0){
         db_update_all(priv -> db_con, "qquser", "last", "0");
         db_qquser_save(priv -> db_con, priv -> qqnum -> str, priv -> passwd -> str
-                       , priv -> status -> str, 1); 
+                       , priv -> status -> str, 1, priv->rempw); 
     }
     return 0;
 }
