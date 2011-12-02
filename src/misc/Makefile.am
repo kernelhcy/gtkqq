@@ -1,4 +1,4 @@
-SUBDIRS=qqfaces status
+SUBDIRS=qqfaces status sound
 
 imgdir= ${pkgdatadir}/misc
 img_DATA=\
