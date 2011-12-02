@@ -169,6 +169,55 @@ PKG_CHECK_MODULES(GOBJECT2, [
         gobject-2.0 >= 2.1
 ])
 
+dnl #######################################################################
+dnl # Check for GStreamer
+dnl #######################################################################
+dnl
+dnl TODO: Depend on gstreamer >= 0.10.10, and remove the conditional use of
+dnl       gst_registry_fork_set_enabled.
+AC_ARG_ENABLE(gstreamer,
+	[AC_HELP_STRING([--disable-gstreamer], [compile without GStreamer audio support])],
+	enable_gst="$enableval", enable_gst="yes")
+if test "x$enable_gst" != "xno"; then
+	PKG_CHECK_MODULES(GSTREAMER, [gstreamer-0.10], [
+		AC_DEFINE(USE_GSTREAMER, 1, [Use GStreamer for playing sounds])
+		AC_SUBST(GSTREAMER_CFLAGS)
+		AC_SUBST(GSTREAMER_LIBS)
+		AC_CHECK_LIB(gstreamer-0.10, gst_registry_fork_set_enabled,
+			[ AC_DEFINE(GST_CAN_DISABLE_FORKING, [],
+			  [Define if gst_registry_fork_set_enabled exists])],
+			[], [$GSTREAMER_LIBS])
+	], [
+		AC_MSG_RESULT(no)
+		enable_gst="no"
+		if test "x$force_deps" = "xyes" ; then
+			AC_MSG_ERROR([
+GStreamer development headers not found.
+Use --disable-gstreamer if you do not need GStreamer (sound) support.
+])
+		fi])
+fi
+
+dnl #######################################################################
+dnl # Check for GStreamer Interfaces
+dnl #######################################################################
+if test "x$enable_gst" != "xno"; then
+	AC_ARG_ENABLE(gstreamer-interfaces,
+		[AC_HELP_STRING([--disable-gstreamer-interfaces], [compile without GStreamer interface support])],
+			enable_gstinterfaces="$enableval", enable_gstinterfaces="yes")
+	if test "x$enable_gstinterfaces" != "xno"; then
+		PKG_CHECK_MODULES(GSTINTERFACES, [gstreamer-interfaces-0.10], [
+			AC_DEFINE(USE_GSTINTERFACES, 1, [Use GStreamer interfaces for X overlay support])
+			AC_SUBST(GSTINTERFACES_CFLAGS)
+			AC_SUBST(GSTINTERFACES_LIBS)
+		], [
+			enable_gstinterfaces="no"
+		])
+	fi
+else
+	enable_gstinterfaces="no"
+fi
+
 # Checks for library functions.
 AC_FUNC_FORK
 AC_FUNC_MALLOC
@@ -187,9 +236,11 @@ AC_CONFIG_FILES([Makefile
          src/misc/Makefile
          src/misc/status/Makefile
          src/misc/qqfaces/Makefile
+         src/misc/sound/Makefile
          src/test/Makefile])
 AC_OUTPUT
 
 #echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
+echo Build with GStreamer support.. : $enable_gst

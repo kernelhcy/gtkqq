@@ -9,6 +9,11 @@
 #include <msgloop.h>
 #include <groupchatwindow.h>
 #include <tray.h>
+#include <config.h>
+
+#ifdef USE_GSTREAMER
+#include <gst/gst.h>
+#endif //USE_GSTREAMER
 
 /*
  * Global
@@ -36,6 +41,9 @@ GQQMessageLoop *send_loop = NULL;
 
 int main(int argc, char **argv)
 {
+#ifdef USE_GSTREAMER
+	gst_init(&argc , &argv);
+#endif
     gtk_init(&argc, &argv);
 
     log_init();
@@ -58,6 +66,7 @@ int main(int argc, char **argv)
         return -1;
     }
 
+    /* GtkWidget *win = qq_mainwindow_new(); */
 	main_win = qq_mainwindow_new();
     tray = qq_tray_new();
     gtk_widget_show_all(main_win);
