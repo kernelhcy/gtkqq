@@ -9,7 +9,7 @@
 #include <msgloop.h>
 #include <groupchatwindow.h>
 #include <tray.h>
-
+#include <url.h>
 /*
  * Global
  */
@@ -38,6 +38,7 @@ int main(int argc, char **argv)
 {
     gtk_init(&argc, &argv);
 
+    // connect_set_proxy("10.64.40.16",808);
     log_init();
     info = qq_init(NULL);
     if(info == NULL){

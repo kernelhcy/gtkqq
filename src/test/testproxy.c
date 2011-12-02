@@ -45,12 +45,6 @@
 #define ECONNRESET WSAECONNRESET
 #endif /* _WI32 */
 
-
-
-//#ifndef LINT
-//static char *vcid = "$Id: connect.c 100 2007-07-03 10:48:26Z gotoh $";
-//#endif
-
 /* Microsoft Visual C/C++ has _snprintf() and _vsnprintf() */
 #ifdef _MSC_VER
 #define snprintf _snprintf
@@ -96,7 +90,7 @@ const char *digits    = "0123456789";
 const char *dotdigits = "0123456789.";
 
 /* options */
-int f_debug = 0;
+int f_debug = 1;
 
 /* report flag to hide secure information */
 int f_report = 1;
@@ -2765,14 +2759,3 @@ do_repeater:
 
     return 0;
 }
-
-/* ------------------------------------------------------------
-   Local Variables:
-   compile-command: "cc connect.c -o connect"
-   tab-width: 8
-   fill-column: 74
-   comment-column: 48
-   End:
-   ------------------------------------------------------------ */
-
-/*** end of connect.c ***/

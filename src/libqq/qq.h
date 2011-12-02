@@ -68,12 +68,12 @@ gint qq_get_groups(QQInfo *info, GError **err);
 gint qq_update_details(QQInfo *info, GError **err);
 
 //
-// Get buddy information 
+// Get buddy information
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err);
 //
-// Get the group information 
+// Get the group information
 // If success, return 0. or error code and set *err.
 //
 gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err);

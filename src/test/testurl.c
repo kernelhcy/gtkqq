@@ -1,10 +1,14 @@
 #include <url.h>
 #include <log.h>
 #include <stdio.h>
+#include <stdlib.h>
 int main(int argc, char ** argv)
 {
 	log_init();
-	Connection *con = connect_to_host("web2.qq.com", 80);
+
+    connect_set_proxy("10.64.40.16",808);
+    
+	Connection *con =  connect_to_host("web2.qq.com", 80);
 	if(con == NULL){
 		return 0;
 	}

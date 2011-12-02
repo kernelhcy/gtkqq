@@ -11,6 +11,37 @@
 
 #include <zlib.h>
 
+static const char * GL_PROXY_HOST =NULL;
+
+static int GL_PROXY_PORT = -1;
+/*
+char* itoa(int value,  int radix) {
+    char *str;
+    static char dig[] =
+        "0123456789"
+        "abcdefghijklmnopqrstuvwxyz";
+    int n = 0, neg = 0;
+    unsigned int v;
+    char* p, *q;
+    char c;
+
+    if (radix == 10 && value < 0) {
+        value = -value;
+        neg = 1;
+    }
+    v = value;
+    do {
+        str[n++] = dig[v%radix];
+        v /= radix;
+    } while (v);
+    if (neg)
+        str[n++] = '-';
+    str[n] = '\0';
+    for (p = str, q = p + n/2; p != q; ++p, --q)
+        c = *p, *p = *q, *q = c;
+    return str;
+}
+*/
 Connection* connection_new()
 {
     Connection *con = g_slice_new(Connection);
@@ -27,11 +58,20 @@ void connection_free(Connection *con)
     g_slice_free(Connection, con);
 }
 
-Connection* connect_to_host(const char *hostname, int port)
+void connect_set_proxy( const char * hostname, int port)
+{
+    g_debug("Try to set proxy...(%s,%d)",__FILE__, __LINE__);
+    GL_PROXY_HOST = strdup(hostname);
+    GL_PROXY_PORT= port;
+}
+
+
+Connection* connect_to_host_direct(const char *hostname, int port)
 {
     if(NULL == hostname){
         return NULL;
     }
+    
     int sockfd = -1, err;
     struct addrinfo *ailist = NULL, *aip = NULL;
     struct addrinfo hint;
@@ -41,7 +81,7 @@ Connection* connect_to_host(const char *hostname, int port)
     
     if((err = getaddrinfo(hostname, NULL, &hint, &ailist)) != 0){
         g_warning("Can't get the address information of %s (%s, %d)"
-                ,hostname , __FILE__, __LINE__);
+                  ,hostname , __FILE__, __LINE__);
         return NULL;
     }
     
@@ -51,7 +91,7 @@ Connection* connect_to_host(const char *hostname, int port)
         
         if((sockfd =socket(aip -> ai_family, SOCK_STREAM, 0)) < 0){
             g_warning("Can't create a socket.(%s, %d)"
-                    , __FILE__, __LINE__);
+                      , __FILE__, __LINE__);
             return NULL;
         }
         
@@ -64,8 +104,8 @@ Connection* connect_to_host(const char *hostname, int port)
         if(connect(sockfd,aip -> ai_addr, aip -> ai_addrlen) < 0){
             close(sockfd);
             sockfd = -1;
-            g_warning("Can't connect to the server.(%s, %d)"
-                    , __FILE__, __LINE__);
+            g_warning("Can't connect to the server %s:%d.(%s, %d)",GL_PROXY_HOST, GL_PROXY_PORT
+                      , __FILE__, __LINE__);
             continue;
         }
         //connect to the host success.
@@ -95,6 +135,79 @@ void close_con(Connection *con)
     close(con -> fd);
 }
 
+Connection * connect_to_host_via_proxy(const char * host , int port)
+{
+    if ( GL_PROXY_HOST == NULL  || GL_PROXY_PORT   < 0 )
+    {
+        g_warning("Can't connect to the Proxy.(%s, %d)", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    if ( NULL == host || port < 0 )
+    {
+        g_warning("Can't connect to the Server.(%s, %d)", __FILE__, __LINE__);
+        return NULL;
+    }
+
+    GIOStatus status;
+    GError *err = NULL;
+    gsize bytes_written = 0;
+    Connection * con = connect_to_host_direct(GL_PROXY_HOST, GL_PROXY_PORT);
+    char buf[128] ;
+    sprintf(buf, "CONNECT %s:%d HTTP/1.0\r\n", host, port);
+    g_debug("buf is :%s (%s,%d)", buf, __FILE__, __LINE__);
+    status = g_io_channel_write_chars(con -> channel
+                                      , buf
+                                      , strlen(buf)
+                                      , &bytes_written
+                                      , &err);
+
+    if(status != G_IO_STATUS_NORMAL || bytes_written != strlen(buf)){
+        g_warning("Connect to proxy fail...(%s, %d)"
+                  , __FILE__, __LINE__);
+        return NULL;
+    }    
+    status = g_io_channel_flush(con -> channel, &err);
+    if(status != G_IO_STATUS_NORMAL){
+        g_warning("Flush io channel error! But don't warry...(%s, %d)"
+                  , __FILE__, __LINE__);
+        return NULL;
+    }
+
+    gsize bytes_read = 0;
+    status = g_io_channel_read_chars(con -> channel, buf
+                                     , 128, &bytes_read, &err);
+    if(status != G_IO_STATUS_NORMAL){
+        g_warning("Connect to proxy %s fail...(%s, %d)",  GL_PROXY_HOST
+                  , __FILE__, __LINE__);
+        return NULL;
+    }
+    if (NULL == strstr(buf,"200"))
+    {
+        g_warning("Connect to proxy %s fail...(%s, %d)", GL_PROXY_HOST
+                  , __FILE__, __LINE__);
+        return NULL;
+    }
+    return con;
+}
+
+
+Connection * connect_to_host(const char * hostname, int port)
+{
+    Connection * con =NULL;
+    if ( GL_PROXY_HOST == NULL)
+    {
+        g_debug("we are connecting to server directly...(%s,%d)",__FILE__,__LINE__);
+        
+        con = connect_to_host_direct(hostname, port);
+    }
+    else
+    {
+        g_debug("we are using proxy for connection..(%s,%d)",__FILE__,__LINE__);
+        con = connect_to_host_via_proxy(hostname,port);
+    }
+    return con;
+}
 gint send_request(Connection *con, Request *r)
 {
     if(con == NULL || r == NULL){
@@ -102,8 +215,8 @@ gint send_request(Connection *con, Request *r)
     }
     
     GString *rq = request_tostring(r);
-//    g_printf("\nMESSAGE:  (%s, %d)Send reqeust : %s\n"
-//            ,__FILE__, __LINE__,  rq -> str);
+    g_debug("\nMESSAGE:  (%s, %d)Send reqeust : %s\n"
+            ,__FILE__, __LINE__,  rq -> str);
 
     GIOStatus status;
     GError *err = NULL;
@@ -112,43 +225,43 @@ gint send_request(Connection *con, Request *r)
 
     while(has_written < rq -> len){
         status = g_io_channel_write_chars(con -> channel
-                , rq -> str + has_written
-                , rq -> len - has_written
-                , &bytes_written
-                , &err);
+                                          , rq -> str + has_written
+                                          , rq -> len - has_written
+                                          , &bytes_written
+                                          , &err);
         switch(status)
         {
-        case G_IO_STATUS_NORMAL:
-            //write success.
-            has_written += bytes_written;
-            //g_debug("Write %d bytes data.(%s, %d)"
-            //        , bytes_written, __FILE__
-            //        , __LINE__);
-            break;
-        case G_IO_STATUS_EOF:
-            g_warning("Write data EOF!! What's happenning?(%s, %d)"
-                    , __FILE__, __LINE__);
-            return -1;
-        case G_IO_STATUS_ERROR:
-            g_warning("Write data ERROR!! code:%d msg:%s (%s, %d)"
-                    , err -> code, err -> message
-                    , __FILE__, __LINE__);
-            g_error_free(err);
-            return -1;
-        case G_IO_STATUS_AGAIN:
-            g_debug("Channel temporarily unavailable.(%s, %d)"
-                    , __FILE__, __LINE__);
-            break;
-        default:
-            g_warning("Unknown io status!(%s, %d)"
-                    , __FILE__, __LINE__);
-            return -1;
+            case G_IO_STATUS_NORMAL:
+                //write success.
+                has_written += bytes_written;
+                //g_debug("Write %d bytes data.(%s, %d)"
+                //        , bytes_written, __FILE__
+                //        , __LINE__);
+                break;
+            case G_IO_STATUS_EOF:
+                g_warning("Write data EOF!! What's happenning?(%s, %d)"
+                          , __FILE__, __LINE__);
+                return -1;
+            case G_IO_STATUS_ERROR:
+                g_warning("Write data ERROR!! code:%d msg:%s (%s, %d)"
+                          , err -> code, err -> message
+                          , __FILE__, __LINE__);
+                g_error_free(err);
+                return -1;
+            case G_IO_STATUS_AGAIN:
+                g_debug("Channel temporarily unavailable.(%s, %d)"
+                        , __FILE__, __LINE__);
+                break;
+            default:
+                g_warning("Unknown io status!(%s, %d)"
+                          , __FILE__, __LINE__);
+                return -1;
         }
     }
     status = g_io_channel_flush(con -> channel, &err);
     if(status != G_IO_STATUS_NORMAL){
         g_warning("Flush io channel error! But don't warry...(%s, %d)"
-                , __FILE__, __LINE__);
+                  , __FILE__, __LINE__);
     }    
     //g_debug("Write all date.(%s, %d)", __FILE__, __LINE__);
     g_string_free(rq, TRUE);
@@ -185,18 +298,18 @@ static int ungzip(GString *in, GString *out)
     ret = inflateInit2(&strm, 47);
     switch(ret)
     {
-    case Z_OK:
-        //g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
-        break;
-    case Z_MEM_ERROR:
-    case Z_VERSION_ERROR:
-    case Z_STREAM_ERROR:
-        g_warning("inflateInit2() Error!. %s (%s, %d)", strm.msg, __FILE__
-                    , __LINE__);
-        return -1;
-    default:
-        g_warning("Unknown return!!(%s, %d)", __FILE__, __LINE__);
-        return -1;
+        case Z_OK:
+            //g_debug("Initial zlib. done.(%s, %d)", __FILE__, __LINE__);
+            break;
+        case Z_MEM_ERROR:
+        case Z_VERSION_ERROR:
+        case Z_STREAM_ERROR:
+            g_warning("inflateInit2() Error!. %s (%s, %d)", strm.msg, __FILE__
+                      , __LINE__);
+            return -1;
+        default:
+            g_warning("Unknown return!!(%s, %d)", __FILE__, __LINE__);
+            return -1;
     }
     
     gboolean done = FALSE;
@@ -208,22 +321,22 @@ static int ungzip(GString *in, GString *out)
         ret = inflate(&strm, Z_NO_FLUSH);
         switch(ret)
         {
-        case Z_STREAM_END:
-            done = TRUE;
-            break;
-        case Z_OK:
-            break;
-        case Z_BUF_ERROR:
-            g_error("Unzip error!(%s, %d)", __FILE__, __LINE__);
-            done = TRUE;
-            break;
-        case Z_DATA_ERROR:
-        case Z_MEM_ERROR:
-        case Z_STREAM_ERROR:
-            g_warning("Ungzip stream error! %s(%s, %d)", strm.msg, __FILE__
-                    , __LINE__);
-            g_string_truncate(out, 0);
-            return -1;
+            case Z_STREAM_END:
+                done = TRUE;
+                break;
+            case Z_OK:
+                break;
+            case Z_BUF_ERROR:
+                g_error("Unzip error!(%s, %d)", __FILE__, __LINE__);
+                done = TRUE;
+                break;
+            case Z_DATA_ERROR:
+            case Z_MEM_ERROR:
+            case Z_STREAM_ERROR:
+                g_warning("Ungzip stream error! %s(%s, %d)", strm.msg, __FILE__
+                          , __LINE__);
+                g_string_truncate(out, 0);
+                return -1;
         }
         g_string_append_len(out, buf, BUFSIZE - strm.avail_out);
     }
@@ -254,7 +367,7 @@ gint rcv_response(Connection *con, Response **rp)
     gboolean gotallheaders = FALSE;
     gboolean isgzip = FALSE;
 
-    #define BUFSIZE 500
+#define BUFSIZE 500
     gchar buf[BUFSIZE];
     GIOStatus status;
     GError *err = NULL;
@@ -265,46 +378,46 @@ gint rcv_response(Connection *con, Response **rp)
     while(need_to_read > 0){
         want_read = BUFSIZE < need_to_read ? BUFSIZE : need_to_read;
         status = g_io_channel_read_chars(con -> channel, buf
-                                            , want_read, &bytes_read, &err);
+                                         , want_read, &bytes_read, &err);
         switch(status)
         {
-        case G_IO_STATUS_NORMAL:
-            //read success.
-            need_to_read -= bytes_read;
-            break;
-        case G_IO_STATUS_EOF:
-            if(conclose){
-                /*
-                 * The Connection header is close.
-                 * The server will close the conntion after 
-                 * send all the data.
-                 */
-                //we got all the data.
-                g_debug("Server close the connection. "
-                        "data has gotten: %u(%s, %d)"
-                        , (unsigned int)bytes_read ,__FILE__, __LINE__);
+            case G_IO_STATUS_NORMAL:
+                //read success.
+                need_to_read -= bytes_read;
                 break;
-            }
-            break;
-        case G_IO_STATUS_ERROR:
-            g_warning("Read data ERROR!! code:%d msg:%s(%s, %d)"
-                            , err -> code, err -> message
-                            , __FILE__, __LINE__);
-            g_string_free(data, TRUE);
-            g_error_free(err);
-            return -1;
-        case G_IO_STATUS_AGAIN:
-            g_warning("Channel temporarily unavailable.");
-            break;
-        default:
-            g_warning("Unknown io status!(%s, %d)", __FILE__, __LINE__);
-            g_string_free(data, TRUE);
-            return -1;
+            case G_IO_STATUS_EOF:
+                if(conclose){
+                    /*
+                     * The Connection header is close.
+                     * The server will close the conntion after 
+                     * send all the data.
+                     */
+                    //we got all the data.
+                    g_debug("Server close the connection. "
+                            "data has gotten: %u(%s, %d)"
+                            , (unsigned int)bytes_read ,__FILE__, __LINE__);
+                    break;
+                }
+                break;
+            case G_IO_STATUS_ERROR:
+                g_warning("Read data ERROR!! code:%d msg:%s(%s, %d)"
+                          , err -> code, err -> message
+                          , __FILE__, __LINE__);
+                g_string_free(data, TRUE);
+                g_error_free(err);
+                return -1;
+            case G_IO_STATUS_AGAIN:
+                g_warning("Channel temporarily unavailable.");
+                break;
+            default:
+                g_warning("Unknown io status!(%s, %d)", __FILE__, __LINE__);
+                g_string_free(data, TRUE);
+                return -1;
         }
         g_string_append_len(data, buf, bytes_read);
         
         if(!gotallheaders && g_strstr_len(data -> str, data -> len
-                                                    , "\r\n\r\n") != NULL){
+                                          , "\r\n\r\n") != NULL){
             //We have gotten all the headers;
             r = response_new_parse(data);
             g_string_truncate(data, 0);
@@ -326,7 +439,7 @@ gint rcv_response(Connection *con, Response **rp)
             tev = response_get_header_chars(r, "Transfer-Encoding");
             if(tev != NULL && g_strstr_len(tev, -1, "chunked") != NULL){
                 g_debug("The message body is chunked.(%s, %d)"
-                                , __FILE__, __LINE__);
+                        , __FILE__, __LINE__);
                 ischunked = TRUE;
 
                 //copy the message back to data
@@ -344,18 +457,18 @@ gint rcv_response(Connection *con, Response **rp)
             }
 
             gchar *connection = response_get_header_chars(r
-                        , "Connection");    
+                                                          , "Connection");    
             if(connection != NULL){
                 //g_debug("Connection: %s (%s, %d)", connection
                 //        , __FILE__, __LINE__);
                 if(g_strstr_len(connection, -1, "close") 
-                            != NULL){
+                   != NULL){
                     conclose = TRUE;
                 }
             }
 
             gchar *ce = response_get_header_chars(r
-                    , "Content-Encoding");
+                                                  , "Content-Encoding");
             if(ce != NULL){
                 g_debug("Content-Encoding: %s (%s, %d)", ce
                         , __FILE__, __LINE__);
@@ -371,7 +484,7 @@ gint rcv_response(Connection *con, Response **rp)
                     break;
                 }
                 gchar *tmp = g_strstr_len(data -> str + chunkbegin
-                                        , data -> len - chunkbegin, "\r\n");
+                                          , data -> len - chunkbegin, "\r\n");
                 if(tmp != NULL){
                     /*
                      * we got the length
@@ -388,20 +501,20 @@ gint rcv_response(Connection *con, Response **rp)
                 }else{
 					/* Format data->len so that it can be compiled on x86-64 machine */
                     g_debug("More chunks... Begin %d len %d %s(%s, %d)"
-										, chunkbegin, (int)data -> len
-                                        , data -> str + chunkbegin
-                                        , __FILE__, __LINE__);
+                            , chunkbegin, (int)data -> len
+                            , data -> str + chunkbegin
+                            , __FILE__, __LINE__);
                     break;
                 }
 
                 if(chunklen != -1 && (tmp - data -> str) + 2 + chunklen 
-                                                            <= data -> len){
+                   <= data -> len){
                     totalchunklen += chunklen;
                     chunkbegin = tmp - data -> str;
                     chunkbegin += 2;
 
                     g_string_append_len(r -> msg, data -> str + chunkbegin
-                                            , chunklen);
+                                        , chunklen);
                     chunkbegin += chunklen + 2;
                     chunklen = -1;
                 }else{
@@ -419,7 +532,7 @@ gint rcv_response(Connection *con, Response **rp)
         //we do not find "\r\n\r\n".
         //Should not happen.
         g_warning("Read all data, but not find all headers.!"
-                    "(%s, %d)", __FILE__, __LINE__);
+                  "(%s, %d)", __FILE__, __LINE__);
         g_string_free(data, TRUE);
         return -1;
     }
@@ -431,12 +544,12 @@ gint rcv_response(Connection *con, Response **rp)
         //g_debug("Total chunk length: %d (%s, %d)", totalchunklen
         //            , __FILE__, __LINE__);
     }
-    #undef BUFSIZE
+#undef BUFSIZE
     
     if(gotcl && r -> msg -> len != cl && tev == NULL){
         g_warning("No read all the message!! content length:%d"
-                    " msg -> len: %u. (%s, %d)"
-                    , cl, (unsigned int)r -> msg -> len, __FILE__, __LINE__);
+                  " msg -> len: %u. (%s, %d)"
+                  , cl, (unsigned int)r -> msg -> len, __FILE__, __LINE__);
     }
 
     if(isgzip){
@@ -449,7 +562,7 @@ gint rcv_response(Connection *con, Response **rp)
         g_string_append(r -> msg, out -> str);
         g_string_free(out, TRUE);
         g_debug("Ungzip data. After len %u.(%s, %d)"
-                    , (unsigned int)r -> msg -> len, __FILE__, __LINE__);
+                , (unsigned int)r -> msg -> len, __FILE__, __LINE__);
     }
 
     *rp = r;

@@ -15,7 +15,9 @@ typedef struct{
 
     gchar *buf;             //use to read data.
     gsize bufsize;          //buffer size
+
 }Connection;
+
 
 /*
  * create and free a connection.
@@ -28,7 +30,24 @@ void connection_free(Connection *con);
  * Connect to the url:port
  * return the socket file descriptor, or -1 for error.
  */
+
+Connection* connect_to_host_direct(const char* hostname, int port);
+
+Connection * connect_to_host_via_proxy(const char * hostname, int port);
+
 Connection* connect_to_host(const char *hostname, int port);
+
+/**
+ *
+ * Set proxy host and port
+ * @param hostname
+ * @param port
+ *
+ * @return 0 fail, 1 sucess.
+ */
+
+void connect_set_proxy ( const char * hostname, int port );
+
 /*
  * close the connection
  */
