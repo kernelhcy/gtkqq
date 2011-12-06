@@ -1,4 +1,4 @@
-/* Last modified Time-stamp: <2011-12-06 11:42:38 Tuesday by devil>
+/* Last modified Time-stamp: <2011-12-06 13:33:21 Tuesday by devil>
  * @(#)qqproxy.c
  */
 
@@ -77,7 +77,8 @@ u_short dest_port = 0;
 static int   relay_method = METHOD_DIRECT;          /* relaying method */
 static char *relay_host = NULL;                        /* hostname of relay server */
 static u_short relay_port = 0;                         /* port of relay server */
-//static char *relay_user = NULL;  
+static char * relay_user= NULL;
+static char * relay_pass = NULL;
 
 
 void *xmalloc (size_t size)
@@ -100,8 +101,7 @@ char * downcase( char *str )
 }
 
 
-char *
-expand_host_and_port (const char *fmt, const char *host, int port)
+char * expand_host_and_port (const char *fmt, const char *host, int port)
 {
     const char *src;
     char *buf, *dst;
@@ -181,8 +181,7 @@ int  lookup_resolve( const char *str )
 }
 
 
-char *
-getusername(void)
+char * getusername(void)
 {
     struct passwd *pw = getpwuid(getuid());
     if ( pw == NULL )
@@ -190,8 +189,7 @@ getusername(void)
     return pw->pw_name;
 }
 
-int
-expect( char *str, char *substr)
+int expect( char *str, char *substr)
 {
     int len = strlen(substr);
     while ( 0 < len-- ) {
@@ -414,8 +412,7 @@ int atomic_out( SOCKET s, char *buf, int size )
     return ret;
 }
 
-int
-atomic_in( SOCKET s, char *buf, int size )
+int atomic_in( SOCKET s, char *buf, int size )
 {
     int ret, len;
 
@@ -438,8 +435,7 @@ atomic_in( SOCKET s, char *buf, int size )
     return ret;
 }
 
-int
-line_input( SOCKET s, char *buf, int size )
+int line_input( SOCKET s, char *buf, int size )
 {
     char *dst = buf;
     if ( size == 0 )
@@ -471,8 +467,7 @@ line_input( SOCKET s, char *buf, int size )
 }
 
 
-char *
-cut_token( char *str, char *delim)
+char * cut_token( char *str, char *delim)
 {
     char *ptr = str + strcspn(str, delim);
     char *end = ptr + strspn(ptr, delim);
@@ -538,39 +533,42 @@ char * make_base64_string(const char *str)
     return buf;
 }
 
-/*
-  int basic_auth (SOCKET s)
-  {
-  char *userpass;
-  char *cred;
-  const char *user = relay_user;
-  char *pass = NULL;
-  int len, ret;
 
+int basic_auth (SOCKET s )
+{
+    char *cred, *user = relay_user, *pass= relay_pass;
+    int len, ret;
+    char * userpass= NULL;
+    if (user == NULL)
+    {
+        g_error("Cannot decide username for proxy authentication.(%s,%d)",__FILE__, __LINE__);
+        return -1;        
+    }
+
+    if (pass == NULL)
+    {
+        g_error("Can not decide password for proxy authentication.(%s,%d)", __FILE__, __LINE__);
+    }
+    //    if ((pass = determine_relay_password ()) == NULL &&
+    //       (pass = readpass("Enter proxy authentication password for %s@%s: ",
+    //relay_user, relay_host)) == NULL)
+    //  g_error("Cannot decide password for proxy authentication.");
     
-  if (user == NULL)
-  g_error("Cannot decide username for proxy authentication.");
-  if ((pass = determine_relay_password ()) == NULL &&
-  (pass = readpass("Enter proxy authentication password for %s@%s: ",
-  relay_user, relay_host)) == NULL)
-  g_error("Cannot decide password for proxy authentication.");
+    len = strlen(user)+strlen(pass)+1;
+    userpass = xmalloc(len+1);
+    snprintf(userpass, len+1, "%s:%s", user, pass);
+    //memset (pass, 0, strlen(pass));
+    cred = make_base64_string(userpass);
+    memset (userpass, 0, len);
 
-  len = strlen(user)+strlen(pass)+1;
-  userpass = xmalloc(len+1);
-  snprintf(userpass, len+1, "%s:%s", user, pass);
-  memset (pass, 0, strlen(pass));
-  cred = make_base64_string(userpass);
-  memset (userpass, 0, len);
-
-  ret = sendf(s, "Proxy-Authorization: Basic %s\r\n", cred);
-  f_report = 1;
+    ret = sendf(s, "Proxy-Authorization: Basic %s\r\n", cred);
     
-  memset(cred, 0, strlen(cred));
-  free(cred);
+    memset(cred, 0, strlen(cred));
+    free(cred);
 
-  return ret;
-  }
-*/
+    return ret;
+}
+
 
 int begin_http_relay( SOCKET s )
 {
@@ -582,10 +580,10 @@ int begin_http_relay( SOCKET s )
 
     if (sendf(s,"CONNECT %s:%d HTTP/1.0\r\n", dest_host, dest_port) < 0)
         return START_ERROR;
-    /*
-      if (proxy_auth_type == PROXY_AUTH_BASIC  *&& basic_auth (s)  < 0) 
+    
+    if (proxy_auth_type == PROXY_AUTH_BASIC   && basic_auth (s)  < 0) 
       return START_ERROR;
-    */
+    
     if (sendf(s,"\r\n") < 0)
         return START_ERROR;
 
@@ -681,7 +679,7 @@ void  switch_ns (struct sockaddr_in *ns)
     g_debug("Using nameserver at %s\n", inet_ntoa(ns->sin_addr));
 }
 
-void set_relay(int method, const char * server , int port)
+void set_relay(int method, const char * server , int port, const char * usr, const char * pass)
 {
     if ( server == NULL || port < 0 )
     {
@@ -695,6 +693,13 @@ void set_relay(int method, const char * server , int port)
             g_debug("did not use proxy for transfering data...(%s,%d)",__FILE__, __LINE__);
             return ;
         }
+    }
+
+    if (usr != NULL && pass!= NULL)
+    {
+        proxy_auth_type = PROXY_AUTH_BASIC;
+        relay_user = strdup(usr);
+        relay_pass = strdup(pass);
     }
     relay_method = method;
     relay_host = strdup(server);

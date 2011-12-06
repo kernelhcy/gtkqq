@@ -136,7 +136,7 @@ int basic_auth (SOCKET s);
 
 int begin_http_relay( SOCKET s );
 
-void set_relay(int method, const char * server, int port);
+void set_relay(int method, const char * server, int port, const char * usr, const char * pass);
 
 int get_authenticated_socket(const char * host, int port);
 
