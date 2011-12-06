@@ -1,4 +1,4 @@
-/* Last modified Time-stamp: <2011-12-06 10:10:52 Tuesday by devil>
+/* Last modified Time-stamp: <2011-12-06 11:35:08 Tuesday by devil>
  * @(#)qqproxy.c
  */
 
@@ -51,7 +51,7 @@ u_short dest_port = 0;
 /* u_short local_port = 0;                         /\* option 'p' *\/ */
 /* int f_hold_session = 0;                         /\* option 'P' *\/ */
 
-static int   relay_method = METHOD_UNDECIDED;          /* relaying method */
+static int   relay_method = METHOD_DIRECT;          /* relaying method */
 static char *relay_host = NULL;                        /* hostname of relay server */
 static u_short relay_port = 0;                         /* port of relay server */
 //static char *relay_user = NULL;  
@@ -661,10 +661,21 @@ void  switch_ns (struct sockaddr_in *ns)
 void set_relay(int method, const char * server , int port)
 {
     if ( server == NULL || port < 0 )
-        g_error("invalid proxy server and port...(%s,%d)", __FILE__, __LINE__);
+    {
+        if ( method != METHOD_DIRECT)
+        {
+            g_error("invalid proxy server and port...(%s,%d)", __FILE__, __LINE__);
+        }
+        
+        else
+        {
+            g_debug("did not use proxy for transfering data...(%s,%d)",__FILE__, __LINE__);
+            return ;
+        }
+    }
     relay_method = method;
-    relay_port = port;
     relay_host = strdup(server);
+    relay_port = port;
 }
 
 int get_authenticated_socket( const char * host, int port)
@@ -677,8 +688,8 @@ int get_authenticated_socket( const char * host, int port)
     
     if (0 < connect_timeout)
         set_timeout (connect_timeout);
-    if (check_direct(dest_host))
-        relay_method = METHOD_DIRECT;
+    //if (check_direct(dest_host))
+    //   relay_method = METHOD_DIRECT;
   
     if ( relay_method == METHOD_DIRECT ) {
         remote = open_connection (dest_host, dest_port);
@@ -708,6 +719,9 @@ int get_authenticated_socket( const char * host, int port)
                     
                     close (remote);
             }
+            break;
+        case METHOD_DIRECT:
+            g_debug("Did not using proxy bypass ...(%s,%d)",__FILE__, __LINE__);
             break;
     }
     return remote;
