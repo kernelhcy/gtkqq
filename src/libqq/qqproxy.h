@@ -97,31 +97,6 @@ typedef struct {
     char* name;
     char* value;
 } PARAMETER_ITEM;
-PARAMETER_ITEM parameter_table[] = {
-    { ENV_SOCKS_SERVER, NULL },
-    { ENV_SOCKS5_SERVER, NULL },
-    { ENV_SOCKS4_SERVER, NULL },
-    { ENV_SOCKS_RESOLVE, NULL },
-    { ENV_SOCKS5_RESOLVE, NULL },
-    { ENV_SOCKS4_RESOLVE, NULL },
-    { ENV_SOCKS5_USER, NULL },
-    { ENV_SOCKS5_PASSWD, NULL },
-    { ENV_SOCKS5_PASSWORD, NULL },
-    { ENV_HTTP_PROXY, NULL },
-    { ENV_HTTP_PROXY_USER, NULL },
-    { ENV_HTTP_PROXY_PASSWORD, NULL },
-    { ENV_CONNECT_USER, NULL },
-    { ENV_CONNECT_PASSWORD, NULL },
-    { ENV_SSH_ASKPASS, NULL },
-    { ENV_SOCKS5_DIRECT, NULL },
-    { ENV_SOCKS4_DIRECT, NULL },
-    { ENV_SOCKS_DIRECT, NULL },
-    { ENV_HTTP_DIRECT, NULL },
-    { ENV_CONNECT_DIRECT, NULL },
-    { ENV_SOCKS5_AUTH, NULL },
-    { NULL, NULL }
-};
-
 
 struct ADDRPAIR {
     struct in_addr addr;

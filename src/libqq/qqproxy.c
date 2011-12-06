@@ -1,4 +1,4 @@
-/* Last modified Time-stamp: <2011-12-06 11:35:08 Tuesday by devil>
+/* Last modified Time-stamp: <2011-12-06 11:42:38 Tuesday by devil>
  * @(#)qqproxy.c
  */
 
@@ -36,7 +36,30 @@ const char *dotdigits = "0123456789.";
 
 struct ADDRPAIR direct_addr_list[MAX_DIRECT_ADDR_LIST];
 int n_direct_addr_list = 0;
-
+PARAMETER_ITEM parameter_table[] = {
+    { ENV_SOCKS_SERVER, NULL },
+    { ENV_SOCKS5_SERVER, NULL },
+    { ENV_SOCKS4_SERVER, NULL },
+    { ENV_SOCKS_RESOLVE, NULL },
+    { ENV_SOCKS5_RESOLVE, NULL },
+    { ENV_SOCKS4_RESOLVE, NULL },
+    { ENV_SOCKS5_USER, NULL },
+    { ENV_SOCKS5_PASSWD, NULL },
+    { ENV_SOCKS5_PASSWORD, NULL },
+    { ENV_HTTP_PROXY, NULL },
+    { ENV_HTTP_PROXY_USER, NULL },
+    { ENV_HTTP_PROXY_PASSWORD, NULL },
+    { ENV_CONNECT_USER, NULL },
+    { ENV_CONNECT_PASSWORD, NULL },
+    { ENV_SSH_ASKPASS, NULL },
+    { ENV_SOCKS5_DIRECT, NULL },
+    { ENV_SOCKS4_DIRECT, NULL },
+    { ENV_SOCKS_DIRECT, NULL },
+    { ENV_HTTP_DIRECT, NULL },
+    { ENV_CONNECT_DIRECT, NULL },
+    { ENV_SOCKS5_AUTH, NULL },
+    { NULL, NULL }
+};
 struct sockaddr_in socks_ns;
 int connect_timeout = 0; 
 int proxy_auth_type = PROXY_AUTH_NONE;
