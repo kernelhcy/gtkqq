@@ -2,7 +2,7 @@
 #ifndef __QQ_PROXY_H__
 #define __QQ_PROXY_H__
 #include <glib.h>
-
+#include <netinet/in.h>
 typedef struct {
     int num;
     const char *str;
@@ -148,7 +148,7 @@ int is_direct_address (const struct in_addr addr);
 int check_direct(const char *host);
 
 int local_resolve (const char *host, struct sockaddr_in *addr);
-int open_connection( const char *host, u_short port );
+int open_connection( const char *host, short port );
 
 int atomic_out( SOCKET s, char *buf, int size );
 int atomic_in( SOCKET s, char *buf, int size );

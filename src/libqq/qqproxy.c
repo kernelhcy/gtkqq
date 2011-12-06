@@ -1,4 +1,4 @@
-/* Last modified Time-stamp: <2011-12-05 17:32:39 Monday by devil>
+/* Last modified Time-stamp: <2011-12-06 10:10:52 Tuesday by devil>
  * @(#)qqproxy.c
  */
 
@@ -350,7 +350,7 @@ int local_resolve (const char *host, struct sockaddr_in *addr)
     return 0;                                   /* good */
 }
 
-int open_connection( const char *host, u_short port )
+int open_connection( const char *host, short port )
 {
     SOCKET s;
     struct sockaddr_in saddr;
