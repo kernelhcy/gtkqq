@@ -37,7 +37,7 @@ struct _QQLoginPanel{
     GtkWidget *passwd_label, *passwd_entry;
     GtkWidget *rempwcb;             //rember password check button
     GtkWidget *err_label;           //show error infomation.
-    GtkWidget *login_btn, *status_comb;
+    GtkWidget *login_btn, *status_comb, *set_proxy_btn;
 
     const gchar *uin, *passwd, *status;
 	gint rempw;

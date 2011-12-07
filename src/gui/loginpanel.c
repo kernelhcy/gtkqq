@@ -7,11 +7,14 @@
 #include <statusbutton.h>
 #include <msgloop.h>
 #include <msgdispacher.h>
-
+#include <string.h>
+#include <proxypanel.h>
 /*
  * The global value
  * in main.c
  */
+
+
 extern QQInfo *info;
 extern GQQConfig *cfg;
 
@@ -50,7 +53,7 @@ GtkType qq_loginpanel_get_type()
                 NULL
             };
         t = g_type_register_static(GTK_TYPE_VBOX, "QQLoginPanel"
-                        , &info, 0);
+                                   , &info, 0);
     }
     return t;
 }
@@ -93,24 +96,24 @@ static gint do_login(QQLoginPanel *panel)
     const gchar *msg;
     switch(ret)
     {
-    case NO_ERR:
-        // going on
-        return 0;
-    case NETWORK_ERR:
-        msg = "Network error. Please try again.";
-        break;
-    case WRONGPWD_ERR:
-        msg = "Wrong Password.";
-        break;
-    case WRONGUIN_ERR:
-        msg = "Wrong QQ Number.";
-        break;
-    case WRONGVC_ERR:
-        msg = "Wrong Verify Code.";
-        break;
-    default:
-        msg = "Error. Please try again.";
-        break;
+        case NO_ERR:
+            // going on
+            return 0;
+        case NETWORK_ERR:
+            msg = "Network error. Please try again.";
+            break;
+        case WRONGPWD_ERR:
+            msg = "Wrong Password.";
+            break;
+        case WRONGUIN_ERR:
+            msg = "Wrong QQ Number.";
+            break;
+        case WRONGVC_ERR:
+            msg = "Wrong Verify Code.";
+            break;
+        default:
+            msg = "Error. Please try again.";
+            break;
     }
     g_warning("Login error! %s (%s, %d)", err -> message, __FILE__, __LINE__);
     g_error_free(err);
@@ -140,8 +143,8 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
 
     //update qq number
     update_buddy_qq_number(info
-                        , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
-                                                -> main_panel);
+                           , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+                           -> main_panel);
     // update group number
     gint i;
     QQGroup *grp;
@@ -161,8 +164,8 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
 
     //update face image
     update_face_image(info
-                       , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
-                                                -> main_panel);
+                      , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+                      -> main_panel);
 }
 
 //login state machine state.
@@ -182,57 +185,57 @@ static void login_state_machine(gpointer data)
     while(TRUE){
         switch(state)
         {
-        case LOGIN_SM_CHECKVC:
-            if(qq_check_verifycode(info, panel -> uin, NULL) != 0){
-                state = LOGIN_SM_ERR;
+            case LOGIN_SM_CHECKVC:
+                if(qq_check_verifycode(info, panel -> uin, NULL) != 0){
+                    state = LOGIN_SM_ERR;
+                    break;
+                }
+                state = LOGIN_SM_LOGIN;
+                if(info -> need_vcimage){
+                    gqq_mainloop_attach(&gtkloop, read_verifycode, 1, panel);
+                    // Quit the state machine.
+                    // The state machine will restart in the read verify code
+                    // dialog.
+                    return;
+                }
+            case LOGIN_SM_LOGIN:
+                if(do_login(panel) != 0){
+                    state = LOGIN_SM_ERR;
+                }else{
+                    state = LOGIN_SM_GET_DATA;
+                }
                 break;
-            }
-            state = LOGIN_SM_LOGIN;
-            if(info -> need_vcimage){
-                gqq_mainloop_attach(&gtkloop, read_verifycode, 1, panel);
-                // Quit the state machine.
-                // The state machine will restart in the read verify code
-                // dialog.
-                return;
-            }
-        case LOGIN_SM_LOGIN:
-            if(do_login(panel) != 0){
-                state = LOGIN_SM_ERR;
-            }else{
-                state = LOGIN_SM_GET_DATA;
-            }
-            break;
-        case LOGIN_SM_GET_DATA:
-            //Read cached data from db
-            gqq_config_load(cfg, panel -> uin);
-            qq_get_buddies_and_categories(info, NULL);
-            qq_get_groups(info, NULL);
-            state = LOGIN_SM_DONE;
-            break;
-        case LOGIN_SM_DONE:
-            g_debug("Login done. show main panel!(%s, %d)", __FILE__, __LINE__);
-            //
-            // Start poll message
-            //
-            qq_start_poll(info, qq_poll_message_callback, &gtkloop, NULL);
-            // update main panel
-            gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
+            case LOGIN_SM_GET_DATA:
+                //Read cached data from db
+                gqq_config_load(cfg, panel -> uin);
+                qq_get_buddies_and_categories(info, NULL);
+                qq_get_groups(info, NULL);
+                state = LOGIN_SM_DONE;
+                break;
+            case LOGIN_SM_DONE:
+                g_debug("Login done. show main panel!(%s, %d)", __FILE__, __LINE__);
+                //
+                // Start poll message
+                //
+                qq_start_poll(info, qq_poll_message_callback, &gtkloop, NULL);
+                // update main panel
+                gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
                                     , 1, QQ_MAINWINDOW(panel -> container) 
-                                                    -> main_panel);
-            // show main panel
-            gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
+                                    -> main_panel);
+                // show main panel
+                gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
                                     , 1, panel -> container);
-            update_details(info, panel);
+                update_details(info, panel);
 
-            return;
-        case LOGIN_SM_ERR:
-            g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
-            gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_loginpanel
+                return;
+            case LOGIN_SM_ERR:
+                g_debug("Login error... (%s, %d)", __FILE__, __LINE__);
+                gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_loginpanel
                                     , 1, panel -> container);
-            g_debug("Show login panel.(%s, %d)", __FILE__, __LINE__);
-            return;
-        default:
-            break;
+                g_debug("Show login panel.(%s, %d)", __FILE__, __LINE__);
+                return;
+            default:
+                break;
         }
     }
     return;
@@ -260,22 +263,22 @@ static void read_verifycode(gpointer p)
     if(info -> vc_image_data == NULL || info -> vc_image_type == NULL){
         g_warning("No vc image data or type!(%s, %d)" , __FILE__, __LINE__);
         gtk_label_set_text(GTK_LABEL(panel -> err_label)
-                                , "Login failed. Please retry.");
+                           , "Login failed. Please retry.");
         qq_mainwindow_show_loginpanel(w);
         return;
     }
     sprintf(fn, CONFIGDIR"verifycode.%s", info -> vc_image_type -> str);
     save_img_to_file(info -> vc_image_data -> str
-                        , info -> vc_image_data -> len
-                        , fn);
+                     , info -> vc_image_data -> len
+                     , fn);
     GtkWidget *dialog = gtk_dialog_new_with_buttons("Information"
-                            , GTK_WINDOW(w), GTK_DIALOG_MODAL
-                            , GTK_STOCK_OK, GTK_RESPONSE_OK
-                            , NULL);
+                                                    , GTK_WINDOW(w), GTK_DIALOG_MODAL
+                                                    , GTK_STOCK_OK, GTK_RESPONSE_OK
+                                                    , NULL);
     GtkWidget *vbox = GTK_DIALOG(dialog) -> vbox;
     GtkWidget *img = gtk_image_new_from_file(fn);
     gtk_box_pack_start(GTK_BOX(vbox), gtk_label_new("VerifyCode：")
-                            , FALSE, FALSE, 20);    
+                       , FALSE, FALSE, 20);    
     gtk_box_pack_start(GTK_BOX(vbox), img, FALSE, FALSE, 0); 
 
     GtkWidget *vc_entry = gtk_entry_new();
@@ -290,7 +293,7 @@ static void read_verifycode(gpointer p)
     
     //got the verify code
     info -> verify_code = g_string_new(
-                gtk_entry_get_text(GTK_ENTRY(vc_entry)));
+        gtk_entry_get_text(GTK_ENTRY(vc_entry)));
     gtk_widget_destroy(dialog); 
     
     //restart the state machine
@@ -313,7 +316,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 	panel -> rempw = qq_loginpanel_get_rempw(panel);
 
     g_debug("Start login... qqnum: %s, status: %s (%s, %d)", panel -> uin
-                                        , panel -> status, __FILE__, __LINE__);
+            , panel -> status, __FILE__, __LINE__);
 
     // run the login state machine
     g_debug("Run login state machine...(%s, %d)", __FILE__, __LINE__);
@@ -333,6 +336,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
     gqq_config_save_last_login_user(cfg);
 }
+
 
 static void qq_loginpanel_init(QQLoginPanel *obj)
 {
@@ -361,7 +365,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     for(i = 0; i < login_users -> len; ++i){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
         gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
-                            , usr -> qqnumber);
+                                  , usr -> qqnumber);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> uin_entry), 0);
 
@@ -373,7 +377,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 			gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
     }
     g_signal_connect(G_OBJECT(obj -> uin_entry), "changed"
-                        , G_CALLBACK(qqnumber_combox_changed), obj);
+                     , G_CALLBACK(qqnumber_combox_changed), obj);
     //not visibily 
     gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
     gtk_widget_set_size_request(obj -> uin_entry, 200, -1);
@@ -391,7 +395,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     //password label and entry
     GtkWidget *passwd_hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(passwd_hbox), obj -> passwd_label
-                    , FALSE, FALSE, 0);
+                       , FALSE, FALSE, 0);
     GtkWidget *passwd_vbox = gtk_vbox_new(FALSE, 2);
     gtk_box_pack_start(GTK_BOX(passwd_vbox), passwd_hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(passwd_vbox), obj -> passwd_entry, FALSE, FALSE, 0);
@@ -416,15 +420,19 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     obj -> login_btn = gtk_button_new_with_label("Login");
     gtk_widget_set_size_request(obj -> login_btn, 90, -1);
     g_signal_connect(G_OBJECT(obj -> login_btn), "clicked"
-                                , G_CALLBACK(login_btn_cb), (gpointer)obj);
-
+                     , G_CALLBACK(login_btn_cb), (gpointer)obj);
     //status combo box
     obj -> status_comb = qq_statusbutton_new();
     if(login_users -> len > 0){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
         qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
     }
-
+    //proxy setting
+    obj -> set_proxy_btn = gtk_button_new_with_label("Network");
+    gtk_widget_set_size_request(obj -> set_proxy_btn, 100, -1);
+    g_signal_connect(G_OBJECT(obj -> set_proxy_btn), "clicked"
+                     , G_CALLBACK(set_proxy_btn_cb), (gpointer)obj);
+    
     GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);
 
@@ -434,6 +442,9 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(hbox2), obj -> login_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox3), hbox2, TRUE, FALSE, 0);
 
+    GtkWidget *hbox_proxy_setting = gtk_hbutton_box_new();
+    gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox_proxy_setting), GTK_BUTTONBOX_CENTER);
+    gtk_box_pack_start(GTK_BOX(hbox_proxy_setting), obj -> set_proxy_btn, FALSE, FALSE, 0);
     //error informatin label
     obj -> err_label = gtk_label_new("");
     GdkColor color;
@@ -448,7 +459,9 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(vbox), hbox2, TRUE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox3, FALSE, FALSE, 0);
-
+    
+    gtk_box_pack_start(GTK_BOX(vbox), hbox_proxy_setting, TRUE, TRUE, 10);
+    
     gtk_box_set_homogeneous(GTK_BOX(obj), FALSE);
     GtkWidget *logo = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
     gtk_widget_set_size_request(logo, -1, 150);    
@@ -484,14 +497,14 @@ const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
     return gtk_combo_box_get_active_text(
-                GTK_COMBO_BOX(panel -> uin_entry));    
+        GTK_COMBO_BOX(panel -> uin_entry));    
 
 }
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
     return gtk_entry_get_text(
-                GTK_ENTRY(panel -> passwd_entry));
+        GTK_ENTRY(panel -> passwd_entry));
 }
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel)
 {
@@ -553,10 +566,10 @@ static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel)
         par -> id = i;
         par -> info = info;
         threads[i] = g_thread_create(get_buddy_qqnumber_thread_func
-                                        , par, TRUE, &err);
+                                     , par, TRUE, &err);
         if(threads[i] == NULL){
             g_warning("Create thread to get face image error. %s (%s, %d)"
-                                    , err -> message, __FILE__, __LINE__);
+                      , err -> message, __FILE__, __LINE__);
             g_error_free(err);
         }
     }
@@ -653,10 +666,10 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
         par -> id = i;
         par -> info = info;
         threads[i] = g_thread_create(get_buddy_face_thread_func
-                                        , par, TRUE, &err);
+                                     , par, TRUE, &err);
         if(threads[i] == NULL){
             g_warning("Create thread to get face image error. %s (%s, %d)"
-                                    , err -> message, __FILE__, __LINE__);
+                      , err -> message, __FILE__, __LINE__);
             g_error_free(err);
         }
     }

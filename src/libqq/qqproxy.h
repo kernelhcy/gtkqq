@@ -1,4 +1,3 @@
-
 #ifndef __QQ_PROXY_H__
 #define __QQ_PROXY_H__
 #include <glib.h>
