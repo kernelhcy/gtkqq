@@ -1,4 +1,4 @@
-/* Last modified Time-stamp: <2011-12-06 13:33:21 Tuesday by devil>
+/* Last modified Time-stamp: <2011-12-08-16:44:53 Thursday by geniux>
  * @(#)qqproxy.c
  */
 
@@ -85,7 +85,7 @@ void *xmalloc (size_t size)
 {
     void *ret = malloc(size);
     if (ret == NULL)
-        g_error("Cannot allocate memory: %d bytes.\n", size);
+        g_error("Cannot allocate memory: %d bytes.\n", (int)size);
     return ret;
 }
 

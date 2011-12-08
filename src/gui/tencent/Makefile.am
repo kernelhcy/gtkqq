@@ -4,4 +4,4 @@ qq_CPPFLAGS= -I$(srcdir)/. $(GTK_CFLAGS)\
 qq_LDADD = $(GTK_LIBS)
 qq_SOURCES= qqwindow.h qqwindow.c\
 	    qqbutton.h qqbutton.c\
-	    qq.c
+	    qq.c constval.h

@@ -1,6 +1,7 @@
 #include <tray.h>
 #include <qq.h>
 #include <gqqconfig.h>
+#include <mainwindow.h>
 
 /*
  * The main event loop context of Gtk.
@@ -96,15 +97,17 @@ static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
 {
     GdkEventButton *buttonevent = (GdkEventButton*)event;
 
-	/* Left double-clicked, show the main window. */
-	if(buttonevent -> button == 1 && buttonevent -> type == GDK_2BUTTON_PRESS){
-		gtk_widget_show_all(main_win);
+	/* Only handle left clicked. */
+	if(buttonevent -> button != 1 || buttonevent -> type != GDK_BUTTON_PRESS){
+		return FALSE;
 	}
     
     QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
                                                     , QQTrayPriv);
     gchar *uin = g_queue_pop_tail(priv -> blinking_queue);
     if(uin == NULL){
+		/* If there is no new msg, show or hide the main window. */
+		qq_mainwindow_show_hide(main_win);
         return FALSE;
     }
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map", uin);

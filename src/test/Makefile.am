@@ -8,7 +8,7 @@ bin_PROGRAMS=testhttp testjson testcprint testlog testurl testpro testproxy
 testhttp_SOURCES= testhttp.c
 testhttp_LDADD=${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)
 
-testjson_SOURCES= testjson.c  ${srcdir}/../libqq/json.c ${srcidr}/../libqq/json.h
+testjson_SOURCES= testjson.c  ${srcdir}/../libqq/json.c ${srcdir}/../libqq/json.h
 testjson_LDADD=$(GLIB_LIBS)
 
 testcprint_SOURCES= ${srcdir}/../comm/cprint.c testcprint.c 
