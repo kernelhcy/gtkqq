@@ -3,6 +3,7 @@
 3.接收和发送好友消息，消息中包括表情和字体设置。
 4.读取群信息和群成员信息。
 5.接收和发送群消息，消息中包括表情和字体设置。
+6. notification sound
 
 done
 --------
@@ -13,6 +14,3 @@ todo
 3.接收和发送图片。
 4.接收和发送文件。
 5. Login and message transmittion with proxy.
-6. notification sound.
-
-

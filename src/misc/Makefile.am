@@ -28,4 +28,6 @@ img_DATA=\
 	ContactMainTabButton1.png ContactMainTabButton2.png\
 	GroupMainTabButton1.png GroupMainTabButton2.png\
 	RecentMainTabButton1.png RecentMainTabButton2.png
-EXTRA_DIST = $(imgdir)
+# dist_img_DATA = $(img_DATA)
+# EXTRA_DIST = $(imgdir)
+EXTRA_DIST = $(img_DATA)
