@@ -16,7 +16,7 @@
 #include <glib.h>
 #include <unistd.h>
 
-#define MAX_SOUND_LEN 2			/**< Max audio length.*/
+#define MAX_SOUND_LEN 1			/**< Max audio length.*/
 
 #if 0
 static gboolean bus_call(GstBus *bus, GstMessage *msg, gpointer data)

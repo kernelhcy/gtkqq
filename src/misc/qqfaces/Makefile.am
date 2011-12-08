@@ -20,4 +20,6 @@ faceimg_DATA=\
 	49.gif  58.gif  67.gif  76.gif  85.gif  94.gif\
 	108.gif  117.gif  126.gif  13.gif   22.gif  31.gif  40.gif\
 	4.gif   59.gif  68.gif  77.gif  86.gif  95.gif
-EXTRA_DIST = $(faceimgdir)
+
+# EXTRA_DIST = $(faceimgdir)
+EXTRA_DIST = $(faceimg_DATA) 

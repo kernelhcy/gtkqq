@@ -26,7 +26,16 @@ static void destroy_handler(GtkWidget *widget, gpointer  data)
     g_debug("Destroy window.(%s, %d)", __FILE__, __LINE__);
     return;
 }
-#endif 
+#endif
+
+gboolean
+qq_mainwindow_close(GtkWidget *widget)
+{
+	qq_mainwindow_hide(widget);
+
+	return TRUE;
+}
+
 GType qq_mainwindow_get_type()
 {
     static GType t = 0;
@@ -51,6 +60,37 @@ GType qq_mainwindow_get_type()
     return t;
 }
 
+/* Show the main window. */
+void qq_mainwindow_show(GtkWidget *win)
+{
+	QQMainWindow *mainwin = (QQMainWindow *)win;
+
+	mainwin->showed = TRUE;
+	gtk_widget_show(win);
+}
+
+/* Hide the main window */
+void qq_mainwindow_hide(GtkWidget *win)
+{
+	QQMainWindow *mainwin = (QQMainWindow *)win;
+
+	mainwin->showed = FALSE;
+	gtk_widget_hide(win);
+}
+
+/* If the window now is shown, hide it,
+   else show it. */
+void qq_mainwindow_show_hide(GtkWidget *win)
+{
+	QQMainWindow *mainwin = (QQMainWindow *)win;
+
+	if (TRUE == mainwin->showed) {
+		qq_mainwindow_hide(win);
+	} else {
+		qq_mainwindow_show(win);
+	}
+}
+
 GtkWidget* qq_mainwindow_new()
 {
     return GTK_WIDGET(g_object_new(qq_mainwindow_get_type()
@@ -66,10 +106,11 @@ static void qq_mainwindow_init(QQMainWindow *win)
 
 //    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
     g_signal_connect(w, "delete-event",
-					 G_CALLBACK(gtk_widget_hide_on_delete), NULL);
+					 G_CALLBACK(qq_mainwindow_close), NULL);
     win -> login_panel = qq_loginpanel_new(w);
     win -> splash_panel = qq_splashpanel_new();
     win -> main_panel = qq_mainpanel_new(w);
+	win -> showed = FALSE;
 
     win -> notebook = gtk_notebook_new();
     gtk_notebook_set_show_tabs(GTK_NOTEBOOK(win -> notebook), FALSE);
