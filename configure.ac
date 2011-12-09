@@ -224,7 +224,7 @@ AC_FUNC_MALLOC
 AC_CHECK_FUNCS([bzero gethostbyname memset mkdir select socket strstr strtol])
 AC_CHECK_FUNCS([inet_ntoa])
 
-AC_CONFIG_FILES([Makefile 
+AC_CONFIG_FILES([Makefile
          src/Makefile 
          src/comm/Makefile 
          src/libqq/Makefile 
@@ -237,7 +237,8 @@ AC_CONFIG_FILES([Makefile
          src/misc/status/Makefile
          src/misc/qqfaces/Makefile
          src/misc/sound/Makefile
-         src/test/Makefile])
+         src/test/Makefile]
+ 		 pixmaps/Makefile)
 AC_OUTPUT
 
 #echo Use libnotify................. : $enable_libnotify

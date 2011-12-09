@@ -277,6 +277,7 @@ static gpointer do_poll(gpointer data)
     g_slice_free(struct Par, par);
 
     gchar params[300];
+	gint res = 0;
 again:
     g_mutex_lock(lock);
     if(!run){
@@ -311,10 +312,16 @@ again:
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		response_del(rps);
+        request_del(req);
+		goto again;
+	}
     gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*

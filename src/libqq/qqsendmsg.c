@@ -12,6 +12,7 @@ static gint do_send_buddy_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     GString *uin = msg -> to_uin;
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[3000];
     g_debug("Send msg to %s!(%s, %d)", uin -> str, __FILE__, __LINE__);
 
@@ -55,10 +56,15 @@ static gint do_send_buddy_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     json_t *json = NULL;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
@@ -103,6 +109,7 @@ static gint do_send_group_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     GString *uin = msg -> to_uin;
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[3000];
     g_debug("Send msg to %s!(%s, %d)", uin -> str, __FILE__, __LINE__);
 
@@ -149,10 +156,15 @@ static gint do_send_group_msg(QQInfo *info, QQSendMsg *msg, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     json_t *json = NULL;
     if(g_strstr_len(retstatus, -1, "200") == NULL){

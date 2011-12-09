@@ -124,6 +124,7 @@ static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
     }
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[300];
     g_debug("Get single long nick.(%s, %d)", __FILE__, __LINE__);
 
@@ -153,10 +154,15 @@ static gint do_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err)
 
     send_request(con, req);
     response_del(rps);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -210,6 +216,7 @@ static gint do_get_online_buddies(QQInfo *info, GError **err)
     }
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[300];
     g_debug("Get online buddies!(%s, %d)", __FILE__, __LINE__);
 
@@ -237,10 +244,15 @@ static gint do_get_online_buddies(QQInfo *info, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -319,6 +331,7 @@ static gint do_get_recent_contact(QQInfo *info, GError **err)
     }
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[300];
     g_debug("Get recent contacts!(%s, %d)", __FILE__, __LINE__);
 
@@ -352,10 +365,15 @@ static gint do_get_recent_contact(QQInfo *info, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -423,6 +441,7 @@ error:
 static gint do_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
 {
     gint ret_code = 0;
+	gint res = 0;
     gchar params[500];
     g_debug("Get %s information!(%s, %d)", bdy -> uin -> str
                             ,  __FILE__, __LINE__);
@@ -452,10 +471,15 @@ static gint do_get_buddy_info(QQInfo *info, QQBuddy *bdy, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -620,6 +644,7 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
 
 
     gint ret_code = 0;
+	gint res = 0;
     gint i;
     gchar params[300];
     g_debug("Get all buddies.(%s, %d)", __FILE__, __LINE__);
@@ -654,10 +679,15 @@ gint qq_get_buddies_and_categories(QQInfo *info, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -887,6 +917,7 @@ gint qq_get_groups(QQInfo *info, GError **err)
     }
 
     gint ret_code = 0;
+	gint res = 0;
     gchar params[300];
     g_debug("Get my groups!(%s, %d)", __FILE__, __LINE__);
 
@@ -920,10 +951,15 @@ gint qq_get_groups(QQInfo *info, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
@@ -1139,6 +1175,7 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
     
 
     gint ret_code = NO_ERR;
+	gint res = 0;
     gchar params[300];
     g_debug("Get group information.(%s, %d)", __FILE__, __LINE__);
 
@@ -1168,10 +1205,15 @@ gint qq_get_group_info(QQInfo *info, QQGroup *grp, GError **err)
 
     send_request(con, req);
     response_del(rps);
-    rcv_response(con, &rps);
+    res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
     gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
