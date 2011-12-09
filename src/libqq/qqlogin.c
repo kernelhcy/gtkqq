@@ -48,6 +48,7 @@ static gint check_verify_code(QQInfo *info)
 
 	Request *req = request_new();
 	Response *rps = NULL;
+	int res = 0;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
 	g_sprintf(params, VCCHECKPATH"?uin=%s&appid="APPID"&r=%.16f"
@@ -59,7 +60,15 @@ static gint check_verify_code(QQInfo *info)
 	Connection *con = connect_to_host(LOGINHOST, 80);
 
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
@@ -67,9 +76,6 @@ static gint check_verify_code(QQInfo *info)
 		ret = NETWORK_ERR;
 		goto error;
 	}
-
-	close_con(con);
-	connection_free(con);
 
 	/*
 	 * The http message body has two format:
@@ -150,7 +156,8 @@ static gint get_vc_image(QQInfo *info)
 		return PARAMETER_ERR;
 	}
 	gint ret = 0;
-	gchar params[500];  
+	gchar params[500];
+	gint res = 0;
 
 	Request *req = request_new();
 	Response *rps = NULL;
@@ -172,7 +179,9 @@ static gint get_vc_image(QQInfo *info)
 	}
 
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
@@ -180,9 +189,6 @@ static gint get_vc_image(QQInfo *info)
 		ret = NETWORK_ERR;
 		goto error;
 	}
-
-	close_con(con);
-	connection_free(con);
 
 	info -> vc_image_data = g_string_new(NULL);
 	g_string_append_len(info -> vc_image_data, rps -> msg -> str
@@ -222,6 +228,7 @@ static gint get_version(QQInfo *info)
 	int ret = NO_ERR;
 	Request *req = request_new();
 	Response *rps = NULL;
+	gint res = 0;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
 	request_set_uri(req, VERPATH);
@@ -236,17 +243,21 @@ static gint get_version(QQInfo *info)
 		return NETWORK_ERR;
 	}
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
 	const gchar *retstatus = rps -> status -> str;
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
 		ret = NETWORK_ERR;
 		goto error;
 	}
-
-	close_con(con);
-	connection_free(con);
 	
 	gchar *lb, *rb;
 	gchar *ms = rps -> msg -> str;
@@ -317,6 +328,7 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
 static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 {
 	gint ret = 0;
+	gint res = 0;
 	gchar params[300];
 
 	Request *req = request_new();
@@ -352,7 +364,15 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	}
 
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
+	close_con(con);
+	connection_free(con);
+
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
@@ -360,9 +380,6 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 		ret = -1;
 		goto error;
 	}
-
-	close_con(con);
-	connection_free(con);
 
 	gint status;
 	gchar *sbe = g_strstr_len(rps -> msg -> str, -1, "'");
@@ -474,6 +491,7 @@ static GString *generate_clientid()
 static int get_psessionid(QQInfo *info)
 {
 	int ret = NO_ERR;
+	gint res = 0;
 	if(info -> ptwebqq == NULL || info -> ptwebqq -> len <= 0){
 		g_warning("Need ptwebqq!!(%s, %d)", __FILE__, __LINE__);
 		return PARAMETER_ERR;
@@ -532,8 +550,13 @@ static int get_psessionid(QQInfo *info)
 	}
 
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
@@ -716,6 +739,7 @@ gint qq_login(QQInfo *info, const gchar *qqnum, const gchar *passwd
 static gint do_logout(QQInfo *info, GError **err)
 {
     gint ret_code = 0;
+	gint res = 0;
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
 	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
 		g_warning("Need psessionid !!(%s, %d)", __FILE__, __LINE__);
@@ -745,10 +769,15 @@ static gint do_logout(QQInfo *info, GError **err)
 	}
 
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
 	close_con(con);
 	connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		/*

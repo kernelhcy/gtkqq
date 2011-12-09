@@ -1,0 +1,14 @@
+[Desktop Entry]
+Version=1.0
+Name=GTKQQ
+Name[es]=GTKQQ
+GenericName=QQ Client
+GenericName[es]=QQ Client
+Comment=QQ client written in GTK
+Comment[es]=QQ client written in GTK
+Exec=gtkqq
+Icon=gtkqq
+Terminal=false
+Type=Application
+Categories=Network;
+StartupNotify=true
