@@ -40,6 +40,7 @@ gint qq_get_face_img(QQInfo *info, QQFaceImg *img, GError **err)
     }
     gint ret_code = NO_ERR;
     gchar params[300];
+	gint res = 0;
     g_debug("Get face image of %s!(%s, %d)", img -> uin -> str
                                 , __FILE__, __LINE__);
 
@@ -65,10 +66,16 @@ gint qq_get_face_img(QQInfo *info, QQFaceImg *img, GError **err)
     }
 
     send_request(con, req);
-    rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
     close_con(con);
     connection_free(con);
 
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret_code = -1;
+		goto error;
+	}
+		
     const gchar *retstatus = rps -> status -> str;
     if(g_strstr_len(retstatus, -1, "200") == NULL){
         /*
