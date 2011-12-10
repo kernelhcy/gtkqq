@@ -240,6 +240,7 @@ static void signal_default_handler(gpointer instance
 static void gqq_config_init(GQQConfig *self)
 {
     GString *cfgdir = g_string_new (g_get_home_dir ());
+    g_string_append (cfgdir, "/.gtkqq");
     if(!g_file_test(cfgdir->str, G_FILE_TEST_EXISTS
        && -1 == g_mkdir(cfgdir->str, 0777)){
         g_error("Create config dir %s error!(%s, %d)"
