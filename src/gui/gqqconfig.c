@@ -239,17 +239,24 @@ static void signal_default_handler(gpointer instance
 }
 static void gqq_config_init(GQQConfig *self)
 {
-
-    if(!g_file_test(CONFIGDIR, G_FILE_TEST_EXISTS) 
-       && -1 == g_mkdir(CONFIGDIR, 0777)){
+    GString *cfgdir = g_string_new (g_get_home_dir ());
+    if(!g_file_test(cfgdir->str, G_FILE_TEST_EXISTS
+       && -1 == g_mkdir(cfgdir->str, 0777)){
         g_error("Create config dir %s error!(%s, %d)"
-                , CONFIGDIR, __FILE__, __LINE__);
-    }
-    if(!g_file_test(CONFIGDIR"/faces", G_FILE_TEST_EXISTS) 
-       && -1 == g_mkdir(CONFIGDIR"/faces", 0777)){
+                , cfgdir->str, __FILE__, __LINE__);
+    }) 
+    
+    GString *facedir = g_string_new (cfgdir->str);
+    g_string_free (cfgdir, FALSE);
+    
+    g_string_append (facedir, "/faces");
+    if(!g_file_test (facedir->str, G_FILE_TEST_EXISTS) 
+       && -1 == g_mkdir(facedir->str, 0777)){/* FIXME!!! 0777 is not safe enough! */
         g_error("Create config dir %s error!(%s, %d)"
-                , CONFIGDIR"/faces", __FILE__, __LINE__);
+                , facedir->str, __FILE__, __LINE__);
     }
+    
+    g_string_free (facedir, TRUE);
     GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(self
                                                       , GQQ_TYPE_CONFIG, GQQConfigPriv);
 
