@@ -157,7 +157,6 @@ static gint get_vc_image(QQInfo *info)
 	}
 	gint ret = 0;
 	gchar params[500];
-	gint res = 0;
 
 	Request *req = request_new();
 	Response *rps = NULL;
@@ -179,7 +178,7 @@ static gint get_vc_image(QQInfo *info)
 	}
 
 	send_request(con, req);
-	res = rcv_response(con, &rps);
+	rcv_response(con, &rps);
 	close_con(con);
 	connection_free(con);
 	const gchar *retstatus = rps -> status -> str;
