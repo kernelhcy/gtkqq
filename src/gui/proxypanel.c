@@ -225,59 +225,73 @@ const char proxy_xml[] =
 
 
 const char * success_xml=
-    "<?xml version=\"1.0\"?>\n"
-    "<interface>\n"
-    "<!-- interface-requires gtk+ 2.24 -->\n"
-    "<!-- interface-naming-policy project-wide -->\n"
-    "<object class=\"GtkAboutDialog\" id=\"successdialog\">\n"
-    "<property name=\"can_focus\">False</property>\n"
-    "<property name=\"border_width\">5</property>\n"
-    "<property name=\"type_hint\">dialog</property>\n"
-    "<property name=\"program_name\">Success</property>\n"
-    "<child internal-child=\"vbox\">\n"
-    "<object class=\"GtkVBox\" id=\"dialog-vbox1\">\n"
-    "<property name=\"visible\">True</property>\n"
-    "<property name=\"can_focus\">False</property>\n"
-    "<property name=\"spacing\">2</property>\n"
-    "<child internal-child=\"action_area\">\n"
-    "<object class=\"GtkHButtonBox\" id=\"dialog-action_area1\">\n"
-    "<property name=\"visible\">True</property>\n"
-    "<property name=\"can_focus\">False</property>\n"
-    "<property name=\"layout_style\">end</property>\n"
-    "<signal handler=\"gtk_widget_destroy\" name=\"button_press_event\" swapped=\"no\"/>\n"
-    "</object>\n"
-    "<packing>\n"
-    "<property name=\"expand\">False</property>\n"
-    "<property name=\"fill\">True</property>\n"
-    "<property name=\"pack_type\">end</property>\n"
-    "<property name=\"position\">0</property>\n"
-    "</packing>\n"
-    "</child>\n"
-    "<child>\n"
-    "<object class=\"GtkEntry\" id=\"entry1\">\n"
-    "<property name=\"visible\">True</property>\n"
-    "<property name=\"sensitive\">False</property>\n"
-    "<property name=\"can_focus\">False</property>\n"
-    "<property name=\"editable\">False</property>\n"
-    "<property name=\"invisible_char\">&#x25CF;</property>\n"
-    "<property name=\"text\" translatable=\"yes\">Connection success</property>\n"
-    "<property name=\"primary_icon_activatable\">False</property>\n"
-    "<property name=\"secondary_icon_activatable\">False</property>\n"
-    "<property name=\"primary_icon_sensitive\">True</property>\n"
-    "<property name=\"secondary_icon_sensitive\">True</property>\n"
-    "</object>\n"
-    "<packing>\n"
-    "<property name=\"expand\">True</property>\n"
-    "<property name=\"fill\">True</property>\n"
-    "<property name=\"position\">2</property>\n"
-    "</packing>\n"
-    "</child>\n"
-    "</object>\n"
-    "</child>\n"
-    "</object>\n"
-    "</interface>\n";
+    "<?xml version=\"1.0\"?>"
+    "<interface>"
+    "<!-- interface-requires gtk+ 2.24 -->"
+    "<!-- interface-naming-policy project-wide -->"
+    "<object class=\"GtkMessageDialog\" id=\"successdialog\">"
+    "<property name=\"can_focus\">False</property>"
+    "<property name=\"border_width\">5</property>"
+    "<property name=\"type_hint\">dialog</property>"
+    "<property name=\"skip_taskbar_hint\">True</property>"
+    "<child internal-child=\"vbox\">"
+    "<object class=\"GtkVBox\" id=\"dialog-vbox1\">"
+    "<property name=\"visible\">True</property>"
+    "<property name=\"can_focus\">False</property>"
+    "<property name=\"spacing\">2</property>"
+    "<child internal-child=\"action_area\">"
+    "<object class=\"GtkHButtonBox\" id=\"dialog-action_area1\">"
+    "<property name=\"visible\">True</property>"
+    "<property name=\"can_focus\">False</property>"
+    "<property name=\"layout_style\">end</property>"
+    "<child>"
+    "<placeholder/>"
+    "</child>"
+    "<child>"
+    "<object class=\"GtkButton\" id=\"close_btn\">"
+    "<property name=\"label\" translatable=\"yes\">Close</property>"
+    "<property name=\"visible\">True</property>"
+    "<property name=\"can_focus\">True</property>"
+    "<property name=\"receives_default\">True</property>"
+    "<property name=\"use_action_appearance\">False</property>"
+    "</object>"
+    "<packing>"
+    "<property name=\"expand\">False</property>"
+    "<property name=\"fill\">False</property>"
+    "<property name=\"position\">1</property>"
+    "</packing>"
+    "</child>"
+    "</object>"
+    "<packing>"
+    "<property name=\"expand\">False</property>"
+    "<property name=\"fill\">True</property>"
+    "<property name=\"pack_type\">end</property>"
+    "<property name=\"position\">0</property>"
+    "</packing>"
+    "</child>"
+    "<child>"
+    "<object class=\"GtkEntry\" id=\"entry1\">"
+    "<property name=\"visible\">True</property>"
+    "<property name=\"can_focus\">True</property>"
+    "<property name=\"invisible_char\">&#x25CF;</property>"
+    "<property name=\"text\" translatable=\"yes\">Connection Success!!!</property>"
+    "<property name=\"primary_icon_activatable\">False</property>"
+    "<property name=\"secondary_icon_activatable\">False</property>"
+    "<property name=\"primary_icon_sensitive\">True</property>"
+    "<property name=\"secondary_icon_sensitive\">True</property>"
+    "</object>"
+    "<packing>"
+    "<property name=\"expand\">True</property>"
+    "<property name=\"fill\">True</property>"
+    "<property name=\"position\">2</property>"
+    "</packing>"
+    "</child>"
+    "</object>"
+    "</child>"
+    "</object>"
+    "</interface>";
 
-const char * fail_xml=
+    const char * fail_xml=
     "<?xml version=\"1.0\"?>\n"
     "<interface>\n"
     "<!-- interface-requires gtk+ 2.24 -->\n"
@@ -362,7 +376,7 @@ const gchar * password_text;
 void set_proxy_btn_cb(GtkButton *btn, gpointer data)
 {
     /*  
-    */
+     */
     GtkBuilder      *builder;
     GtkWidget       *window;
     GError *err = NULL;
@@ -438,6 +452,12 @@ void set_proxy_btn_cb(GtkButton *btn, gpointer data)
     gtk_widget_show_all(window);             
 }
 
+static void on_close_cb(GtkButton * btn, gpointer data)
+{
+    g_debug("close widget ... (%s,%d)", __FILE__ ,__LINE__);
+    GtkWidget * window = GTK_WIDGET(data);
+    gtk_widget_destroy (window);
+}
 
 void on_click_detect_cb(GtkButton *btn, gpointer data)
 {
@@ -472,6 +492,9 @@ void on_click_detect_cb(GtkButton *btn, gpointer data)
             {
                 g_debug("can not get widget...(%s,%d)",__FILE__, __LINE__);
             }
+            GtkWidget * close_btn = GTK_WIDGET(gtk_builder_get_object(builder, "close_btn"));
+            g_signal_connect(G_OBJECT(close_btn), "clicked", G_CALLBACK(on_close_cb),window);
+           
             g_object_unref (G_OBJECT (builder));            
             gtk_widget_show_all(window);     
         }
@@ -486,7 +509,11 @@ void on_click_detect_cb(GtkButton *btn, gpointer data)
                 g_debug("builder load fail...(%s,%d)",  __FILE__ , __LINE__);
                 g_error_free(err); 
             }
-            window = GTK_WIDGET (gtk_builder_get_object (builder, "connection_fail"));    
+            window = GTK_WIDGET (gtk_builder_get_object (builder, "connection_fail"));
+
+            GtkWidget * close_btn = GTK_WIDGET(gtk_builder_get_object(builder, "close_btn"));
+            g_signal_connect(G_OBJECT(close_btn), "clicked", G_CALLBACK(on_close_cb),window);
+            
             g_object_unref (G_OBJECT (builder));            
             gtk_widget_show_all(window);     
             gtk_entry_set_text( (GtkEntry*)ip_entry, "");
