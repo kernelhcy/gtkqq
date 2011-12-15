@@ -272,7 +272,7 @@ const char * success_xml=
     "<child>"
     "<object class=\"GtkEntry\" id=\"entry1\">"
     "<property name=\"visible\">True</property>"
-    "<property name=\"can_focus\">True</property>"
+    "<property name=\"can_focus\">False</property>"
     "<property name=\"invisible_char\">&#x25CF;</property>"
     "<property name=\"text\" translatable=\"yes\">Connection Success!!!</property>"
     "<property name=\"primary_icon_activatable\">False</property>"
