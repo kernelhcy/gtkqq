@@ -46,6 +46,10 @@ AC_ARG_ENABLE(debug,
         [ --enable-debug turn on debug],
         CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb")
 
+AC_ARG_ENABLE(unity,
+        [ --enable-unity build on ubuntu unity],
+        CFLAGS="$CFLAGS -DUSE_UNITY")
+		
 #AC_ARG_ENABLE(libnotify,
 #              AS_HELP_STRING([--enable-libnotify],
 #                             [Enable libnotify support (used to show message\
