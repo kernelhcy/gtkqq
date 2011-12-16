@@ -323,7 +323,13 @@ static void qq_chatwidget_init(QQChatWidget *widget)
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win)
                                         , GTK_SHADOW_ETCHED_IN);
     gtk_container_add(GTK_CONTAINER(scrolled_win), priv -> input_textview);
-    gtk_box_pack_start(GTK_BOX(widget), scrolled_win, FALSE, FALSE, 0); 
+#ifndef USE_UNITY
+    gtk_box_pack_start(GTK_BOX(widget), scrolled_win, FALSE, FALSE, 0);
+#else
+	/* On ubuntu unity, there is a fuck bug if we pack the textview
+	 with the argument FALSE, FALSE, it cant be shown, how fuck it is. */
+	gtk_box_pack_start(GTK_BOX(widget), scrolled_win, TRUE, TRUE, 0);
+#endif	/* USE_UNITY */
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(priv -> input_textview)
                                                 , GTK_WRAP_CHAR);
 
