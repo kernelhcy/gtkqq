@@ -10,7 +10,10 @@
 #include <glib/gprintf.h>
 
 #include <zlib.h>
+
+#ifdef USE_PROXY
 #include <qqproxy.h>
+#endif
 
 Connection* connection_new()
 {
@@ -30,51 +33,54 @@ void connection_free(Connection *con)
 
 Connection* connect_to_host(const char *hostname, int port)
 {
-    /* if(NULL == hostname){ */
-    /*     return NULL; */
-    /* } */
-    /* int sockfd = -1, err; */
-    /* struct addrinfo *ailist = NULL, *aip = NULL; */
-    /* struct addrinfo hint; */
+#ifdef USE_PROXY
+	int sockfd = get_authenticated_socket(hostname, port);
+#else
+    if(NULL == hostname){
+        return NULL;
+    }
+    int sockfd = -1, err;
+    struct addrinfo *ailist = NULL, *aip = NULL;
+    struct addrinfo hint;
     
-    /* memset(&hint, 0, sizeof(hint)); */
-    /* hint.ai_socktype = SOCK_STREAM; */
+    memset(&hint, 0, sizeof(hint));
+    hint.ai_socktype = SOCK_STREAM;
     
-    /* if((err = getaddrinfo(hostname, NULL, &hint, &ailist)) != 0){ */
-    /*     g_warning("Can't get the address information of %s (%s, %d)" */
-    /*             ,hostname , __FILE__, __LINE__); */
-    /*     return NULL; */
-    /* } */
+    if((err = getaddrinfo(hostname, NULL, &hint, &ailist)) != 0){
+        g_warning("Can't get the address information of %s (%s, %d)"
+                ,hostname , __FILE__, __LINE__);
+        return NULL;
+    }
     
-    /* struct sockaddr_in *sinp; */
+    struct sockaddr_in *sinp;
     
-    /* for(aip = ailist; aip != NULL; aip = aip -> ai_next){ */
+    for(aip = ailist; aip != NULL; aip = aip -> ai_next){
         
-    /*     if((sockfd =socket(aip -> ai_family, SOCK_STREAM, 0)) < 0){ */
-    /*         g_warning("Can't create a socket.(%s, %d)" */
-    /*                 , __FILE__, __LINE__); */
-    /*         return NULL; */
-    /*     } */
+        if((sockfd =socket(aip -> ai_family, SOCK_STREAM, 0)) < 0){
+            g_warning("Can't create a socket.(%s, %d)"
+                    , __FILE__, __LINE__);
+            return NULL;
+        }
         
-    /*     sinp = (struct sockaddr_in *)aip -> ai_addr; */
-    /*     /\* */
-    /*      * the http protocol uses port 80 */
-    /*      *\/ */
-    /*     sinp -> sin_port = htons((gint16)port); */
+        sinp = (struct sockaddr_in *)aip -> ai_addr;
+        /*
+         * the http protocol uses port 80
+         */
+        sinp -> sin_port = htons((gint16)port);
         
-    /*     if(connect(sockfd,aip -> ai_addr, aip -> ai_addrlen) < 0){ */
-    /*         close(sockfd); */
-    /*         sockfd = -1; */
-    /*         g_warning("Can't connect to the server.(%s, %d)" */
-    /*                 , __FILE__, __LINE__); */
-    /*         continue; */
-    /*     } */
-    /*     //connect to the host success. */
-    /*     break; */
-    /* } */
-    /* freeaddrinfo(ailist); */
-
-    int sockfd = get_authenticated_socket(hostname, port);
+        if(connect(sockfd,aip -> ai_addr, aip -> ai_addrlen) < 0){
+            close(sockfd);
+            sockfd = -1;
+            g_warning("Can't connect to the server.(%s, %d)"
+                    , __FILE__, __LINE__);
+            continue;
+        }
+        //connect to the host success.
+        break;
+    }
+    freeaddrinfo(ailist);
+#endif	/* USE_PROXY */
+	
     Connection *con = connection_new();
     con -> fd = sockfd;
     
