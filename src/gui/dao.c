@@ -76,10 +76,20 @@ static gint create_tables(sqlite3 *db)
 
 sqlite3* db_open()
 {
+    /* get config dir path. you needn't to free the home dir buffer. it's static */
+    /* maybe this patch it's dirty. if you think so please change this. */
+    GString *dbpath = g_string_new (g_get_home_dir ());
+    g_string_append (dbpath, "/.gtkqq/gtkqq.db");
+    
+    /* -- */
     sqlite3 *db;
-    g_debug("Open db connection to "CONFIGDIR"gtkqq.db (%s, %d)"
+    g_debug("Open db connection (%s, %d)"
                                         , __FILE__, __LINE__);
-    gint retcode = sqlite3_open(CONFIGDIR"gtkqq.db", &db);
+    gint retcode = sqlite3_open(dbpath->str, &db);
+    
+    /* {{ free GString */
+    g_string_free (dbpath, TRUE);
+    /* }} */
     if(retcode != SQLITE_OK){
         if(retcode == SQLITE_NOMEM){
             g_error("Open database error. no memory. (%s, %d)", __FILE__, __LINE__);
