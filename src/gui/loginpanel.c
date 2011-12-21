@@ -8,7 +8,9 @@
 #include <msgloop.h>
 #include <msgdispacher.h>
 #include <string.h>
+#ifdef USE_PROXY
 #include <proxypanel.h>
+#endif	/* USE_PROXY */
 /*
  * The global value
  * in main.c
@@ -427,11 +429,13 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
         qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
     }
+#ifdef USE_PROXY
     //proxy setting
     obj -> set_proxy_btn = gtk_button_new_with_label("Network");
     gtk_widget_set_size_request(obj -> set_proxy_btn, 100, -1);
     g_signal_connect(G_OBJECT(obj -> set_proxy_btn), "clicked"
                      , G_CALLBACK(set_proxy_btn_cb), (gpointer)obj);
+#endif	/* USE_PROXY */
     
     GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);
@@ -442,9 +446,12 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(hbox2), obj -> login_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox3), hbox2, TRUE, FALSE, 0);
 
+#ifdef USE_PROXY
     GtkWidget *hbox_proxy_setting = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox_proxy_setting), GTK_BUTTONBOX_CENTER);
     gtk_box_pack_start(GTK_BOX(hbox_proxy_setting), obj -> set_proxy_btn, FALSE, FALSE, 0);
+#endif	/* USE_PROXY */
+	
     //error informatin label
     obj -> err_label = gtk_label_new("");
     GdkColor color;
@@ -459,8 +466,10 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(vbox), hbox2, TRUE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox3, FALSE, FALSE, 0);
-    
+
+#ifdef USE_PROXY
     gtk_box_pack_start(GTK_BOX(vbox), hbox_proxy_setting, TRUE, TRUE, 10);
+#endif	/* USE_PROXY */
     
     gtk_box_set_homogeneous(GTK_BOX(obj), FALSE);
     GtkWidget *logo = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
