@@ -49,6 +49,10 @@ AC_ARG_ENABLE(debug,
 AC_ARG_ENABLE(unity,
         [ --enable-unity build on ubuntu unity],
         CFLAGS="$CFLAGS -DUSE_UNITY")
+
+AC_ARG_ENABLE(proxy,
+        [ --enable-proxy build on ubuntu unity],
+        CFLAGS="$CFLAGS -DUSE_PROXY")		
 		
 #AC_ARG_ENABLE(libnotify,
 #              AS_HELP_STRING([--enable-libnotify],
