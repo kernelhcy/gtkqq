@@ -356,6 +356,7 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
     switch(bdy -> client_type)
     {
     case 1:
+		gtk_tree_store_set(store, iter, BDY_TYPE, NULL, -1);
         break;
     case 21:
         g_snprintf(buf, 500, "%s/phone.png", IMGDIR);

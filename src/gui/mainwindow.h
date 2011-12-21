@@ -44,4 +44,13 @@ void qq_mainwindow_show_hide(GtkWidget *win);
 void qq_mainwindow_show_loginpanel(GtkWidget *win);
 void qq_mainwindow_show_splashpanel(GtkWidget *win);
 void qq_mainwindow_show_mainpanel(GtkWidget *win);
+
+/** 
+ * Get the main panel accoss main window.
+ * 
+ * @param win The main window.
+ * 
+ * @return 
+ */
+GtkWidget *qq_mainwindow_get_mainpanel(GtkWidget *win);
 #endif

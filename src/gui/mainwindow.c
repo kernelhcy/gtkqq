@@ -173,3 +173,12 @@ void qq_mainwindow_show_mainpanel(GtkWidget *win)
                 QQ_MAINWINDOW(win) -> notebook), 2);
 }
 
+GtkWidget *qq_mainwindow_get_mainpanel(GtkWidget *win)
+{
+	if (!win)
+		return NULL;
+	
+	QQMainWindow *mainwin = (QQMainWindow *)win;
+
+	return mainwin->main_panel;
+}
