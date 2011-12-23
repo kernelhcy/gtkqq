@@ -67,7 +67,7 @@ static void qq_tray_blinking(QQTray *tray, const gchar *uin)
     if(bdy == NULL){
         g_snprintf(buf, 500, IMGDIR"/webqq_icon.png%s", "");
     }else{
-        g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
+		g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, bdy -> qqnumber -> str);
     }
     pb = gdk_pixbuf_new_from_file(buf, NULL);
     if(pb == NULL){
@@ -149,7 +149,7 @@ static gboolean qq_tray_on_show_tooltip(GtkWidget* widget
         return TRUE;
     }
     gchar buf[500];
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", info -> me -> qqnumber -> str);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, info -> me -> qqnumber -> str);
     pb = gdk_pixbuf_new_from_file_at_size(buf, 35, 35, NULL);
     gtk_tooltip_set_icon(tip, pb);
     g_object_unref(pb);

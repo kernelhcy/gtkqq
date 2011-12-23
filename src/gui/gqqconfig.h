@@ -130,4 +130,22 @@ gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name);
 gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
                                         , gchar *key
                                         , gpointer value);
+
+/** 
+ * Get user's config directory.
+ * 
+ * 
+ * @return 
+ */
+gchar *gqq_config_get_cfgdir();
+#define QQ_CFGDIR gqq_config_get_cfgdir()
+
+/** 
+ * Get user' face directory.
+ * 
+ * 
+ * @return 
+ */
+gchar *gqq_config_get_facedir();
+#define QQ_FACEDIR gqq_config_get_facedir()
 #endif

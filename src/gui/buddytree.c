@@ -148,7 +148,7 @@ static GdkPixbuf* create_face_image(const gchar *num, gint width, gint height)
 {
     gchar buf[500];
     GError *err = NULL;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", num);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, num);
     GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, width, height, &err);
     if(pb == NULL){
         g_error_free(err);

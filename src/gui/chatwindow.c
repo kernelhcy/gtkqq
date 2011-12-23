@@ -334,7 +334,7 @@ static void qq_chatwindow_setter(GObject *object, guint property_id,
     g_snprintf(buf, 500, "<b>%s</b>", bdy -> lnick -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> lnick_label), buf);
     // set face image
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, bdy -> qqnumber -> str);
     pb= gdk_pixbuf_new_from_file_at_size(buf, 35, 35, NULL);
     if(pb == NULL){
         pb= gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"

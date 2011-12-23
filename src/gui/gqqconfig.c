@@ -727,3 +727,39 @@ gint gqq_config_save_group(GQQConfig *cfg, QQGroup *grp)
 
     return -1;
 }
+
+/** 
+ * Get user's config directory.
+ * 
+ * 
+ * @return 
+ */
+gchar *gqq_config_get_cfgdir()
+{
+	static GString *cfgdir = NULL;
+
+	if (!cfgdir){
+		cfgdir = g_string_new(g_get_home_dir());
+		g_string_append(cfgdir, "/.gtkqq");
+	}
+
+	return cfgdir->str;
+}
+
+/** 
+ * Get user' face directory.
+ * 
+ * 
+ * @return 
+ */
+gchar *gqq_config_get_facedir()
+{
+	static GString *facedir = NULL;
+
+	if (!facedir){
+		facedir = g_string_new(gqq_config_get_cfgdir());
+		g_string_append(facedir, "/faces");
+	}
+
+	return facedir->str;
+}
