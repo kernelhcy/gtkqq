@@ -271,20 +271,42 @@ void qq_chat_textview_add_recv_message(GtkWidget *widget, QQRecvMsg *msg)
         return;
     }
 
-    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, msg -> from_uin -> str);
-    const gchar *name = NULL;
-    if(bdy == NULL){
-        name = msg -> from_uin -> str;
-    }else{
-        name = bdy -> markname -> str;
-        if(bdy -> markname -> len <= 0){
-            name = bdy -> nick -> str;
-        }
-    }
+	QQGMember *mb = NULL;
+	QQGroup *gp = NULL;
+	GString *code = msg->group_code;
+	gchar *name = NULL;
+	if (code && code->len > 0) {
+		/**
+		 * Obviously, it's a group msg if there is a group_code.
+		 * 
+		 */
+		gp = qq_info_lookup_group_by_code(info, code->str);
+		if (!gp) {
+			name = msg -> from_uin -> str;
+		} else {
+			mb = qq_group_lookup_member_by_uin(gp, msg->send_uin->str);
+			if (mb)
+				name = mb->nick->str;
+			else
+				name = msg->from_uin->str;
+		}
+			
+	} else {
+	    QQBuddy *bdy = qq_info_lookup_buddy_by_uin(info, msg -> from_uin -> str);
+		const gchar *name = NULL;
+		if(bdy == NULL){
+			name = msg -> from_uin -> str;
+		}else{
+			name = bdy -> markname -> str;
+			if(bdy -> markname -> len <= 0){
+				name = bdy -> nick -> str;
+			}
+		}	
+	}
     qq_chat_textview_add_message(QQ_CHAT_TEXTVIEW(widget)
-                                , name
-                                , msg -> contents, msg -> time -> str
-                                , "blue");
+								 , name
+								 , msg -> contents, msg -> time -> str
+								 , "blue");
 }
 
 void qq_chat_textview_add_face(GtkWidget *widget, gint face)
