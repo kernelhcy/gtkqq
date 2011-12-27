@@ -269,7 +269,7 @@ static void read_verifycode(gpointer p)
         qq_mainwindow_show_loginpanel(w);
         return;
     }
-    sprintf(fn, CONFIGDIR"verifycode.%s", info -> vc_image_type -> str);
+    sprintf(fn, "%s/verifycode.%s", QQ_CFGDIR, info -> vc_image_type -> str);
     save_img_to_file(info -> vc_image_data -> str
                      , info -> vc_image_data -> len
                      , fn);
@@ -612,7 +612,7 @@ static gpointer get_buddy_face_thread_func(gpointer data)
     for(i = id; i < imgs -> len; i += t_num){
         img = g_ptr_array_index(imgs, i);
         qq_get_face_img(info, img, NULL);
-        g_snprintf(path, 500, CONFIGDIR"/faces/%s", img -> num -> str);
+		g_snprintf(path, 500, "%s/%s", QQ_FACEDIR, img -> num -> str);
         qq_save_face_img(img, path, NULL);
     }
     return NULL;

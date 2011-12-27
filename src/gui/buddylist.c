@@ -1,4 +1,5 @@
 #include <buddylist.h>
+#include <gqqconfig.h>
 
 extern QQInfo *info;
 
@@ -206,7 +207,7 @@ static void qq_buddy_list_set_buddy(GtkListStore *store, GtkTreeIter *iter
                         , -1);
     gchar buf[500];
     GdkPixbuf *pb = NULL;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", bdy -> qqnumber -> str);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, bdy -> qqnumber -> str);
     pb = gdk_pixbuf_new_from_file_at_size(buf, 22, 22, NULL);
     if(pb == NULL){
         pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/group.png"
@@ -254,7 +255,7 @@ static void qq_buddy_list_set_group(GtkListStore *store, GtkTreeIter *iter
                         , -1);
     gchar buf[500];
     GdkPixbuf *pb = NULL;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", grp -> gnumber -> str);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, grp -> gnumber -> str);
     pb = gdk_pixbuf_new_from_file_at_size(buf, 22, 22, NULL);
     if(pb == NULL){
         pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/group.png", 22, 22, NULL);
@@ -409,7 +410,7 @@ static void qq_buddy_list_set_group_member(GtkListStore *store
                         , -1);
     gchar buf[500];
     GdkPixbuf *pb = NULL;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", gm -> qqnumber -> str);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, gm -> qqnumber -> str);
     pb = gdk_pixbuf_new_from_file_at_size(buf, 22, 22, NULL);
     if(pb == NULL){
         pb = gdk_pixbuf_new_from_file_at_size(IMGDIR"/avatar.gif"

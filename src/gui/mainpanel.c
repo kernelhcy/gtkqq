@@ -493,7 +493,7 @@ static void update_my_face_image(QQMainPanel *panel)
     
     GError *err = NULL;
     gchar buf[500];
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", info -> me -> qqnumber -> str);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, info -> me -> qqnumber -> str);
     GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, 48, 48, &err);
     if(pb == NULL){
         g_debug("Load %s's face image error. use default. %s (%s, %d)"
