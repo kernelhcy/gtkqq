@@ -163,6 +163,11 @@ static gboolean qq_tray_on_show_tooltip(GtkWidget* widget
 //
 // Status menu item signal handler
 //
+static void qq_tray_mute_menu_item_activate(GtkMenuItem *item, gpointer data)
+{
+	
+}
+
 static void qq_tray_status_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     const gchar *status = data;
@@ -205,6 +210,10 @@ static void qq_tray_init(QQTray *tray)
     GtkWidget *menuitem;
 
     menuitem = gtk_check_menu_item_new_with_label("Mute");
+//	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(menuitem), TRUE);
+	g_signal_connect(G_OBJECT(menuitem), "activate"
+					 , G_CALLBACK(qq_tray_mute_menu_item_activate)
+					 , NULL);
     gtk_menu_shell_append(GTK_MENU_SHELL(priv -> popupmenu), menuitem);
 
     menuitem = gtk_separator_menu_item_new();

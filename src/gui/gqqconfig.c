@@ -30,6 +30,7 @@ typedef struct{
     GString *qqnum;     //current user's qq number
     GString *status;    //current user's status
 	gint rempw;		//whether remember password
+	gint mute;		//whether mute
 
     sqlite3 *db_con;    //database connection
     
@@ -49,6 +50,7 @@ enum{
     GQQ_CONFIG_PROPERTY_UIN,
     GQQ_CONFIG_PROPERTY_STATUS,
 	GQQ_CONFIG_PROPERTY_REMPW,
+	GQQ_CONFIG_PROPERTY_MUTE,
 };
 
 static void gqq_config_init(GQQConfig *self);
@@ -133,6 +135,9 @@ static void gqq_config_getter(GObject *object, guint property_id,
 		case GQQ_CONFIG_PROPERTY_REMPW:
 			priv -> rempw = g_value_get_int(value);
             break;
+		case GQQ_CONFIG_PROPERTY_MUTE:
+			priv -> mute = g_value_get_int(value);
+            break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
             break;
@@ -171,6 +176,9 @@ static void gqq_config_setter(GObject *object, guint property_id,
             break;
 		case GQQ_CONFIG_PROPERTY_REMPW:
 			priv -> rempw = g_value_get_int(value);
+            break;
+		case GQQ_CONFIG_PROPERTY_MUTE:
+			priv -> mute = g_value_get_int(value);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -273,6 +281,7 @@ static void gqq_config_init(GQQConfig *self)
     priv -> qqnum = g_string_new(NULL);
     priv -> status = g_string_new(NULL);
 	priv -> rempw = 0;
+	priv -> mute = 0;
     priv -> db_con = db_open();
     priv -> ht_ht = g_hash_table_new_full(g_str_hash, g_str_equal
                                           , g_free, NULL);
@@ -353,6 +362,17 @@ static void gqq_config_class_init(GQQConfigClass *klass, gpointer data)
     g_object_class_install_property(G_OBJECT_CLASS(klass)
                                     , GQQ_CONFIG_PROPERTY_REMPW, pspec);
 
+	//install the mute property
+    pspec = g_param_spec_int("mute"
+                                , "mute"
+                                , "Whather mute."
+                                , 0
+							 	, 1
+							 	, 0
+                                , G_PARAM_READABLE | G_PARAM_WRITABLE);
+    g_object_class_install_property(G_OBJECT_CLASS(klass)
+                                    , GQQ_CONFIG_PROPERTY_MUTE, pspec);
+
 }
 
 //
@@ -428,7 +448,7 @@ gint gqq_config_save_last_login_user(GQQConfig *cfg)
     if(priv -> qqnum -> len > 0){
         db_update_all(priv -> db_con, "qquser", "last", "0");
         db_qquser_save(priv -> db_con, priv -> qqnum -> str, priv -> passwd -> str
-                       , priv -> status -> str, 1, priv->rempw); 
+                       , priv -> status -> str, 1, priv->rempw, priv->mute); 
     }
     return 0;
 }

@@ -47,7 +47,7 @@ gint db_clear_table(sqlite3 *db, const gchar *table
 // Store qq user into db
 //
 gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
-					, const gchar *status, gint last, gint rempw);
+					, const gchar *status, gint last, gint rempw, gint mute);
 
 //
 // Store key:value into db
