@@ -973,7 +973,7 @@ QQGMember* qq_group_lookup_member_by_uin(QQGroup *grp, const gchar *uin)
     QQGMember *gmem;
     for(i = 0; i < grp -> members -> len; ++i){
         gmem = g_ptr_array_index(grp -> members, i);
-        if(gmem){
+        if(!gmem){
             continue;
         }
         if(g_strcmp0(uin, gmem -> uin -> str) == 0){

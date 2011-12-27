@@ -77,9 +77,13 @@ static gint create_tables(sqlite3 *db)
 sqlite3* db_open()
 {
     sqlite3 *db;
-    g_debug("Open db connection to "CONFIGDIR"gtkqq.db (%s, %d)"
-                                        , __FILE__, __LINE__);
-    gint retcode = sqlite3_open(CONFIGDIR"gtkqq.db", &db);
+	gchar dbfile[1024] = {0};
+
+	g_snprintf(dbfile, sizeof(dbfile), "%s/gtkqq.db", QQ_CFGDIR);
+		
+    g_debug("Open db connection to %s (%s, %d)"
+			, dbfile, __FILE__, __LINE__);
+    gint retcode = sqlite3_open(dbfile, &db);
     if(retcode != SQLITE_OK){
         if(retcode == SQLITE_NOMEM){
             g_error("Open database error. no memory. (%s, %d)", __FILE__, __LINE__);
