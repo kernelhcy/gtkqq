@@ -2,6 +2,7 @@
 #include <mainpanel.h>
 #include <mainwindow.h>
 #include <qq.h>
+#include <tray.h>
 #include <gqqconfig.h>
 #include <stdlib.h>
 #include <statusbutton.h>
@@ -19,6 +20,7 @@
 
 extern QQInfo *info;
 extern GQQConfig *cfg;
+extern QQTray *tray;
 
 extern GQQMessageLoop *get_info_loop;
 extern GQQMessageLoop *send_loop;
@@ -302,6 +304,27 @@ static void read_verifycode(gpointer p)
     run_login_state_machine(panel);
 }
 
+/* Get the current login user */
+static GQQLoginUser *get_current_login_user(GPtrArray* all_users)
+{
+	if (!all_users)
+		return NULL;
+	
+    gint i;
+    GQQLoginUser *usr = NULL;
+    for(i = 0; i < login_users -> len; ++i){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
+        if (!usr) {
+            continue;
+        }
+        if(TRUE == usr->last){
+            break;
+        }
+    }
+	
+	return usr;
+}
+
 /*
  * Callback of login_btn button
  */
@@ -334,6 +357,11 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     qq_buddy_set(info -> me, "uin", panel -> uin);
     qq_buddy_set(info -> me, "status", panel -> status);
 
+	/* Set mute status */
+	GQQLoginUser *usr = get_current_login_user(login_users);
+	if (usr)
+		qq_tray_set_mute_item(tray, usr->mute);
+	
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
     gqq_config_save_last_login_user(cfg);

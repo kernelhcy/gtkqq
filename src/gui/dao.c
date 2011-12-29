@@ -223,7 +223,7 @@ gint db_get_all_users(sqlite3 *db, GPtrArray **result)
                         , (const gchar *)sqlite3_column_text(stmt, 0), 100);
             usr -> last = sqlite3_column_int(stmt, 1);
 			usr -> rempw = sqlite3_column_int(stmt, 4);
-			usr -> mute = sqlite3_column_int(stmt, 4);
+			usr -> mute = sqlite3_column_int(stmt, 5);
             decode_passwed = (gchar *)g_base64_decode(
                                 (const gchar *)sqlite3_column_text(stmt, 2)
                                 , &out_len);
@@ -248,6 +248,42 @@ out_label:
     *result = re;
     sqlite3_finalize(stmt);
     return retcode;
+}
+
+/** 
+ * Update qq user's config
+ * 
+ * @param db 
+ * @param qqnumber User's qq number
+ * @param col 
+ * @param value 
+ * 
+ * @return 
+ */
+gint db_update_user(sqlite3 *db, const gchar *qqnumber,
+					const gchar *col, const gchar *value)
+{
+    if (!db) {
+        return SQLITE_ERROR;
+    }
+
+    if (!qqnumber || !col | !value) {
+        return SQLITE_OK;
+    }
+
+    gchar sql[500];
+    g_snprintf(sql, 500, "update qquser set %s=%s where qqnumber='%s';",
+			   col, value, qqnumber);
+
+    gchar *err = NULL;
+    sqlite3_exec(db, sql, NULL, NULL, &err);
+    if(err != NULL){
+        g_warning("SQL:(%s) error. %s (%s, %d)", sql, err, __FILE__, __LINE__);
+        sqlite3_free(err);
+        return SQLITE_ERROR;
+    }
+
+    return SQLITE_OK;
 }
 
 gint db_update_all(sqlite3 *db, const gchar *table

@@ -133,10 +133,10 @@ static void gqq_config_getter(GObject *object, guint property_id,
             g_value_set_static_string(value, priv -> qqnum -> str);
             break;
 		case GQQ_CONFIG_PROPERTY_REMPW:
-			priv -> rempw = g_value_get_int(value);
+			g_value_set_int(value, priv->rempw);
             break;
 		case GQQ_CONFIG_PROPERTY_MUTE:
-			priv -> mute = g_value_get_int(value);
+			g_value_set_int(value, priv->mute);
             break;
         default:
             G_OBJECT_WARN_INVALID_PROPERTY_ID(object, property_id, pspec);
@@ -782,4 +782,44 @@ gchar *gqq_config_get_facedir()
 	}
 
 	return facedir->str;
+}
+
+/** 
+ * Whether mute.
+ * 
+ * @param cfg 
+ * 
+ * @return TRUE if mute, else FALSE.
+ */
+gint gqq_config_is_mute(GQQConfig *cfg)
+{
+	gint mute = 0;
+
+	g_object_get(cfg, "mute", &mute, NULL);
+	return mute;
+}
+
+/** 
+ * Set the mute status.
+ * 
+ * @param cfg 
+ * @param mute TRUE if we want to mute else FALSE.
+ */
+void gqq_config_set_mute(GQQConfig *cfg, gint mute)
+{
+	const gchar *str = NULL;
+	
+	if (mute) {
+		str = "1";
+	} else {
+		str = "0";
+	}
+	
+	GQQConfigPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
+        cfg, gqq_config_get_type(), GQQConfigPriv);
+	
+    if (priv -> qqnum -> len > 0) {
+		db_update_user(priv->db_con, priv->qqnum->str, "mute", str);
+		g_object_set(cfg, "mute", mute, NULL);
+    }
 }
