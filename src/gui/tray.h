@@ -33,4 +33,13 @@ void qq_tray_blinking_for(QQTray *tray, const gchar *uin);
 // If some uin is waiting for blinking, blink it.
 //
 void qq_tray_stop_blinking_for(QQTray *tray, const gchar *uin);
+
+/** 
+ * Set mute item status, it usually called when user login.
+ * 
+ * @param tray 
+ * @param mute 
+ */
+void qq_tray_set_mute_item(QQTray *tray, gboolean mute);
+
 #endif

@@ -138,8 +138,10 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
     GQQMessageLoop *loop = data;
 
 #ifdef USE_GSTREAMER
-	/* Play a audio to notify that a new msg is coming. */
-	qq_sound_notify(msg);
+	/* Play a audio to notify that a new msg is coming if
+	 user dont set mute. */
+	if (!gqq_config_is_mute(cfg))
+		qq_sound_notify(msg);
 #endif // USE_GSTREAMER
 	
     switch(msg -> msg_type)

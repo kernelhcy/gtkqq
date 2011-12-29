@@ -18,6 +18,7 @@ typedef struct{
     GQueue *tmp_queue;          // tmp queue
 
     GtkWidget *popupmenu;       // popup menu
+	GtkWidget *mute_item;		/**< mute item. */
 }QQTrayPriv;
 
 static void qq_tray_init(QQTray *tray);
@@ -163,6 +164,32 @@ static gboolean qq_tray_on_show_tooltip(GtkWidget* widget
 //
 // Status menu item signal handler
 //
+static void qq_tray_mute_menu_item_activate(GtkMenuItem *item, gpointer data)
+{
+	gint mute = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(item));
+
+	if (mute)
+		g_print("Mute (%s, %d)\n", __FILE__, __LINE__);
+	
+	gqq_config_set_mute(cfg, mute);
+}
+
+/** 
+ * Set mute item status, it usually called when user login.
+ * 
+ * @param tray 
+ * @param mute 
+ */
+void qq_tray_set_mute_item(QQTray *tray, gboolean mute)
+{
+	QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
+												   , QQTrayPriv);
+
+	if (!priv)
+		return ;
+	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(priv->mute_item), mute);
+}
+
 static void qq_tray_status_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     const gchar *status = data;
@@ -205,6 +232,10 @@ static void qq_tray_init(QQTray *tray)
     GtkWidget *menuitem;
 
     menuitem = gtk_check_menu_item_new_with_label("Mute");
+	priv -> mute_item = menuitem;
+	g_signal_connect(G_OBJECT(menuitem), "activate"
+					 , G_CALLBACK(qq_tray_mute_menu_item_activate)
+					 , NULL);
     gtk_menu_shell_append(GTK_MENU_SHELL(priv -> popupmenu), menuitem);
 
     menuitem = gtk_separator_menu_item_new();
