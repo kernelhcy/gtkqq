@@ -349,7 +349,10 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     run_login_state_machine(panel);
 
     g_object_set(cfg, "qqnum", panel -> uin, NULL);
-    g_object_set(cfg, "passwd", panel -> passwd, NULL);
+	if (panel->rempw)
+		g_object_set(cfg, "passwd", panel -> passwd, NULL);
+	else
+		g_object_set(cfg, "passwd", "", NULL);
     g_object_set(cfg, "status", panel -> status, NULL);
 	g_object_set(cfg, "rempw", panel -> rempw, NULL);
 
@@ -513,8 +516,9 @@ static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data)
     if(idx < 0 || idx >= login_users -> len){
         return;
     }
-    GQQLoginUser *usr = (GQQLoginUser*)g_ptr_array_index(login_users, idx); 
-    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
+    GQQLoginUser *usr = (GQQLoginUser*)g_ptr_array_index(login_users, idx);
+	if (usr->rempw)
+		gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
     qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
     return;
 }
