@@ -89,8 +89,10 @@ static void qq_tray_popup_menu(GtkStatusIcon *tray, guint button
 {
     QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
                                                     , QQTrayPriv);
-    gtk_menu_popup(GTK_MENU(priv -> popupmenu), NULL, NULL, NULL
-                            , NULL, button, active_time);
+    gtk_menu_popup(GTK_MENU(priv -> popupmenu),
+                   NULL, NULL,
+                   gtk_status_icon_position_menu, tray, 
+                   button, active_time);
 }
 
 static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
