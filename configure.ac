@@ -207,6 +207,26 @@ Use --disable-gstreamer if you do not need GStreamer (sound) support.
 fi
 
 dnl #######################################################################
+dnl # Check for libnotify
+dnl #######################################################################
+dnl
+AC_ARG_ENABLE(libnotify, AS_HELP_STRING([--disable-libnotify],[compile without libnotify support]),,enable_libnotify=yes)
+
+if test "x$enable_libnotify" = "xyes"; then
+    PKG_CHECK_MODULES([LIBNOTIFY], [libnotify],enable_libnotify=yes,enable_libnotify=no)
+	AC_SUBST(LIBNOTIFY_CFLAGS)
+    AC_SUBST(LIBNOTIFY_LIBS)
+else
+    enable_libnotify=no
+fi
+
+if test "x$enable_libnotify" = "xyes"; then
+	AC_DEFINE(USE_LIBNOTIFY, 1, [Define if libnotify support is enabled])
+fi
+
+AM_CONDITIONAL(WITH_LIBNOTIFY, test "x$enable_libnotify" = "xyes")
+
+dnl #######################################################################
 dnl # Check for GStreamer Interfaces
 dnl #######################################################################
 if test "x$enable_gst" != "xno"; then
@@ -249,7 +269,7 @@ AC_CONFIG_FILES([Makefile
  		 pixmaps/Makefile)
 AC_OUTPUT
 
-#echo Use libnotify................. : $enable_libnotify
+echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
