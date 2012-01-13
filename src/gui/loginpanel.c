@@ -2,13 +2,16 @@
 #include <mainpanel.h>
 #include <mainwindow.h>
 #include <qq.h>
+#include <tray.h>
 #include <gqqconfig.h>
 #include <stdlib.h>
 #include <statusbutton.h>
 #include <msgloop.h>
 #include <msgdispacher.h>
 #include <string.h>
+#ifdef USE_PROXY
 #include <proxypanel.h>
+#endif	/* USE_PROXY */
 /*
  * The global value
  * in main.c
@@ -17,6 +20,7 @@
 
 extern QQInfo *info;
 extern GQQConfig *cfg;
+extern QQTray *tray;
 
 extern GQQMessageLoop *get_info_loop;
 extern GQQMessageLoop *send_loop;
@@ -267,7 +271,7 @@ static void read_verifycode(gpointer p)
         qq_mainwindow_show_loginpanel(w);
         return;
     }
-    sprintf(fn, CONFIGDIR"verifycode.%s", info -> vc_image_type -> str);
+    sprintf(fn, "%s/verifycode.%s", QQ_CFGDIR, info -> vc_image_type -> str);
     save_img_to_file(info -> vc_image_data -> str
                      , info -> vc_image_data -> len
                      , fn);
@@ -300,6 +304,27 @@ static void read_verifycode(gpointer p)
     run_login_state_machine(panel);
 }
 
+/* Get the current login user */
+static GQQLoginUser *get_current_login_user(GPtrArray* all_users)
+{
+	if (!all_users)
+		return NULL;
+	
+    gint i;
+    GQQLoginUser *usr = NULL;
+    for(i = 0; i < login_users -> len; ++i){
+        usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
+        if (!usr) {
+            continue;
+        }
+        if(TRUE == usr->last){
+            break;
+        }
+    }
+	
+	return usr;
+}
+
 /*
  * Callback of login_btn button
  */
@@ -324,7 +349,10 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     run_login_state_machine(panel);
 
     g_object_set(cfg, "qqnum", panel -> uin, NULL);
-    g_object_set(cfg, "passwd", panel -> passwd, NULL);
+	if (panel->rempw)
+		g_object_set(cfg, "passwd", panel -> passwd, NULL);
+	else
+		g_object_set(cfg, "passwd", "", NULL);
     g_object_set(cfg, "status", panel -> status, NULL);
 	g_object_set(cfg, "rempw", panel -> rempw, NULL);
 
@@ -332,6 +360,11 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     qq_buddy_set(info -> me, "uin", panel -> uin);
     qq_buddy_set(info -> me, "status", panel -> status);
 
+	/* Set mute status */
+	GQQLoginUser *usr = get_current_login_user(login_users);
+	if (usr)
+		qq_tray_set_mute_item(tray, usr->mute);
+	
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
     gqq_config_save_last_login_user(cfg);
@@ -427,11 +460,13 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, 0);
         qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
     }
+#ifdef USE_PROXY
     //proxy setting
     obj -> set_proxy_btn = gtk_button_new_with_label("Network");
     gtk_widget_set_size_request(obj -> set_proxy_btn, 100, -1);
     g_signal_connect(G_OBJECT(obj -> set_proxy_btn), "clicked"
                      , G_CALLBACK(set_proxy_btn_cb), (gpointer)obj);
+#endif	/* USE_PROXY */
     
     GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);
@@ -442,9 +477,12 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(hbox2), obj -> login_btn, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox3), hbox2, TRUE, FALSE, 0);
 
+#ifdef USE_PROXY
     GtkWidget *hbox_proxy_setting = gtk_hbutton_box_new();
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox_proxy_setting), GTK_BUTTONBOX_CENTER);
     gtk_box_pack_start(GTK_BOX(hbox_proxy_setting), obj -> set_proxy_btn, FALSE, FALSE, 0);
+#endif	/* USE_PROXY */
+	
     //error informatin label
     obj -> err_label = gtk_label_new("");
     GdkColor color;
@@ -459,8 +497,10 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(vbox), hbox2, TRUE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), hbox3, FALSE, FALSE, 0);
-    
+
+#ifdef USE_PROXY
     gtk_box_pack_start(GTK_BOX(vbox), hbox_proxy_setting, TRUE, TRUE, 10);
+#endif	/* USE_PROXY */
     
     gtk_box_set_homogeneous(GTK_BOX(obj), FALSE);
     GtkWidget *logo = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
@@ -476,8 +516,9 @@ static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data)
     if(idx < 0 || idx >= login_users -> len){
         return;
     }
-    GQQLoginUser *usr = (GQQLoginUser*)g_ptr_array_index(login_users, idx); 
-    gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
+    GQQLoginUser *usr = (GQQLoginUser*)g_ptr_array_index(login_users, idx);
+	if (usr->rempw)
+		gtk_entry_set_text(GTK_ENTRY(obj -> passwd_entry), usr -> passwd);
     qq_statusbutton_set_status_string(obj -> status_comb, usr -> status);
     return;
 }
@@ -603,7 +644,7 @@ static gpointer get_buddy_face_thread_func(gpointer data)
     for(i = id; i < imgs -> len; i += t_num){
         img = g_ptr_array_index(imgs, i);
         qq_get_face_img(info, img, NULL);
-        g_snprintf(path, 500, CONFIGDIR"/faces/%s", img -> num -> str);
+		g_snprintf(path, 500, "%s/%s", QQ_FACEDIR, img -> num -> str);
         qq_save_face_img(img, path, NULL);
     }
     return NULL;

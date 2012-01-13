@@ -1,3 +1,4 @@
+#include <stdlib.h>
 #include <msgdispacher.h>
 #include <gqqconfig.h>
 #include <chatwindow.h>
@@ -6,6 +7,8 @@
 #include <msgloop.h>
 #include <config.h>
 #include <sound.h>
+#include <mainpanel.h>
+#include <mainwindow.h>
 
 //
 // Global 
@@ -13,6 +16,7 @@
 extern QQTray *tray;
 extern QQInfo *info;
 extern GQQConfig *cfg;
+extern GtkWidget *main_win;
 
 #ifdef USE_GSTREAMER
 static void qq_sound_notify(QQRecvMsg *msg)
@@ -84,7 +88,40 @@ static void qq_poll_dispatch_group_msg(QQRecvMsg *msg)
 
 static void qq_poll_dispatch_status_changed_msg(QQRecvMsg *msg)
 {
+	GtkWidget *mainpanel = NULL;
+	const gchar *number = NULL;
+	const gchar *status = NULL;
+	const gchar *client_type = NULL;
+	QQBuddy *bdy = NULL;
 
+	/* Get the mainpanel object. */
+	mainpanel = qq_mainwindow_get_mainpanel(main_win);
+	if (!mainpanel)
+		return ;
+
+	/* Get number whose status has changed. */
+	bdy = qq_info_lookup_buddy_by_uin(info, msg->uin->str);
+	if (bdy->qqnumber->len <= 0)
+		return ;
+	number = bdy->qqnumber->str;
+
+	status = msg->status->str;
+	client_type = msg->client_type->str;
+	g_debug("Buddy %s is %s (%s, %d)\n", number, status, __FILE__, __LINE__);
+	
+	/* Find the buddy from the buddy list to update status. */
+	int i = 0;
+	for(i = 0; i < info -> buddies -> len; ++i){
+		bdy = (QQBuddy *)info -> buddies -> pdata[i];
+		if (bdy->qqnumber->len >0 && !g_strcmp0(bdy->qqnumber->str, number)) {
+			qq_buddy_set(bdy, "status", status);
+			qq_buddy_set(bdy, "client_type", atoi(client_type));
+			qq_mainpanel_update_online_buddies(QQ_MAINPANEL(mainpanel));
+			break;
+		} else  {
+			continue;
+		}
+	}
 }
 
 static void qq_poll_dispatch_kick_msg(QQRecvMsg *msg)
@@ -101,8 +138,10 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
     GQQMessageLoop *loop = data;
 
 #ifdef USE_GSTREAMER
-	/* Play a audio to notify that a new msg is coming. */
-	qq_sound_notify(msg);
+	/* Play a audio to notify that a new msg is coming if
+	 user dont set mute. */
+	if (!gqq_config_is_mute(cfg))
+		qq_sound_notify(msg);
 #endif // USE_GSTREAMER
 	
     switch(msg -> msg_type)

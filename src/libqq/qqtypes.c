@@ -97,6 +97,11 @@ void qq_info_free(QQInfo *info)
 
 QQBuddy* qq_info_lookup_buddy_by_uin(QQInfo *info, const gchar *uin)
 {
+	if (!uin) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		return NULL;
+	}
+	
     QQBuddy *bdy = (QQBuddy*)g_hash_table_lookup(info -> buddies_ht, uin);
     if(bdy == NULL){
         gint i;
@@ -114,6 +119,11 @@ QQBuddy* qq_info_lookup_buddy_by_uin(QQInfo *info, const gchar *uin)
 }
 QQBuddy* qq_info_lookup_buddy_by_number(QQInfo *info, const gchar *number)
 {
+	if (!number) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		return NULL;
+	}
+	
     QQBuddy *bdy = (QQBuddy*)g_hash_table_lookup(info -> buddies_number_ht
                                                             , number);
     if(bdy == NULL){
@@ -134,6 +144,11 @@ QQBuddy* qq_info_lookup_buddy_by_number(QQInfo *info, const gchar *number)
 
 QQGroup* qq_info_lookup_group_by_code(QQInfo *info, const gchar *code)
 {
+	if (!code) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		return NULL;
+	}
+	
     QQGroup *grp = (QQGroup*)g_hash_table_lookup(info -> groups_ht, code);
     if(grp == NULL){
         gint i;
@@ -150,6 +165,10 @@ QQGroup* qq_info_lookup_group_by_code(QQInfo *info, const gchar *code)
 }
 QQGroup* qq_info_lookup_group_by_number(QQInfo *info, const gchar *number)
 {
+	if (!number) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		return NULL;
+	}
     QQGroup *grp = (QQGroup*)g_hash_table_lookup(info -> groups_ht, number);
     if(grp == NULL){
         gint i;
@@ -954,7 +973,7 @@ QQGMember* qq_group_lookup_member_by_uin(QQGroup *grp, const gchar *uin)
     QQGMember *gmem;
     for(i = 0; i < grp -> members -> len; ++i){
         gmem = g_ptr_array_index(grp -> members, i);
-        if(gmem){
+        if(!gmem){
             continue;
         }
         if(g_strcmp0(uin, gmem -> uin -> str) == 0){

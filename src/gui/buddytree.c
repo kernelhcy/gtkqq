@@ -148,7 +148,7 @@ static GdkPixbuf* create_face_image(const gchar *num, gint width, gint height)
 {
     gchar buf[500];
     GError *err = NULL;
-    g_snprintf(buf, 500, CONFIGDIR"/faces/%s", num);
+	g_snprintf(buf, 500, "%s/%s", QQ_FACEDIR, num);
     GdkPixbuf *pb = gdk_pixbuf_new_from_file_at_size(buf, width, height, &err);
     if(pb == NULL){
         g_error_free(err);
@@ -356,6 +356,7 @@ static void tree_store_set_buddy_info(GtkTreeStore *store, QQBuddy *bdy, GtkTree
     switch(bdy -> client_type)
     {
     case 1:
+		gtk_tree_store_set(store, iter, BDY_TYPE, NULL, -1);
         break;
     case 21:
         g_snprintf(buf, 500, "%s/phone.png", IMGDIR);

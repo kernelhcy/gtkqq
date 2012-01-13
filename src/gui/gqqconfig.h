@@ -16,6 +16,7 @@ typedef struct __GQQLoginUser{
     gchar status[100];
     gint last;
 	gint rempw;
+	gint mute;
 }GQQLoginUser;
 
 #define GQQ_TYPE_CONFIG             (gqq_config_get_type())
@@ -130,4 +131,40 @@ gint gqq_config_clear_ht(GQQConfig *cfg, const gchar *name);
 gint gqq_config_insert_ht(GQQConfig *cfg, const gchar *name
                                         , gchar *key
                                         , gpointer value);
+
+/** 
+ * Get user's config directory.
+ * 
+ * 
+ * @return 
+ */
+gchar *gqq_config_get_cfgdir();
+#define QQ_CFGDIR gqq_config_get_cfgdir()
+
+/** 
+ * Get user' face directory.
+ * 
+ * 
+ * @return 
+ */
+gchar *gqq_config_get_facedir();
+#define QQ_FACEDIR gqq_config_get_facedir()
+
+/** 
+ * Whether mute.
+ * 
+ * @param cfg 
+ * 
+ * @return TRUE if mute, else FALSE.
+ */
+gint gqq_config_is_mute(GQQConfig *cfg);
+
+/** 
+ * Set the mute status.
+ * 
+ * @param cfg 
+ * @param mute 
+ */
+void gqq_config_set_mute(GQQConfig *cfg, gint mute);
+	
 #endif

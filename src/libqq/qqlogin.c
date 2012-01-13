@@ -44,16 +44,24 @@ static gint check_verify_code(QQInfo *info)
 {
 	g_debug("Check veriry code...(%s, %d)", __FILE__, __LINE__);
 	gint ret = 0;
-	gchar params[300];
+	gchar *params = NULL;
 
-	Request *req = request_new();
+	Request *req = NULL;
 	Response *rps = NULL;
 	int res = 0;
+
+	params = g_strdup_printf(VCCHECKPATH"?uin=%s&appid="APPID"&r=%.16f"
+							 , info -> me -> uin -> str, g_random_double());
+	if (!params)
+		return -1;
+	
+	req = request_new();
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, VCCHECKPATH"?uin=%s&appid="APPID"&r=%.16f"
-			, info -> me -> uin -> str, g_random_double());
+
 	request_set_uri(req, params);
+	g_free(params);
+	
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
 
@@ -156,16 +164,21 @@ static gint get_vc_image(QQInfo *info)
 		return PARAMETER_ERR;
 	}
 	gint ret = 0;
-	gchar params[500];
+	gint res = 0;
+	gchar *params = NULL;
 
+	params = g_strdup_printf(IMAGEPATH"?aid="APPID"&r=%.16f&uin=%s&vc_type=%s"
+							 , g_random_double(), info -> me -> uin -> str
+							 , info -> vc_type -> str);
+	if (!params)
+		return -1;
+	
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, IMAGEPATH"?aid="APPID"&r=%.16f&uin=%s&vc_type=%s"
-			, g_random_double(), info -> me -> uin -> str
-			, info -> vc_type -> str);
 	request_set_uri(req, params);
+	g_free(params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", IMAGEHOST);
 
@@ -178,9 +191,15 @@ static gint get_vc_image(QQInfo *info)
 	}
 
 	send_request(con, req);
-	rcv_response(con, &rps);
+	res = rcv_response(con, &rps);
 	close_con(con);
 	connection_free(con);
+	
+	if (-1 == res || !rps) {
+		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
+		ret = -1;
+		goto error;
+	}
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
@@ -287,7 +306,7 @@ error:
  */
 GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
 {
-	guint8 buf[100];
+	guint8 buf[100] = {0};
 	gsize bsize = 100;
 	
 	GChecksum *cs = g_checksum_new(G_CHECKSUM_MD5);
@@ -304,8 +323,8 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
 	g_checksum_update(cs, buf, bsize);
 	const gchar * md5_3 = g_checksum_get_string(cs);
 	md5_3 = g_ascii_strup(md5_3, strlen(md5_3));
-	gchar buf2[100];
-	g_sprintf(buf2, "%s%s", md5_3, vc);
+	gchar buf2[100] = {0};
+	g_snprintf(buf2, sizeof(buf2), "%s%s", md5_3, vc);
 	g_checksum_free(cs);
 
 	gchar *tmp1;
@@ -328,19 +347,24 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 {
 	gint ret = 0;
 	gint res = 0;
-	gchar params[300];
+	gchar *params = NULL;
 
+	params = g_strdup_printf(LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
+							 "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
+							 "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
+							 "&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
+							 , info -> me -> uin -> str, p, info -> verify_code -> str
+							 , LOGIN_S_URL);
+	if (!params)
+		return -1;
+	
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
-			"remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
-			"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-			"&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
-			, info -> me -> uin -> str, p, info -> verify_code -> str
-			, LOGIN_S_URL);
+	
 	request_set_uri(req, params);
+	g_free(params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
 	request_add_header(req, "Referer", "http://ui.ptlogin2.qq.com/cgi-bin/"
@@ -349,9 +373,14 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 						"om%2Floginproxy.html%3Flogin_level%3D3"
 						"&f_url=loginerroralert");
 	if(info -> ptvfsession != NULL){
-		g_sprintf(params, "ptvfsession=%s; "
-				, info -> ptvfsession -> str);
+		params = g_strdup_printf("ptvfsession=%s; "
+								 , info -> ptvfsession -> str);
+		if (!params) {
+			request_del(req);
+			return -1;
+		}
 		request_add_header(req, "Cookie", params);
+		g_free(params);
 	}
 
 	Connection *con = connect_to_host(LOGINHOST, 80);
@@ -476,8 +505,8 @@ static GString *generate_clientid()
 	g_get_current_time(&now);
 	glong t = now.tv_usec % 1000000;
 
-	gchar buf[20];
-	g_sprintf(buf, "%d%ld", (int)r, t);
+	gchar buf[20] = {0};
+	g_snprintf(buf, sizeof(buf), "%d%ld", (int)r, t);
 
 	return g_string_new(buf);
 }
@@ -522,8 +551,8 @@ static int get_psessionid(QQInfo *info)
 	g_free(escape);
 
 	request_append_msg(req, msg, strlen(msg));
-	gchar cl[10];
-	g_sprintf(cl, "%u", (unsigned int)strlen(msg));
+	gchar cl[10] = {0};
+	g_snprintf(cl, sizeof(cl), "%u", (unsigned int)strlen(msg));
 	request_add_header(req, "Content-Length", cl);
 	request_add_header(req, "Content-Type"
 			, "application/x-www-form-urlencoded");
@@ -745,15 +774,19 @@ static gint do_logout(QQInfo *info, GError **err)
 		return -1;
 	}
 
-	gchar params[300];
+	gchar *params = NULL;
+	params = g_strdup_printf(LOGOUTPATH"?clientid=%s&psessionid=%s&t=%ld"
+							 , info -> clientid -> str
+							 , info -> psessionid -> str, get_now_millisecond());
+	if (!params)
+		return -1;
+	
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	g_sprintf(params, LOGOUTPATH"?clientid=%s&psessionid=%s&t=%ld"
-			, info -> clientid -> str
-			, info -> psessionid -> str, get_now_millisecond());
 	request_set_uri(req, params);
+	g_free(params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGOUTHOST);
 	request_add_header(req, "Cookie", info -> cookie -> str);

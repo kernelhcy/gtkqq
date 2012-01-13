@@ -10,6 +10,89 @@
 #define TABLE_GRP   "groups"
 #define TABLE_GMEM  "gmembers"
 
+/* For database update */
+#define DB_NO_VERSION 1001
+#define DB_CURRENT_VERSION 1002
+
+typedef void (*db_update_script)(void *data);
+
+struct DBUpdateItem 
+{
+	int version;
+	db_update_script fn;
+};
+
+#define BEGIN_UPDATE_MAP \
+	struct DBUpdateItem update_entries[] = { \
+
+#define ADD_UPDATE_ENTRY(ver, fn_update) \
+	{ver, fn_update}, \
+
+#define END_UPDATE_MAP \
+	{-1, NULL}};
+
+static void db_update_to_v1002(void *data)
+{
+	sqlite3 *db = (sqlite3 *)data;
+
+	g_print("Update datebase from version %d to version %d (%s, %d)\n",
+			1001, 1002, __FILE__, __LINE__);
+	
+	db_exec_sql(db, "INSERT into config (owner, key, value) VALUES('gtkqq', 'version', 1002);");
+	db_exec_sql(db, "ALTER TABLE qquser ADD mute INTEGER default 0;");
+}
+
+/* Get datebase' version. */
+static gint db_get_version(sqlite3 *db)
+{
+	if (!db) {
+        return -1;
+    }
+    const gchar *sql = "SELECT value FROM config WHERE owner='gtkqq' and key='version';";
+    sqlite3_stmt *stmt = NULL;
+	gint version = -1;
+	
+    if (sqlite3_prepare_v2(db, sql, 256, &stmt, NULL) != SQLITE_OK) {
+        g_warning("Prepare sql error. SQL(%s) (%s, %d)",
+				  sql, __FILE__, __LINE__);
+        return -1;
+    }
+
+	if (sqlite3_step(stmt) == SQLITE_ROW)
+		version = sqlite3_column_int(stmt, 0);
+	sqlite3_finalize(stmt);
+	
+	return version;
+}
+
+/** 
+ * Update the datebase' version.
+ * 
+ * @param db 
+ */
+void db_update_version(sqlite3 *db)
+{
+	int i = 0;
+	int start = 0, end = 0;
+	int last = 0;
+
+	BEGIN_UPDATE_MAP
+	ADD_UPDATE_ENTRY(DB_NO_VERSION, db_update_to_v1002)
+	END_UPDATE_MAP
+
+	last = db_get_version(db);
+	g_print("Last datebase version is %d. (%s, %d)\n", last, __FILE__, __LINE__);
+	
+	if(last < DB_NO_VERSION)
+		last = DB_NO_VERSION;
+
+	start = last - DB_NO_VERSION;
+	end = DB_CURRENT_VERSION - DB_NO_VERSION;
+	for (i = start; i < end; ++i) {
+		update_entries[i].fn(db);
+	}
+}
+
 static const gchar table_sql[] = 
         "create table if not exists config("
         "   id integer primary key asc autoincrement, "
@@ -77,9 +160,13 @@ static gint create_tables(sqlite3 *db)
 sqlite3* db_open()
 {
     sqlite3 *db;
-    g_debug("Open db connection to "CONFIGDIR"gtkqq.db (%s, %d)"
-                                        , __FILE__, __LINE__);
-    gint retcode = sqlite3_open(CONFIGDIR"gtkqq.db", &db);
+	gchar dbfile[1024] = {0};
+
+	g_snprintf(dbfile, sizeof(dbfile), "%s/gtkqq.db", QQ_CFGDIR);
+		
+    g_debug("Open db connection to %s (%s, %d)"
+			, dbfile, __FILE__, __LINE__);
+    gint retcode = sqlite3_open(dbfile, &db);
     if(retcode != SQLITE_OK){
         if(retcode == SQLITE_NOMEM){
             g_error("Open database error. no memory. (%s, %d)", __FILE__, __LINE__);
@@ -97,6 +184,9 @@ sqlite3* db_open()
             return NULL;
         }
     }
+
+	/* Update datebase. */
+	db_update_version(db);
     return db;
 }
 
@@ -110,7 +200,7 @@ gint db_get_all_users(sqlite3 *db, GPtrArray **result)
     if(db == NULL || result == NULL){
         return SQLITE_ERROR;
     }
-    static const gchar *sql = "select qqnumber,last,passwd,status,rempw from qquser;";
+    static const gchar *sql = "select qqnumber,last,passwd,status,rempw,mute from qquser;";
     sqlite3_stmt *stmt = NULL;
     if(sqlite3_prepare_v2(db, sql, 500, &stmt, NULL) != SQLITE_OK){
         g_warning("prepare sql error. SQL(%s) (%s, %d)", sql
@@ -133,6 +223,7 @@ gint db_get_all_users(sqlite3 *db, GPtrArray **result)
                         , (const gchar *)sqlite3_column_text(stmt, 0), 100);
             usr -> last = sqlite3_column_int(stmt, 1);
 			usr -> rempw = sqlite3_column_int(stmt, 4);
+			usr -> mute = sqlite3_column_int(stmt, 5);
             decode_passwed = (gchar *)g_base64_decode(
                                 (const gchar *)sqlite3_column_text(stmt, 2)
                                 , &out_len);
@@ -157,6 +248,42 @@ out_label:
     *result = re;
     sqlite3_finalize(stmt);
     return retcode;
+}
+
+/** 
+ * Update qq user's config
+ * 
+ * @param db 
+ * @param qqnumber User's qq number
+ * @param col 
+ * @param value 
+ * 
+ * @return 
+ */
+gint db_update_user(sqlite3 *db, const gchar *qqnumber,
+					const gchar *col, const gchar *value)
+{
+    if (!db) {
+        return SQLITE_ERROR;
+    }
+
+    if (!qqnumber || !col | !value) {
+        return SQLITE_OK;
+    }
+
+    gchar sql[500];
+    g_snprintf(sql, 500, "update qquser set %s=%s where qqnumber='%s';",
+			   col, value, qqnumber);
+
+    gchar *err = NULL;
+    sqlite3_exec(db, sql, NULL, NULL, &err);
+    if(err != NULL){
+        g_warning("SQL:(%s) error. %s (%s, %d)", sql, err, __FILE__, __LINE__);
+        sqlite3_free(err);
+        return SQLITE_ERROR;
+    }
+
+    return SQLITE_OK;
 }
 
 gint db_update_all(sqlite3 *db, const gchar *table
@@ -205,7 +332,7 @@ gint db_clear_table(sqlite3 *db, const gchar *table
 }
 
 gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
-					, const gchar *status, gint last, gint rempw)
+					, const gchar *status, gint last, gint rempw, gint mute)
 {
     if(db == NULL || qqnum == NULL){
         return SQLITE_ERROR;
@@ -214,8 +341,8 @@ gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
                                                 , (gsize)strlen(passwd));
     gchar sql[500];
     g_snprintf(sql, 500, "insert or replace into qquser (qqnumber, last, "
-			   "passwd, status, rempw)values('%s', %d, '%s', '%s', '%d');"
-			   , qqnum, last, encoded_passwd, status, rempw);
+			   "passwd, status, rempw, mute)values('%s', %d, '%s', '%s', '%d', '%d');"
+			   , qqnum, last, encoded_passwd, status, rempw, mute);
     gchar *err = NULL;
     sqlite3_exec(db, sql, NULL, NULL, &err);
     if(err != NULL){

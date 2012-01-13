@@ -47,7 +47,7 @@ gint db_clear_table(sqlite3 *db, const gchar *table
 // Store qq user into db
 //
 gint db_qquser_save(sqlite3 *db, const gchar *qqnum, const gchar *passwd
-					, const gchar *status, gint last, gint rempw);
+					, const gchar *status, gint last, gint rempw, gint mute);
 
 //
 // Store key:value into db
@@ -84,4 +84,17 @@ gint db_get_group(sqlite3 *db, const gchar *owner, QQGroup *grp, gint *cnt);
 // Execute the sql
 //
 gint db_exec_sql(sqlite3 *db, const gchar *sql);
+
+/** 
+ * Update qq user's config
+ * 
+ * @param db 
+ * @param qqnumber User's qq number
+ * @param col 
+ * @param value 
+ * 
+ * @return 
+ */
+gint db_update_user(sqlite3 *db, const gchar *qqnumber, const gchar *col, const gchar *value);
+
 #endif

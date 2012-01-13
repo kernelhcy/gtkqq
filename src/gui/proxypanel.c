@@ -239,6 +239,8 @@ const char proxy_xml[] =
     "</interface>\n";
 
 
+
+
 const char * success_xml=
     "<?xml version=\"1.0\"?>"
     "<interface>"
@@ -306,7 +308,7 @@ const char * success_xml=
     "</object>"
     "</interface>";
 
-    const char * fail_xml=
+const char * fail_xml=
     "<?xml version=\"1.0\"?>\n"
     "<interface>\n"
     "<!-- interface-requires gtk+ 2.24 -->\n"
