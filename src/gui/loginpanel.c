@@ -4,6 +4,7 @@
 #include <qq.h>
 #include <tray.h>
 #include <gqqconfig.h>
+#include <gdk/gdkkeysyms.h>
 #include <stdlib.h>
 #include <statusbutton.h>
 #include <msgloop.h>
@@ -324,13 +325,8 @@ static GQQLoginUser *get_current_login_user(GPtrArray* all_users)
 	
 	return usr;
 }
-
-/*
- * Callback of login_btn button
- */
-static void login_btn_cb(GtkButton *btn, gpointer data)
+static void login_cb(QQLoginPanel* panel)
 {
-    QQLoginPanel *panel = QQ_LOGINPANEL(data);
     GtkWidget *win = panel -> container;
     qq_mainwindow_show_splashpanel(win);
 		
@@ -369,8 +365,31 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
     gqq_config_save_last_login_user(cfg);
 }
+/*
+*actived when RETURN pressed at uin_entry or passwd_entry
+*/
+gboolean quick_login(GtkWidget* widget,GdkEvent* e,gpointer data){
+	GdkEventKey *event = (GdkEventKey*)e;
+    if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter|| event -> keyval == GDK_ISO_Enter){
+         if((event -> state & GDK_CONTROL_MASK) != 0
+                         || (event -> state & GDK_SHIFT_MASK) != 0){
+             return FALSE;
+         }
+         login_cb(QQ_LOGINPANEL(data));
+         return TRUE;
+	}
+	return FALSE;
 
+}
+/*
+ * Callback of login_btn button
+*/
 
+static void login_btn_cb(GtkButton *btn, gpointer data)
+{
+    QQLoginPanel *panel = QQ_LOGINPANEL(data);
+	login_cb(panel);
+}
 static void qq_loginpanel_init(QQLoginPanel *obj)
 {
     login_users = gqq_config_get_all_login_user(cfg);
@@ -394,7 +413,6 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 
     obj -> uin_label = gtk_label_new("QQ Number:");
     obj -> uin_entry = gtk_combo_box_entry_new_text();
-
     for(i = 0; i < login_users -> len; ++i){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
         gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
@@ -411,6 +429,8 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     }
     g_signal_connect(G_OBJECT(obj -> uin_entry), "changed"
                      , G_CALLBACK(qqnumber_combox_changed), obj);
+	g_signal_connect(G_OBJECT(obj->uin_entry),"key-press-event",G_CALLBACK(quick_login),(gpointer)obj);
+	g_signal_connect(G_OBJECT(obj->passwd_entry),"key-press-event",G_CALLBACK(quick_login),(gpointer)obj);
     //not visibily 
     gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
     gtk_widget_set_size_request(obj -> uin_entry, 200, -1);
@@ -424,7 +444,6 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     GtkWidget *uin_vbox = gtk_vbox_new(FALSE, 2);
     gtk_box_pack_start(GTK_BOX(uin_vbox), uin_hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(uin_vbox), obj -> uin_entry, FALSE, FALSE, 0);
-
     //password label and entry
     GtkWidget *passwd_hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(passwd_hbox), obj -> passwd_label
