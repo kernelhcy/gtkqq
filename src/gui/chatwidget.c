@@ -206,6 +206,11 @@ static void qq_chatwidget_init(QQChatWidget *widget)
     GtkWidget *scrolled_win; 
     gchar buf[100];
 
+	GtkWidget *paned=gtk_vpaned_new();
+	GtkWidget* vbox=gtk_vbox_new(FALSE,0);
+    gtk_box_pack_start(GTK_BOX(widget),paned, TRUE,TRUE,0); 
+	gtk_paned_set_position(GTK_PANED(paned),250);
+	gtk_paned_pack2(GTK_PANED(paned),vbox,TRUE,TRUE);
     // message text view
     priv -> message_textview = qq_chat_textview_new(); 
     scrolled_win= gtk_scrolled_window_new(NULL, NULL);
@@ -214,7 +219,7 @@ static void qq_chatwidget_init(QQChatWidget *widget)
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win)
                                         , GTK_SHADOW_ETCHED_IN);
     gtk_container_add(GTK_CONTAINER(scrolled_win), priv -> message_textview);
-    gtk_box_pack_start(GTK_BOX(widget), scrolled_win, TRUE, TRUE, 0); 
+	gtk_paned_pack1(GTK_PANED(paned),scrolled_win,TRUE,FALSE);
 
     gtk_text_view_set_cursor_visible(GTK_TEXT_VIEW(priv -> message_textview)
                                                 , FALSE);
@@ -270,6 +275,7 @@ static void qq_chatwidget_init(QQChatWidget *widget)
     g_signal_connect(G_OBJECT(priv -> color_btn), "color-set"
                             , G_CALLBACK(qq_chat_widget_font_changed), widget);
 
+
     // tool bar
     priv -> tool_bar = gtk_toolbar_new();
     GtkWidget *img = NULL;
@@ -311,7 +317,7 @@ static void qq_chatwidget_init(QQChatWidget *widget)
     img = gtk_image_new_from_file(IMGDIR"/showhistory.png");
     priv -> history_item = gtk_tool_button_new(img, NULL);
     gtk_toolbar_insert(GTK_TOOLBAR(priv -> tool_bar), priv -> history_item, -1);
-    gtk_box_pack_start(GTK_BOX(widget), priv -> tool_bar
+    gtk_box_pack_start(GTK_BOX(vbox), priv -> tool_bar
                                                 , FALSE, FALSE, 0); 
 
     // input text view
@@ -323,13 +329,13 @@ static void qq_chatwidget_init(QQChatWidget *widget)
     gtk_scrolled_window_set_shadow_type(GTK_SCROLLED_WINDOW(scrolled_win)
                                         , GTK_SHADOW_ETCHED_IN);
     gtk_container_add(GTK_CONTAINER(scrolled_win), priv -> input_textview);
-#ifndef USE_UNITY
-    gtk_box_pack_start(GTK_BOX(widget), scrolled_win, FALSE, FALSE, 0);
-#else
+//#ifndef USE_UNITY
+//    gtk_box_pack_start(GTK_BOX(vbox), scrolled_win, FALSE, FALSE, 0);
+//#else
 	/* On ubuntu unity, there is a fuck bug if we pack the textview
 	 with the argument FALSE, FALSE, it cant be shown, how fuck it is. */
-	gtk_box_pack_start(GTK_BOX(widget), scrolled_win, TRUE, TRUE, 0);
-#endif	/* USE_UNITY */
+	gtk_box_pack_start(GTK_BOX(vbox), scrolled_win, TRUE, TRUE, 0);
+//#endif	/* USE_UNITY */
     gtk_text_view_set_wrap_mode(GTK_TEXT_VIEW(priv -> input_textview)
                                                 , GTK_WRAP_CHAR);
 
