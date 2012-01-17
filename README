@@ -15,3 +15,5 @@ src-|
     |--misc     some resource files. such as pictures.
     |--tool     some tool used to develop
     |--test     the test codes.
+
+Please refer to INSTALL for detailed information on installation.
