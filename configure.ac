@@ -233,6 +233,7 @@ AC_CHECK_FUNCS([bzero gethostbyname memset mkdir select socket strstr strtol])
 AC_CHECK_FUNCS([inet_ntoa])
 
 AC_CONFIG_FILES([Makefile
+	 gtkqq.spec
          src/Makefile 
          src/comm/Makefile 
          src/libqq/Makefile 
