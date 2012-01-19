@@ -101,6 +101,7 @@ static void qq_notify(QQRecvMsg *msg)
 			}
 		}
 		g_snprintf(title, sizeof(title), "New message from friend %s", from);
+		break;
     case MSG_GROUP_T:
 		/* Parse which group send this message. */
 		code = msg->group_code;
@@ -122,10 +123,11 @@ static void qq_notify(QQRecvMsg *msg)
 				  , __FILE__, __LINE__);
 		return;
     }
-
 	body = qq_get_msgstr(msg);
 	if (body) {
-		qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
+		gchar buf[200];
+		g_snprintf(buf,200,"%s/%s",QQ_FACEDIR,bdy->qqnumber->str);
+		qq_notify_send(title, body->str, buf);
 	}
 	else {
 		qq_notify_send(title, NULL, IMGDIR"/webqq_icon.png");
