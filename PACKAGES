@@ -1,0 +1,27 @@
+This file decribes how to build your package so that you can install it.
+
+RPM
+===
+First be sure you finished 'CONFIGURE' described in INSTALL. Then run
+the following commands,
+
+$ cd Packages/rpm
+$ make rpm
+
+When you finished it, now you can find your rpm packages in
+rpmbuild/x86_64 (for 64-bit) or rpmbuild/i686 (for 32-bit).
+
+Then you can install it with 'rpm'.
+
+Deb
+===
+[TODO]
+
+Arch
+====
+Just run 
+$ yaourt -S gtkqq-git
+
+Gentoo
+======
+[TODO]

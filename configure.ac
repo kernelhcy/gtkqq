@@ -265,11 +265,18 @@ AC_CONFIG_FILES([Makefile
          src/misc/status/Makefile
          src/misc/qqfaces/Makefile
          src/misc/sound/Makefile
-         src/test/Makefile]
- 		 pixmaps/Makefile)
+         src/test/Makefile
+         pixmaps/Makefile
+         
+         Packages/Makefile
+         Packages/rpm/Makefile
+         Packages/rpm/gtkqq.spec
+         ])
 AC_OUTPUT
 
-echo Use libnotify................. : $enable_libnotify
+echo ======== OPTIONS ============
+#echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
+echo =============================
