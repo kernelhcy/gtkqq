@@ -53,11 +53,17 @@ Some useful options for configure:
   
 BUILD
 =====
-Run the following commands after configure,
+Run the following command after configure,
 
 $ make
-$ sudo make install
 
+INSTALL
+=======
+Run the following command if you want to install it into your system
+
+# make install
+
+If you want a package to install, please refer to PACKAGES.
 
 RUN
 ===
