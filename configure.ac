@@ -233,7 +233,6 @@ AC_CHECK_FUNCS([bzero gethostbyname memset mkdir select socket strstr strtol])
 AC_CHECK_FUNCS([inet_ntoa])
 
 AC_CONFIG_FILES([Makefile
-	 gtkqq.spec
          src/Makefile 
          src/comm/Makefile 
          src/libqq/Makefile 
@@ -246,11 +245,18 @@ AC_CONFIG_FILES([Makefile
          src/misc/status/Makefile
          src/misc/qqfaces/Makefile
          src/misc/sound/Makefile
-         src/test/Makefile]
- 		 pixmaps/Makefile)
+         src/test/Makefile
+         pixmaps/Makefile
+         
+         Packages/Makefile
+         Packages/rpm/Makefile
+         Packages/rpm/gtkqq.spec
+         ])
 AC_OUTPUT
 
+echo ======== OPTIONS ============
 #echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
+echo =============================
