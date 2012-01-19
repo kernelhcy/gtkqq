@@ -17,3 +17,4 @@ src-|
     |--test     the test codes.
 
 Please refer to INSTALL for detailed information on installation.
+Refer to PACKAGES for details about building packages like RPM.

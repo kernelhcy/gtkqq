@@ -62,6 +62,7 @@ This packages provides the library required for gtkqq.
 
 %build
 ./configure --prefix=%{_prefix} --libdir=%{_libdir}
+# %configure
 make %{?_smp_mflags}
 
 %install
