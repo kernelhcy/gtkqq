@@ -7,13 +7,13 @@
 /* 
  * Initialize the libqq.
  * WARNING:
- * 	This function MUST be called before any other function!
- * return QQInfo instance if success or NULL if failed
+ * 	This function MUST be called before any other functions!
+ * return QQInfo instance if success or NULL if failed.
  */
 QQInfo* qq_init(GError **err);
 
 /* 
- * Finalze the event loops.
+ * Finalize the event loops.
  * Called before the program exits.
  */
 void qq_finalize(QQInfo *info, GError **err);
@@ -28,16 +28,17 @@ gint qq_check_verifycode(QQInfo *info, const gchar *uin, GError **err);
 
 /*
  * Login
- * @param info store the information used by this program
- * @param uin the QQ number
- * @param passwd the QQ password
- * @param status the status of the user. If NULL, this func
- * 	will not change the status.
+ *
+ * @param info 		store the information used by this program
+ * @param uin 		the QQ number
+ * @param passwd 	the QQ password
+ * @param status 	the status of the user. If NULL, this func will not 
+ * 			change the status.
  *
  * If success, return 0. or error code and set *err.
  */
-gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd
-		                    , const gchar *status, GError **err);
+gint qq_login(QQInfo *info, const gchar *uin, const gchar *passwd,
+		const gchar *status, GError **err);
 
 /*
  * Logout
@@ -96,7 +97,7 @@ gint qq_get_online_buddies(QQInfo *info, GError **err);
 gint qq_get_recent_contact(QQInfo *info, GError **err);
 
 /*
- * Get the long nick of bdy.
+ * Get the long nick of bdy(buddy).
  * If success, return 0. or error code and set *err.
  */
 gint qq_get_single_long_nick(QQInfo *info, QQBuddy *bdy, GError **err);
@@ -108,8 +109,8 @@ gint qq_get_qq_number(QQInfo *info, const gchar *uin
                                     , gchar *num, GError **err);
 /*
  * The callback of the poll fuction.
- * @param msg : the message received
- * @param data : the user data
+ * @param msg		the message received
+ * @param data		the user data
  */
 typedef gint (*QQPollCallBack)(QQRecvMsg *msg, gpointer data);
 
@@ -119,9 +120,9 @@ typedef gint (*QQPollCallBack)(QQRecvMsg *msg, gpointer data);
  * data is passed to cb.
  *
  * NOTE:
- *  This function will create a new thread to poll message.
- *  This function will return immeditally.
- *  The callback function will called in the new created thread.
+ *	This function will create a new thread to poll message.
+ *	This function will return immeditally.
+ *	The callback function will called in the new created thread.
  */
 gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data
                                                 , GError **err);
