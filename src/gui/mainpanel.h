@@ -1,3 +1,10 @@
+/**
+ * mainpanel.h
+ *
+ * create main user interface
+ * define QQMainPanel
+ */
+
 #ifndef __GTKQQ_MAINPANEL_H
 #define __GTKQQ_MAINPANEL_H
 #include <gtk/gtk.h>
@@ -64,12 +71,15 @@ void qq_mainpanel_update(QQMainPanel *panel);
 // Update my information
 //
 void qq_mainpanel_update_my_info(QQMainPanel *panel);
-//
-// Update the buddy info
-//
+
+
+/**
+ * Update the buddy info(online, face image, groups)
+ */
 void qq_mainpanel_update_buddy_info(QQMainPanel *panel);
 void qq_mainpanel_update_buddy_faceimg(QQMainPanel *panel);
 void qq_mainpanel_update_online_buddies(QQMainPanel *panel);
 
 void qq_mainpanel_update_group_info(QQMainPanel *panel);
-#endif
+
+#endif /* __GTKQQ_MAINPANEL_H */

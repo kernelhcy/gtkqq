@@ -15,6 +15,7 @@ extern GQQConfig *cfg;
 
 extern GQQMessageLoop *get_info_loop;
 extern GQQMessageLoop *send_loop;
+
 /*
  * The main event loop context of Gtk.
  */
@@ -59,6 +60,7 @@ GType qq_mainpanel_get_type()
     }
     return t;
 }
+
 GtkWidget* qq_mainpanel_new(GtkWidget *container)
 {
     QQMainPanel *panel = g_object_new(qq_mainpanel_get_type(), NULL);
@@ -67,10 +69,10 @@ GtkWidget* qq_mainpanel_new(GtkWidget *container)
     return GTK_WIDGET(panel);
 }
 
-static void qq_group_list_on_double_click(GtkTreeView *tree
-                                    , GtkTreePath *path 
-                                    , GtkTreeViewColumn  *col 
-                                    , gpointer data)
+static void qq_group_list_on_double_click(GtkTreeView *tree,
+					GtkTreePath *path,
+					GtkTreeViewColumn  *col,
+					gpointer data)
 {
     gchar *code;
     GtkTreeModel *model = gtk_tree_view_get_model(tree); 

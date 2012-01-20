@@ -43,7 +43,7 @@ struct _QQLoginPanel{
 #endif	/* USE_PROXY */
 
     const gchar *uin, *passwd, *status;
-	gint rempw;
+    gint rempw;
 
     GtkWidget *container;
 

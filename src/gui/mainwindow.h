@@ -1,3 +1,9 @@
+/**
+ * mainwindow.h
+ *
+ * define the QQMainWindow 's class with gobject library.
+ */
+
 #ifndef __GTKQQ_MAINWINDOW_H
 #define __GTKQQ_MAINWINDOW_H
 #include <gtk/gtk.h>
@@ -21,7 +27,7 @@ struct __QQMainWindow{
 	GtkWidget *main_panel;
 	GtkWidget *splash_panel;
 
-	gboolean showed;
+	gboolean showed; /* whether the main window is visiable */
 };
 
 struct __QQMainWindowClass{

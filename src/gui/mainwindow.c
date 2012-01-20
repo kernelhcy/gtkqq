@@ -1,7 +1,21 @@
-#include <mainwindow.h>
-#include <loginpanel.h>
-#include <splashpanel.h>
-#include <mainpanel.h>
+/**
+ * mainwindow.c
+ * the implementation of the QQMainWindow
+ */
+
+#include "mainwindow.h"
+
+/**
+ * provide
+ * 	qq_loginpanel_new()
+ *	qq_splashpanel_new()
+ * 	qq_mainpanel_new()
+ * for creating main window
+ */
+#include "loginpanel.h"
+#include "splashpanel.h"
+#include "mainpanel.h"
+
 #include <qq.h>
 #include <gqqconfig.h>
 #include <stdlib.h>
@@ -28,8 +42,10 @@ static void destroy_handler(GtkWidget *widget, gpointer  data)
 }
 #endif
 
-gboolean
-qq_mainwindow_close(GtkWidget *widget)
+/**
+ * callback of the 'delete-event'
+ */
+gboolean qq_mainwindow_close(GtkWidget *widget)
 {
 	qq_mainwindow_hide(widget);
 
@@ -54,8 +70,7 @@ GType qq_mainwindow_get_type()
             0
         };
 
-        t = g_type_register_static(GTK_TYPE_WINDOW, "QQMainWindow"
-                    , &info, 0);
+        t = g_type_register_static(GTK_TYPE_WINDOW, "QQMainWindow", &info, 0);
     }
     return t;
 }
@@ -93,8 +108,8 @@ void qq_mainwindow_show_hide(GtkWidget *win)
 
 GtkWidget* qq_mainwindow_new()
 {
-    return GTK_WIDGET(g_object_new(qq_mainwindow_get_type()
-                        , "type", GTK_WINDOW_TOPLEVEL, NULL));
+    return GTK_WIDGET(g_object_new(qq_mainwindow_get_type(), 
+			    "type", GTK_WINDOW_TOPLEVEL, NULL));
 }
 
 
@@ -103,10 +118,17 @@ static void qq_mainwindow_init(QQMainWindow *win)
     GtkWidget *w = GTK_WIDGET(win);
     gtk_widget_set_size_request(w, 200, 500);
     gtk_window_resize(GTK_WINDOW(w), 250, 550);
-
-//    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+    
+    /**
+     * build a resizable main window with
+     * gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+     */
     g_signal_connect(w, "delete-event",
-					 G_CALLBACK(qq_mainwindow_close), NULL);
+		    G_CALLBACK(qq_mainwindow_close), NULL);
+
+    /**
+     * create widgets of the main window
+     */
     win -> login_panel = qq_loginpanel_new(w);
     win -> splash_panel = qq_splashpanel_new();
     win -> main_panel = qq_mainpanel_new(w);
@@ -129,6 +151,9 @@ static void qq_mainwindow_init(QQMainWindow *win)
 
     gtk_container_add(GTK_CONTAINER(win), win -> notebook);
 
+    /**
+     * set main window's properties
+     */
     GdkPixbuf *pb = gdk_pixbuf_new_from_file(IMGDIR"webqq_icon.png", NULL);
     gtk_window_set_icon(GTK_WINDOW(win), pb);
     g_object_unref(pb);
