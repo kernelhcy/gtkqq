@@ -14,7 +14,7 @@ int main(int argc, char **argv)
     const gchar *qqpwd = "1234567890";
     gchar vc[20];
 
-    log_init();
+    log_init(TRUE);
     g_message("Log initial done.");
     QQInfo *info = qq_init(NULL);
     qq_check_verifycode(info, qquin ,NULL);

@@ -1,5 +1,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include <getopt.h>
+#include <unistd.h>
 #include <loginpanel.h>
 #include <mainpanel.h>
 #include <mainwindow.h>
@@ -39,14 +41,61 @@ GQQMessageLoop *get_number_faceimg_loop = NULL;
 //
 GQQMessageLoop *send_loop = NULL;
 
+static void usage()
+{
+	fprintf(stdout, "Usage: gtkqq [options]...\n"
+			"gtkqq: A qq client based on gtk+ uses webqq protocol\n"
+			"  -v, --version\n"
+			"      Show version of program\n"
+			"  -d, --debug\n"
+			"      Open debug mode\n"
+			"  -h, --help\n"
+			"      Print help and exit\n"
+		);
+}
+
 int main(int argc, char **argv)
 {
+	gboolean debug = FALSE;		/* Wheather handle debug message */
+	int c, err = 0;
+	static const struct option long_options[] = {
+		{ "version", 0, 0, 'v' },
+		{ "debug", 0, 0, 'd' },
+		{ "help", 0, 0, 'h' },
+		{ 0, 0, 0, 0 }
+	};
+		
 #ifdef USE_GSTREAMER
-	gst_init(&argc , &argv);
+	gst_init(NULL, NULL);
 #endif
     gtk_init(&argc, &argv);
 
-    log_init();
+	while ((c = getopt_long(argc, argv, "vdh",
+							long_options, NULL)) != EOF) {
+		switch (c) {
+		case 'v':
+			printf("" PACKAGE " " VERSION "\n");
+			exit(0);
+
+		case 'd':
+			debug = TRUE;
+			break;
+
+		case 'h':
+			usage();
+			exit(0);
+
+		default:
+			err++;
+			break;
+		}
+	}
+	if (err || argc > optind) {
+		usage();
+		exit(1);
+	}
+	
+    log_init(debug);
     info = qq_init(NULL);
     if(info == NULL){
         return -1;

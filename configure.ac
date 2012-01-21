@@ -42,10 +42,6 @@ AC_CHECK_LIB([zlib], [compress])
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdint.h\
           stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h zlib.h])
 
-AC_ARG_ENABLE(debug,
-        [ --enable-debug turn on debug],
-        CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb")
-
 AC_ARG_ENABLE(unity,
         [ --enable-unity build on ubuntu unity],
         CFLAGS="$CFLAGS -DUSE_UNITY")
