@@ -56,7 +56,7 @@ static void usage()
 
 int main(int argc, char **argv)
 {
-	gboolean debug = FALSE;		/* Wheather handle debug message */
+	gboolean debug = FALSE;		/* Whether handle debug message */
 	int c, err = 0;
 	static const struct option long_options[] = {
 		{ "version", 0, 0, 'v' },
