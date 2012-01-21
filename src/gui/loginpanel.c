@@ -40,7 +40,7 @@ static GQQMessageLoop gtkloop;
 
 static GPtrArray* login_users = NULL;
 
-GtkType qq_loginpanel_get_type()
+GType qq_loginpanel_get_type()
 {
     static GType t = 0;
     if(!t){
