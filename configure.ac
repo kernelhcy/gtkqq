@@ -109,23 +109,23 @@ PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
              ])
 
 # checks for libnotify
-#if test "x$enable_libnotify" = "xyes"; then
-#PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
-#            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
-#                             notification])
-#            AC_SUBST(LIBNOTIFY_CFLAGS)
-#            AC_SUBST(LIBNOTIFY_LIBS)
-#        ] , [
-#            echo ""
-#            echo "configure: error: "
-#            echo "libnotify development headers not found."
-#            echo "Use --disable-libnotify if you do not need it."
-#            echo "If you're using debian or ubuntu,install it by "
-#            echo "\"sudo apt-get install libnotify-dev\""
-#            echo ""
-#            exit -1
-#            ])
-#fi
+if test "x$enable_libnotify" = "xyes"; then
+PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
+            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
+                             notification])
+            AC_SUBST(LIBNOTIFY_CFLAGS)
+            AC_SUBST(LIBNOTIFY_LIBS)
+        ] , [
+            echo ""
+            echo "configure: error: "
+            echo "libnotify development headers not found."
+            echo "Use --disable-libnotify if you do not need it."
+            echo "If you're using debian or ubuntu,install it by "
+            echo "\"sudo apt-get install libnotify-dev\""
+            echo ""
+            exit -1
+            ])
+fi
 
 # checks for gstreamer-0.10
 #if test "x$enable_gst" = "xyes"; then
