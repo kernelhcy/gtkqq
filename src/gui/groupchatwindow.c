@@ -6,7 +6,13 @@
 #include <facepopupwindow.h>
 #include <tray.h>
 #include <msgloop.h>
+
+#ifdef USE_GTK3
+#include <gdk/gdkkeysyms-compat.h>
+#else
 #include <gdk/gdkkeysyms.h>
+#endif
+
 #include <buddylist.h>
 
 extern QQInfo *info;

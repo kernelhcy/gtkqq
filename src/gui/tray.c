@@ -76,7 +76,9 @@ static void qq_tray_blinking(QQTray *tray, const gchar *uin)
     }
     gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
     g_object_unref(pb);
+#if 0
     gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), TRUE);
+#endif
 }
 
 //
@@ -120,7 +122,9 @@ static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
     g_free(uin);
 
     if(g_queue_is_empty(priv -> blinking_queue)){
+#ifndef USE_GTK3
         gtk_status_icon_set_blinking(tray, FALSE);
+#endif
         GdkPixbuf *pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png"
                                                     , NULL);
         gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
@@ -358,7 +362,9 @@ void qq_tray_stop_blinking_for(QQTray *tray, const gchar *uin)
     GdkPixbuf *pb;
     if(g_queue_is_empty(priv -> blinking_queue)){
         // no more blinking
+#ifndef USE_GTK3
         gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), FALSE);
+#endif
         pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png", NULL);
         gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
         g_object_unref(pb);

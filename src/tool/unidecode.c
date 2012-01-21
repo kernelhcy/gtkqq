@@ -1,6 +1,7 @@
 #include <glib.h>
 #include <glib/gprintf.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 static guint hex2char(gchar c)
 {
@@ -56,7 +57,12 @@ int main(int argc, char **argv)
 	gchar *file;
 	
 	file = argv[1];
-	
+
+	if (argc != 2) {
+		g_printf("Usage: %s filename\n", argv[0]);
+		exit(EXIT_FAILURE);
+	}
+
 	GString * input = g_string_new(NULL);
 	
 	FILE *fd = fopen(file, "r");
@@ -83,5 +89,3 @@ int main(int argc, char **argv)
 	
 	return 0;
 }
-
-

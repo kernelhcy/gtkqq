@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <statusbutton.h>
 #include <msgloop.h>
+#include <gtk/gtk.h>
 #include <msgdispacher.h>
 #include <string.h>
 #ifdef USE_PROXY
@@ -39,7 +40,7 @@ static GQQMessageLoop gtkloop;
 
 static GPtrArray* login_users = NULL;
 
-GtkType qq_loginpanel_get_type()
+GType qq_loginpanel_get_type()
 {
     static GType t = 0;
     if(!t){
@@ -393,12 +394,21 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     }
 
     obj -> uin_label = gtk_label_new("QQ Number:");
+#ifndef USE_GTK3
     obj -> uin_entry = gtk_combo_box_entry_new_text();
+#else
+    obj -> uin_entry = gtk_combo_box_text_new_with_entry();
+#endif
 
     for(i = 0; i < login_users -> len; ++i){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
+#ifndef USE_GTK3
         gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
                                   , usr -> qqnumber);
+#else
+	gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(obj-> uin_entry), 
+					usr -> qqnumber);
+#endif
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> uin_entry), 0);
 
@@ -537,10 +547,14 @@ static void qq_loginpanel_destroy(GtkObject *obj)
 const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
+#ifndef USE_GTK3
     return gtk_combo_box_get_active_text(
         GTK_COMBO_BOX(panel -> uin_entry));    
-
+#else
+    gtk_combo_box_text_get_active_text(panel-> uin_entry);
+#endif
 }
+
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);

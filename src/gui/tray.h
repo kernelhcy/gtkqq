@@ -3,10 +3,10 @@
 #include <gtk/gtk.h>
 #include <qq.h>
 
-#define QQ_TRAY(obj)	GTK_CHECK_CAST(obj, qq_tray_get_type(), QQTray)
-#define QQ_TRAYCLASS(c)	GTK_CHECK_CLASS_CAST(c, qq_tray_get_type()\
+#define QQ_TRAY(obj)	G_TYPE_CHECK_INSTANCE_CAST(obj, qq_tray_get_type(), QQTray)
+#define QQ_TRAYCLASS(c)	G_TYPE_CHECK_CLASS_CAST(c, qq_tray_get_type()\
 						                    , QQTrayClass)
-#define QQ_IS_TRAY(obj)	GTK_CHECK_TYPE(obj, qq_tray_get_type())
+#define QQ_IS_TRAY(obj)	G_TYPE_CHECK_INSTANCE_TYPE(obj, qq_tray_get_type())
 
 typedef struct __QQTray 		QQTray;
 typedef struct __QQTrayClass	QQTrayClass;

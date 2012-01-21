@@ -2,12 +2,12 @@
 #define __GTKQQ_LOGINWIN_H
 #include <gtk/gtk.h>
 
-#define QQ_LOGINPANEL(obj)    GTK_CHECK_CAST(obj, qq_loginpanel_get_type()\
+#define QQ_LOGINPANEL(obj)    G_TYPE_CHECK_INSTANCE_CAST(obj, qq_loginpanel_get_type()\
                                         , QQLoginPanel)
-#define QQ_LOGINPANEL_CLASS(c)    GTK_CHECK_CLASS_CAST(c\
+#define QQ_LOGINPANEL_CLASS(c)    G_TYPE_CHECK_CLASS_CAST(c\
                                         , qq_loginpanel_get_type()\
                                         , QQLoginPanelClass)
-#define QQ_IS_LOGINPANEL(obj)    GTK_CHECK_TYPE(obj, qq_loginpanel_get_type())
+#define QQ_IS_LOGINPANEL(obj)    G_TYPE_CHECK_INSTANCE_TYPE(obj, qq_loginpanel_get_type())
 
 typedef struct _QQLoginPanel            QQLoginPanel;
 typedef struct _QQLoginPanelClass       QQLoginPanelClass;
@@ -43,7 +43,7 @@ struct _QQLoginPanel{
 #endif	/* USE_PROXY */
 
     const gchar *uin, *passwd, *status;
-	gint rempw;
+    gint rempw;
 
     GtkWidget *container;
 
@@ -62,7 +62,7 @@ struct _QQLoginPanelClass{
  *     set to NULL.
  */
 GtkWidget* qq_loginpanel_new(GtkWidget *container);
-GtkType qq_loginpanel_get_type();
+GType qq_loginpanel_get_type();
 
 /*
  * Get the inputs

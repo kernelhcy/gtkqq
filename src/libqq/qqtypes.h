@@ -44,60 +44,65 @@ struct _QQFaceImg{
     GString *data;
     GString *type;
 };
+
+
 QQFaceImg* qq_faceimg_new();
 void qq_faceimg_free(QQFaceImg *img);
 void qq_faceimg_copy(QQFaceImg *from, QQFaceImg *to);
 void qq_faceimg_set(QQFaceImg *img, const gchar *key, GString *val);
 
-/*
- * The main information
+/**
+ * The main information 
+ *
+ * global variable for the user's information
  */
 struct _QQInfo{
     /*
      * The poll thread
      */
-    GThread *pollthread;
+    GThread	*pollthread;
 
-    QQBuddy *me;                    //myself
+    QQBuddy	*me;			/* myself */
 
-    GPtrArray *buddies;             //all friends;
-    GHashTable *buddies_ht;         //buddies hash table by uin
-    GHashTable *buddies_number_ht;  //buddies hash table by qq number
+    GPtrArray	*buddies;		/* all friends */
+    GHashTable	*buddies_ht;         //buddies hash table by uin
+    GHashTable	*buddies_number_ht;  //buddies hash table by qq number
 
-    GPtrArray *groups;              //all groups;
-    GHashTable *groups_ht;          //goups hash table by code
-    GHashTable *groups_number_ht;   //goups hash table by group number 
+    GPtrArray	*groups;              //all groups;
+    GHashTable	*groups_ht;          //goups hash table by code
+    GHashTable	*groups_number_ht;   //goups hash table by group number 
 
-    GPtrArray *recentcons;          //the recenet contacts
-    GPtrArray *categories;          //all categories
+    GPtrArray	*recentcons;          //the recenet contacts
+    GPtrArray	*categories;          //all categories
 
-    GString *verify_code;           //the verify code return from server
-    GString *vc_type;               //vc_type
-    gboolean need_vcimage;          //if we need get the verify code image
-    GString *vc_image_data;         //store the verify code image data
-    GString *vc_image_type;         //the verify code image file type
-    gint vc_image_size;             //verify code image size
-    GString *ptvfsession;        
+    GString	*verify_code;           //the verify code return from server
+    GString	*vc_type;               //vc_type
+    gboolean	need_vcimage;		/* if we need get the 
+					   verify code image */
+    GString	*vc_image_data;		/* store the verify code image data */
+    GString	*vc_image_type;         //the verify code image file type
+    gint	vc_image_size;		/* verify code image size */
+    GString	*ptvfsession;        
 
-    GString *version;
-    GString *ptwebqq;
+    GString	*version;
+    GString	*ptwebqq;
 
-    GString *ptuserinfo;
-    GString *ptcz;
-    GString *skey;
+    GString	*ptuserinfo;
+    GString	*ptcz;
+    GString	*skey;
 
-    GString *psessionid;
-    GString *seskey;
-    GString *cip;
-    GString *index;
-    GString *port;
-    GString *vfwebqq;
-    GString *uin;
-    GString *ptisp;
-    GString *pt2gguin;
+    GString	*psessionid;
+    GString	*seskey;
+    GString	*cip;
+    GString	*index;
+    GString	*port;
+    GString	*vfwebqq;
+    GString	*uin;
+    GString	*ptisp;
+    GString	*pt2gguin;
 
-    GString *clientid;        
-    GString *cookie;
+    GString	*clientid;        
+    GString	*cookie;
 
     /*
      * Maybe we need a lock...
@@ -107,13 +112,15 @@ struct _QQInfo{
 };
 
 QQInfo* qq_info_new();
-void qq_info_free(QQInfo *);
+void qq_info_free(QQInfo *);		/* destructor */
 void qq_append_cookie(QQInfo *, const gchar *);
+
 //
 // Look up the buddy by the uin and qq number
 //
 QQBuddy* qq_info_lookup_buddy_by_uin(QQInfo *, const gchar *uin);
 QQBuddy* qq_info_lookup_buddy_by_number(QQInfo *, const gchar *number);
+
 //
 // Look up the group by the code and group number
 //
@@ -123,17 +130,19 @@ QQGroup* qq_info_lookup_group_by_number(QQInfo *, const gchar *number);
 //
 // The font of the messages
 //
-struct _QQMsgFont{
-    GString *name;
-    gint size;
-    GString *color;
-    struct{
-        gint a, b, c; // bold , italic , underline
-    }style;
+struct _QQMsgFont {
+	GString	*name;
+	gint	size;
+	GString	*color;
+	struct {
+		gint a, b, c; /* bold , italic , underline */
+	} style;
 };
-QQMsgFont* qq_msgfont_new(const gchar *name, gint size, const gchar *color
-                            , gint sa, gint sb, gint sc);
+
+QQMsgFont* qq_msgfont_new(const gchar *name, gint size, const gchar *color,
+				gint sa, gint sb, gint sc);
 void qq_msgfont_free(QQMsgFont *font);
+
 //
 // If two font is the same
 //

@@ -1,13 +1,19 @@
+/**
+ * mainwindow.h
+ *
+ * define the QQMainWindow 's class with gobject library.
+ */
+
 #ifndef __GTKQQ_MAINWINDOW_H
 #define __GTKQQ_MAINWINDOW_H
 #include <gtk/gtk.h>
 
-#define QQ_MAINWINDOW(obj)	GTK_CHECK_CAST(obj, qq_mainwindow_get_type()\
+#define QQ_MAINWINDOW(obj)	G_TYPE_CHECK_INSTANCE_CAST(obj, qq_mainwindow_get_type()\
 						, QQMainWindow)
-#define QQ_MAINWINDOWCLASS(c)	GTK_CHECK_CLASS_CAST(c\
+#define QQ_MAINWINDOWCLASS(c)	G_TYPE_CHECK_CLASS_CAST(c\
 						, qq_mainwindow_get_type()\
 						, QQMainWindowClass)
-#define QQ_IS_MAINWINDOW(obj)	GTK_CHECK_TYPE(obj, qq_mainwindow_get_type())
+#define QQ_IS_MAINWINDOW(obj)	G_TYPE_CHECK_INSTANCE_TYPE(obj, qq_mainwindow_get_type())
 
 typedef struct __QQMainWindow 		QQMainWindow;
 typedef struct __QQMainWindowClass	QQMainWindowClass;
@@ -21,7 +27,7 @@ struct __QQMainWindow{
 	GtkWidget *main_panel;
 	GtkWidget *splash_panel;
 
-	gboolean showed;
+	gboolean showed; /* whether the main window is visiable */
 };
 
 struct __QQMainWindowClass{

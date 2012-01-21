@@ -15,7 +15,7 @@
 #include <gst/gst.h>
 #endif //USE_GSTREAMER
 
-/*
+/**
  * Global
  */
 QQInfo *info = NULL;
@@ -23,20 +23,22 @@ GQQConfig *cfg = NULL;
 QQTray *tray = NULL;
 GtkWidget *main_win = NULL;
 
-//
-// The main loop used to get information from the server.
-// Such as face images, buddy information.
-//
+/**
+ * The main loop used to get information from the server.
+ * Such as face images, buddy information.
+ */
 GQQMessageLoop *get_info_loop = NULL;
-//
-// The main loop used to get qq number and face images from the server.
-// Such as face images, buddy information.
-//
+
+/**
+ * The main loop used to get qq number and face images from the server.
+ * Such as face images, buddy information.
+ */
 GQQMessageLoop *get_number_faceimg_loop = NULL;
-//
-// The main loop used to send messages.
-// Such as group messages and buddy messages.
-//
+
+/**
+ * The main loop used to send messages.
+ * Such as group messages and buddy messages.
+ */
 GQQMessageLoop *send_loop = NULL;
 
 int main(int argc, char **argv)
@@ -79,8 +81,9 @@ int main(int argc, char **argv)
     gqq_msgloop_stop(get_info_loop);
     gqq_msgloop_stop(send_loop);
 
-    //Save config
+    /* Save config */
     gqq_config_save(cfg);
     qq_finalize(info, NULL);
+    
     return 0;
 }
