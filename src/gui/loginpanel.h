@@ -35,15 +35,15 @@ struct _QQLoginPanel{
     /*< private >*/
     GtkWidget *uin_label, *uin_entry;
     GtkWidget *passwd_label, *passwd_entry;
-    GtkWidget *rempwcb;             //rember password check button
-    GtkWidget *err_label;           //show error infomation.
+    GtkWidget *rempwcb;             /* remember password check button */
+    GtkWidget *err_label;           /* show error infomation. */
     GtkWidget *login_btn, *status_comb;
 #ifdef USE_PROXY
 	GtkWidget *set_proxy_btn;
 #endif	/* USE_PROXY */
 
     const gchar *uin, *passwd, *status;
-	gint rempw;
+    gint rempw;
 
     GtkWidget *container;
 
@@ -55,20 +55,20 @@ struct _QQLoginPanelClass{
     GtkVBoxClass parent;
 };
 
-/*
+/**
  * Create a new instance of QQLoginPanel.
  *
- * @param container the container which contains this instance. Can be
+ * @param container : the container which contains this instance. Can be
  *     set to NULL.
  */
 GtkWidget* qq_loginpanel_new(GtkWidget *container);
 GType qq_loginpanel_get_type();
 
-/*
+/**
  * Get the inputs
  */
 const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel);
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel  *loginpanel);
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel);
 gint qq_loginpanel_get_rempw(QQLoginPanel *loginpanel);
-#endif
+#endif /* __GTKQQ_LOGINWIN_H */
