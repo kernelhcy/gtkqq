@@ -1,7 +1,7 @@
-#include <tray.h>
 #include <qq.h>
-#include <gqqconfig.h>
-#include <mainwindow.h>
+#include "tray.h"
+#include "gqqconfig.h"
+#include "mainwindow.h"
 
 /*
  * The main event loop context of Gtk.
@@ -13,13 +13,13 @@ extern GtkWidget *main_win;
 //
 // Private members
 //
-typedef struct{
-    GQueue *blinking_queue;     // blinking queue
-    GQueue *tmp_queue;          // tmp queue
+typedef struct {
+	GQueue *blinking_queue;     // blinking queue
+	GQueue *tmp_queue;          // tmp queue
 
-    GtkWidget *popupmenu;       // popup menu
+	GtkWidget *popupmenu;       // popup menu
 	GtkWidget *mute_item;		/**< mute item. */
-}QQTrayPriv;
+} QQTrayPriv;
 
 static void qq_tray_init(QQTray *tray);
 static void qq_trayclass_init(QQTrayClass *tc, gpointer data);
@@ -42,8 +42,7 @@ GType qq_tray_get_type()
             0
         };
 
-        t = g_type_register_static(GTK_TYPE_STATUS_ICON, "QQTray"
-                                        , &info, 0);
+        t = g_type_register_static(GTK_TYPE_STATUS_ICON, "QQTray", &info, 0);
     }
     return t;
 }
@@ -55,9 +54,9 @@ QQTray* qq_tray_new()
                                 , NULL));
 }
 
-//
-// Blinking uin's face image
-//
+/*
+ * Blinking uin's face image
+ */
 static void qq_tray_blinking(QQTray *tray, const gchar *uin)
 {
     gchar buf[500];
@@ -120,6 +119,13 @@ static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
     g_free(uin);
 
     if(g_queue_is_empty(priv -> blinking_queue)){
+	    /**
+	     * WARNING:
+	     * 		gtk_status_icon_set_blinking()
+	     * 		has been deprecated since version GTK 2.22
+	     * 		and will be removed in GTK+ 3
+	     * 		maybe we should try libnotify
+	     */
         gtk_status_icon_set_blinking(tray, FALSE);
         GdkPixbuf *pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png"
                                                     , NULL);
@@ -163,9 +169,9 @@ static gboolean qq_tray_on_show_tooltip(GtkWidget* widget
     return TRUE;
 }
 
-//
-// Status menu item signal handler
-//
+/**
+ * Status menu item signal handler
+ */
 static void qq_tray_mute_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
 	gint mute = gtk_check_menu_item_get_active(GTK_CHECK_MENU_ITEM(item));
@@ -184,12 +190,12 @@ static void qq_tray_mute_menu_item_activate(GtkMenuItem *item, gpointer data)
  */
 void qq_tray_set_mute_item(QQTray *tray, gboolean mute)
 {
-	QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray, qq_tray_get_type()
-												   , QQTrayPriv);
-
+	QQTrayPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(tray,
+			qq_tray_get_type(), QQTrayPriv);
 	if (!priv)
 		return ;
-	gtk_check_menu_item_set_active(GTK_CHECK_MENU_ITEM(priv->mute_item), mute);
+	gtk_check_menu_item_set_active(
+			GTK_CHECK_MENU_ITEM(priv->mute_item), mute);
 }
 
 static void qq_tray_status_menu_item_activate(GtkMenuItem *item, gpointer data)
@@ -198,22 +204,24 @@ static void qq_tray_status_menu_item_activate(GtkMenuItem *item, gpointer data)
     g_debug("Change status to %s (%s, %d)", status, __FILE__, __LINE__);
 }
 
-static void qq_tray_personal_setting_menu_item_activate(GtkMenuItem *item
-                                                        , gpointer data)
+static void qq_tray_personal_setting_menu_item_activate(GtkMenuItem *item,
+								gpointer data)
 {
     g_debug("Tray personal setting (%s, %d)", __FILE__, __LINE__);
 }
-static void qq_tray_system_setting_menu_item_activate(GtkMenuItem *item
-                                                        , gpointer data)
+static void qq_tray_system_setting_menu_item_activate(GtkMenuItem *item,
+								gpointer data)
 {
     g_debug("Tray system setting (%s, %d)", __FILE__, __LINE__);
 
 }
+
 static void qq_tray_about_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     g_debug("Tray about(%s, %d)", __FILE__, __LINE__);
 
 }
+
 static void qq_tray_quit_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     g_debug("Tray quit(%s, %d)", __FILE__, __LINE__);
