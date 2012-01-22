@@ -4,7 +4,7 @@
 
 #define SL g_debug("(%s, %d)", __FILE__, __LINE__);
 
-/*
+/**
  * The data structures of gtkqq
  */
 typedef struct _QQInfo              QQInfo;
@@ -188,7 +188,7 @@ GString* qq_msgcontent_tostring(QQMsgContent *cnt);
 // Message type
 //
 enum _QQMsgType{
-    MSG_BUDDY_T = 128,      // buddy message
+    MSG_BUDDY_T = 128,      /* buddy message */
     MSG_GROUP_T,            // group message
     MSG_STATUS_CHANGED_T,   // buddy status changed
     MSG_KICK_T,             // kick message. In other place logined
@@ -219,10 +219,11 @@ void qq_sendmsg_add_content(QQSendMsg *msg, QQMsgContent *content);
 //
 GString * qq_sendmsg_contents_tostring(QQSendMsg *msg);
 
-//
-// The received message
-//
-struct _QQRecvMsg{
+/**
+ * message type
+ * The received message
+ */
+struct _QQRecvMsg {
     QQInfo *info;
     QQMsgType msg_type;
     
@@ -242,6 +243,7 @@ struct _QQRecvMsg{
     GPtrArray *contents;
     GString *raw_content;       // the raw content.
 };
+
 QQRecvMsg* qq_recvmsg_new(QQInfo *info, QQMsgType type);
 void qq_recvmsg_set(QQRecvMsg *msg, const gchar *name, const gchar *value);
 void qq_recvmsg_add_content(QQRecvMsg *msg, QQMsgContent *content);
@@ -249,6 +251,7 @@ void qq_recvmsg_free(QQRecvMsg *);
 
 /*
  * The inforamtion of the buddies and myself.
+ * represent a QQ user.
  */
 struct _QQBuddy{
     GString *uin;               //the uin. Change every login
@@ -266,9 +269,9 @@ struct _QQBuddy{
     GString *face;
     GString *flag;
 
-    struct Birthday{
+    struct Birthday {
         gint year, month, day;
-    }birthday;
+    } birthday;
     gint blood;                 //A, B, AB or O
     gint shengxiao;            
 
@@ -294,6 +297,7 @@ struct _QQBuddy{
     gint client_type;
 
 };
+
 QQBuddy* qq_buddy_new();
 void qq_buddy_free(QQBuddy *bdy);
 //Set the value of the member named `name`
@@ -305,7 +309,7 @@ void qq_buddy_set(QQBuddy *bdy, const gchar *name, ...);
 void qq_buddy_copy(QQBuddy *from, QQBuddy *to);
 
 
-/*
+/**
  * The member of the group.
  */
 struct _QQGMember{
@@ -385,14 +389,14 @@ QQRecentCon* qq_recentcon_new();
 void qq_recentcon_free(QQRecentCon *rc);
 
 
-//
-// Get the milliseconds of now.
-//
+/**
+ * Get the milliseconds of now.
+ */
 glong get_now_millisecond();
 
-//
-// Create an error message.
-// return form err.
-//
+/**
+ * Create an error message.
+ * return form err.
+ */
 void create_error_msg(GError **err, gint code, const gchar *fmt, ...);
 #endif

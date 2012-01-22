@@ -1,3 +1,9 @@
+/**
+ * notify.h
+ *
+ * send a message to the system bus by libnotify
+ */
+
 #ifndef GTKQQ_NOTIFY_H
 #define GTKQQ_NOTIFY_H
 

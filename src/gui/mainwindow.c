@@ -28,8 +28,7 @@ static void destroy_handler(GtkWidget *widget, gpointer  data)
 }
 #endif
 
-gboolean
-qq_mainwindow_close(GtkWidget *widget)
+gboolean qq_mainwindow_close(GtkWidget *widget)
 {
 	qq_mainwindow_hide(widget);
 
@@ -55,7 +54,7 @@ GType qq_mainwindow_get_type()
         };
 
         t = g_type_register_static(GTK_TYPE_WINDOW, "QQMainWindow"
-                    , &info, 0);
+			, &info, 0);
     }
     return t;
 }
@@ -104,7 +103,11 @@ static void qq_mainwindow_init(QQMainWindow *win)
     gtk_widget_set_size_request(w, 200, 500);
     gtk_window_resize(GTK_WINDOW(w), 250, 550);
 
-//    gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+
+    /**
+     * you can build a resizable window with
+     * gtk_window_set_resizable(GTK_WINDOW(w), FALSE);
+     */
     g_signal_connect(w, "delete-event",
 					 G_CALLBACK(qq_mainwindow_close), NULL);
     win -> login_panel = qq_loginpanel_new(w);
@@ -141,6 +144,7 @@ static void qq_mainwindow_init(QQMainWindow *win)
 //    qq_mainpanel_update(QQ_MAINPANEL(win -> main_panel));
 
 }
+
 static void qq_mainwindowclass_init(QQMainWindowClass *wc)
 {
 }
@@ -151,8 +155,8 @@ void qq_mainwindow_show_loginpanel(GtkWidget *win)
         g_warning("Not a mainwindow!!(%s, %d)", __FILE__, __LINE__);
         return;
     }
-    gtk_notebook_set_current_page(GTK_NOTEBOOK(
-                QQ_MAINWINDOW(win) -> notebook), 0);
+    gtk_notebook_set_current_page(
+		    GTK_NOTEBOOK(QQ_MAINWINDOW(win)-> notebook), 0);
 }
 void qq_mainwindow_show_splashpanel(GtkWidget *win)
 {
