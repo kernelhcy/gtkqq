@@ -21,7 +21,7 @@ struct __QQMainWindow{
 	GtkWidget *main_panel;
 	GtkWidget *splash_panel;
 
-	gboolean showed;
+	gboolean showed; /* whether the main window is visiable */
 };
 
 struct __QQMainWindowClass{
@@ -38,6 +38,7 @@ void qq_mainwindow_hide(GtkWidget *win);
 /* If the window now is shown, hide it,
    else show it. */
 void qq_mainwindow_show_hide(GtkWidget *win);
+
 /*
  * Show different panels
  */
@@ -53,4 +54,5 @@ void qq_mainwindow_show_mainpanel(GtkWidget *win);
  * @return 
  */
 GtkWidget *qq_mainwindow_get_mainpanel(GtkWidget *win);
-#endif
+
+#endif /* __GTKQQ_MAINWINDOW_H */

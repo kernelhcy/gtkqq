@@ -42,4 +42,3 @@ notify_exit:
 	if (notify)
 		g_object_unref(G_OBJECT(notify));
 }
-
