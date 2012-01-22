@@ -124,13 +124,27 @@ static void qq_notify(QQRecvMsg *msg)
 		return;
     }
 	body = qq_get_msgstr(msg);
-	if (body) {
-		gchar buf[200];
-		g_snprintf(buf,200,"%s/%s",QQ_FACEDIR,bdy->qqnumber->str);
-		qq_notify_send(title, body->str, buf);
-	}
-	else {
+	if (!body) {
+		g_warning("Message pasre error (%s, %d)\n", __FILE__, __LINE__);
 		qq_notify_send(title, NULL, IMGDIR"/webqq_icon.png");
+		return ;
+	}
+	
+	/* The msg is from qq buddy. */
+	if (MSG_BUDDY_T == msg->msg_type) {
+		if (bdy && bdy->qqnumber) {
+			gchar buf[200];
+			g_snprintf(buf,200,"%s/%s",QQ_FACEDIR,bdy->qqnumber->str);
+			qq_notify_send(title, body->str, buf);
+		} else {
+			/* BUG? */
+			g_warning("Buddy pasre error (%s, %d)\n", __FILE__, __LINE__);
+			qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
+			return ;
+		}
+	} else if (MSG_GROUP_T == msg->msg_type) {
+		/* The msg is from qq group */
+		qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
 	}
 }
 #endif

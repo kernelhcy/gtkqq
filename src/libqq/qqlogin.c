@@ -264,12 +264,13 @@ static gint get_version(QQInfo *info)
 	res = rcv_response(con, &rps);
 	close_con(con);
 	connection_free(con);
-	const gchar *retstatus = rps -> status -> str;
 	if (-1 == res || !rps) {
 		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
 		ret = -1;
 		goto error;
 	}
+
+	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
