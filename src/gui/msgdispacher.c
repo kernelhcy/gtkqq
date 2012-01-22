@@ -243,7 +243,17 @@ static void qq_poll_dispatch_status_changed_msg(QQRecvMsg *msg)
 
 static void qq_poll_dispatch_kick_msg(QQRecvMsg *msg)
 {
-
+	/**
+	 * NOTE:
+	 * 	Just a temporary fix.  
+	 * 	It's really awful that I couldn't be aware of I had got kicked
+	 * 	in the back.
+	 */
+	GtkWidget *dialog = gtk_message_dialog_new(NULL,
+			GTK_DIALOG_DESTROY_WITH_PARENT,GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_CLOSE, "You got kicked in the back.");
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_main_quit();
 }
 
 gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
