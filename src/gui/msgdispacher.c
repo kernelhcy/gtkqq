@@ -249,8 +249,8 @@ static void qq_poll_dispatch_kick_msg(QQRecvMsg *msg)
 	 * 	It's really awful that I couldn't be aware of I had got kicked
 	 * 	in the back.
 	 */
-	GtkWidget *dialog = gtk_message_dialog_new(NULL,
-			GTK_DIALOG_DESTROY_WITH_PARENT,GTK_MESSAGE_ERROR,
+	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(main_win),
+			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
 			GTK_BUTTONS_CLOSE, "You got kicked in the back.");
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_main_quit();
@@ -261,6 +261,8 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
     if(msg == NULL || data == NULL){
         return 0;
     }
+
+    static gboolean got = FALSE; /* whether got kicked */
    
     GQQMessageLoop *loop = data;
 
@@ -279,7 +281,9 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
         gqq_mainloop_attach(loop, qq_poll_dispatch_status_changed_msg, 1, msg);
         break;
     case MSG_KICK_T:
-        gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+	if (!got)
+        	gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+	got = TRUE;
         break;
     default:
         g_warning("Unknonw poll message type! %d (%s, %d)", msg -> msg_type
