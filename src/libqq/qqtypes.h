@@ -77,7 +77,9 @@ struct _QQInfo{
     GString *vc_image_data;         //store the verify code image data
     GString *vc_image_type;         //the verify code image file type
     gint vc_image_size;             //verify code image size
-    GString *ptvfsession;        
+    GString *ptvfsession;
+	GString *verifysession;		/**< verify session, if we need input verify
+								 * code, this member must be given. */
 
     GString *version;
     GString *ptwebqq;
