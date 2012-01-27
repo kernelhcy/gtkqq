@@ -230,6 +230,11 @@ static void qq_tray_status_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     const gchar *status = data;
     g_debug("Change status to %s (%s, %d)", status, __FILE__, __LINE__);
+    if (data == NULL)
+	    g_warning("Status data can't be NULL (%s, %d)", __FILE__, __LINE__);
+    qq_buddy_set(info-> me, "status", data);
+    g_debug("Current status is %s (%s, %d)", info-> me-> status-> str,
+		    __FILE__, __LINE__);
 }
 
 static void qq_tray_personal_setting_menu_item_activate(GtkMenuItem *item,
