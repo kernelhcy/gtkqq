@@ -1,3 +1,13 @@
+/**
+ * @file   proxypanel.h
+ * @author Xiang Wang <xiang_wang@trendmicro.com.cn>
+ * @date   Wed Jan 25 10:56:16 2012
+ *
+ * @brief
+ *
+ *
+ */
+
 #ifndef __PROXY_SETTING_H__
 #define __PROXY_SETTING_H__
 

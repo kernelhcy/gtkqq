@@ -1,3 +1,13 @@
+/**
+ * @file   qqproxy.h
+ * @author Xiang Wang <xiang_wang@trendmicro.com.cn>
+ * @date   Wed Jan 25 10:56:47 2012
+ *
+ * @brief
+ *
+ *
+ */
+
 #ifndef __QQ_PROXY_H__
 #define __QQ_PROXY_H__
 #include <glib.h>
@@ -92,6 +102,34 @@ int expect( char *str, char *substr);
 
 #define PARAMETER_FILE "/etc/connectrc"
 #define PARAMETER_DOTFILE ".connectrc"
+
+/* informations for SOCKS */
+
+#define SOCKS5_REP_SUCCEEDED    0x00    /* succeeded */
+#define SOCKS5_REP_FAIL         0x01    /* general SOCKS serer failure */
+#define SOCKS5_REP_NALLOWED     0x02    /* connection not allowed by ruleset */
+#define SOCKS5_REP_NUNREACH     0x03    /* Network unreachable */
+#define SOCKS5_REP_HUNREACH     0x04    /* Host unreachable */
+#define SOCKS5_REP_REFUSED      0x05    /* connection refused */
+#define SOCKS5_REP_EXPIRED      0x06    /* TTL expired */
+#define SOCKS5_REP_CNOTSUP      0x07    /* Command not supported */
+#define SOCKS5_REP_ANOTSUP      0x08    /* Address not supported */
+#define SOCKS5_REP_INVADDR      0x09    /* Inalid address */
+
+/* SOCKS5 authentication methods */
+#define SOCKS5_AUTH_REJECT      0xFF    /* No acceptable auth method */
+#define SOCKS5_AUTH_NOAUTH      0x00    /* without authentication */
+#define SOCKS5_AUTH_GSSAPI      0x01    /* GSSAPI */
+#define SOCKS5_AUTH_USERPASS    0x02    /* User/Password */
+#define SOCKS5_AUTH_CHAP        0x03    /* Challenge-Handshake Auth Proto. */
+#define SOCKS5_AUTH_EAP         0x05    /* Extensible Authentication Proto. */
+#define SOCKS5_AUTH_MAF         0x08    /* Multi-Authentication Framework */
+
+#define SOCKS4_REP_SUCCEEDED    90      /* rquest granted (succeeded) */
+#define SOCKS4_REP_REJECTED     91      /* request rejected or failed */
+#define SOCKS4_REP_IDENT_FAIL   92      /* cannot connect identd */
+#define SOCKS4_REP_USERID       93      /* user id not matched */
+
 typedef struct {
     char* name;
     char* value;
@@ -134,6 +172,7 @@ int basic_auth (SOCKET s);
 
 
 int begin_http_relay( SOCKET s );
+int begin_socks5_relay(SOCKET s);
 
 void set_relay(int method, const char * server, int port, const char * usr, const char * pass);
 
