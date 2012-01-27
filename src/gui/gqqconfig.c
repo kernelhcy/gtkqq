@@ -472,11 +472,14 @@ gint gqq_config_get_int(GQQConfig *cfg, const gchar *key, gint *value)
         return -1;
     }
     const gchar *vstr = NULL;
-    if(gqq_config_get_str(cfg, key, &vstr) == -1){
+    if(gqq_config_get_str(cfg, key, &vstr) == -1 || vstr == NULL){
+        g_debug("gtk qq configuration has no value for key %s...(%s,%d)",\
+                key,__FILE__, __LINE__);
         return -1;
     }
     gchar *end;    
     glong vint = strtol(vstr, &end, 10);
+    //gint vint = atoi(vstr);
     if(vstr == end){
         return -1;
     }

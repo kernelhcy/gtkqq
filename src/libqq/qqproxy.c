@@ -1,6 +1,13 @@
-/* Last modified Time-stamp: <2011-12-08-16:44:53 Thursday by geniux>
- * @(#)qqproxy.c
+/**
+ * @file   qqproxy.c
+ * @author Xiang Wang <xiang_wang@trendmicro.com.cn>
+ * @date   Wed Jan 25 10:57:05 2012
+ * 
+ * @brief  
+ * 
+ * 
  */
+
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -30,6 +37,8 @@
 #include <netdb.h>
 
 #include <qqproxy.h>
+
+#define PUT_BYTE(ptr,data) (*(unsigned char*)ptr = data)
 
 const char *digits    = "0123456789"; 
 const char *dotdigits = "0123456789.";
@@ -61,6 +70,7 @@ PARAMETER_ITEM parameter_table[] = {
     { NULL, NULL }
 };
 struct sockaddr_in socks_ns;
+struct sockaddr_in dest_addr;
 int connect_timeout = 0; 
 int proxy_auth_type = PROXY_AUTH_NONE;
 /* local input type */
@@ -364,7 +374,7 @@ int local_resolve (const char *host, struct sockaddr_in *addr)
             g_debug("resolved: %s (%s)\n",
                     host, inet_ntoa(addr->sin_addr));
         } else {
-            g_debug("failed to resolve locally.\n");
+            g_debug("failed to resolve locally.(%s,%d)",__FILE__, __LINE__);
             return -1;                          /* failed */
         }
     }
@@ -387,7 +397,7 @@ int open_connection( const char *host, short port )
     s = socket( AF_INET, SOCK_STREAM, 0 );
     if ( connect( s, (struct sockaddr *)&saddr, sizeof(saddr))
          == SOCKET_ERROR) {
-        g_debug( "connect() failed.\n");
+        g_debug( "connect() failed.(%s,%d)",__FILE__, __LINE__);
         return SOCKET_ERROR;
     }
     return s;
@@ -582,7 +592,7 @@ int begin_http_relay( SOCKET s )
         return START_ERROR;
     
     if (proxy_auth_type == PROXY_AUTH_BASIC   && basic_auth (s)  < 0) 
-      return START_ERROR;
+        return START_ERROR;
     
     if (sendf(s,"\r\n") < 0)
         return START_ERROR;
@@ -671,6 +681,226 @@ int begin_http_relay( SOCKET s )
     return START_OK;
 }
 
+
+static const char * socks5_getauthname( int auth )
+{
+    switch ( auth ) {
+        case SOCKS5_AUTH_REJECT: return "REJECTED";
+        case SOCKS5_AUTH_NOAUTH: return "NO-AUTH";
+        case SOCKS5_AUTH_GSSAPI: return "GSSAPI";
+        case SOCKS5_AUTH_USERPASS: return "USERPASS";
+        case SOCKS5_AUTH_CHAP: return "CHAP";
+        case SOCKS5_AUTH_EAP: return "EAP";
+        case SOCKS5_AUTH_MAF: return "MAF";
+        default: return "(unknown)";
+    }
+}
+
+typedef struct {
+    char* name;
+    unsigned char auth;
+} AUTH_METHOD_ITEM;
+
+AUTH_METHOD_ITEM socks5_auth_table[] = {
+    { "none", SOCKS5_AUTH_NOAUTH },
+    { "gssapi", SOCKS5_AUTH_GSSAPI },
+    { "userpass", SOCKS5_AUTH_USERPASS },
+    { "chap", SOCKS5_AUTH_CHAP },
+    { NULL, -1 },
+};
+
+int socks5_auth_parse_1(char *start, char *end){
+    int i, len;
+    for ( ; *start; start++ )
+        if ( *start != ' ' && *start != '\t') break;
+    for ( end--; end >= start; end-- ) {
+        if ( *end != ' ' && *end != '\t'){
+            end++;
+            break;
+        }
+    }
+    len = end - start;
+    for ( i = 0; socks5_auth_table[i].name != NULL; i++ ){
+        if ( strncmp(start, socks5_auth_table[i].name, len) == 0) {
+            return socks5_auth_table[i].auth;
+        }
+    }
+    g_error("Unknown auth method: %s...(%s,%d)", start, __FILE__, __LINE__);
+    return -1;
+}
+
+int socks5_auth_parse(char *start, char *auth_list, int max_auth){
+    char *end;
+    int i = 0;
+    while ( i < max_auth ) {
+        end = strchr(start, ',');
+        if (*start && end) {
+            auth_list[i++] = socks5_auth_parse_1(start, end);
+            start = ++end;
+        } else {
+            break;
+        }
+    }
+    if ( *start && ( i < max_auth ) ){
+        for( end = start; *end; end++ );
+        auth_list[i++] = socks5_auth_parse_1(start, end);
+    } else {
+        g_error("Too much auth method...(%s,%d)", __FILE__ , __LINE__);
+    }
+    return i;
+}
+
+static int socks5_do_auth_userpass( int s )
+{
+    char buf[1024], *ptr;
+    char *pass = NULL;
+    int len;
+
+    /* do User/Password authentication. */
+    /* This feature requires username and password from
+       command line argument or environment variable,
+       or terminal. */
+    
+    if (relay_user == NULL)
+        g_error("cannot determine user name...(%s,%d)",__FILE__, __LINE__);
+    /* get password from environment variable if exists. */
+
+    pass = relay_pass;
+    
+    /* make authentication packet */
+    ptr = buf;
+    PUT_BYTE( ptr++, 1 );                       /* subnegotiation ver.: 1 */
+    len = strlen( relay_user );                 /* ULEN and UNAME */
+    PUT_BYTE( ptr++, len );
+    strcpy( ptr, relay_user );
+    ptr += len;
+    len = strlen( pass );                       /* PLEN and PASSWD */
+    PUT_BYTE( ptr++, strlen(pass));
+    strcpy( ptr, pass );
+    ptr += len;
+    memset (pass, 0, strlen(pass));             /* erase password */
+
+    /* send it and get answer */
+    atomic_out( s, buf, ptr-buf );
+    atomic_in( s, buf, 2 );
+
+    /* check status */
+    if ( buf[1] == 0 )
+        return 0;                               /* success */
+    else
+        return -1;                              /* fail */
+}
+
+
+int begin_socks5_relay( SOCKET s )
+{
+    char buf[256], *ptr, *env = NULL;
+    int n_auth = 0;
+    char auth_list[10], auth_method;
+    int len, auth_result, i;
+
+    g_debug( "begin_socks_relay()...(%s,%d)", __FILE__, __LINE__);
+
+    /* request authentication */
+    ptr = buf;
+    PUT_BYTE( ptr++, 5);                        /* SOCKS version (5) */
+    
+    if ( env == NULL ) {
+        auth_list[n_auth++] = SOCKS5_AUTH_NOAUTH;
+        auth_list[n_auth++] = SOCKS5_AUTH_USERPASS;
+    } else {
+        n_auth = socks5_auth_parse(env, auth_list, 10);
+    }
+    
+    PUT_BYTE( ptr++, n_auth);                   /* num auth */
+    for (i=0; i<n_auth; i++) {
+        g_debug("available auth method[%d] = %s (0x%02x)...(%s,%d)",
+                i, socks5_getauthname(auth_list[i]), auth_list[i],
+                __FILE__, __LINE__);
+        PUT_BYTE( ptr++, auth_list[i]);         /* authentications */
+    }
+    atomic_out( s, buf, ptr-buf );              /* send requst */
+    atomic_in( s, buf, 2 );                     /* recv response */
+    if ( (buf[0] != 5) ||                       /* ver5 response */
+         (buf[1] == 0xFF) ) {                   /* check auth method */
+        g_error("No auth method accepted...(%s,%d)",
+                __FILE__, __LINE__);
+        return -1;
+    }
+    auth_method = buf[1];
+
+    g_debug("auth method: %s...(%s,%d)", socks5_getauthname(auth_method),
+            __FILE__, __LINE__);
+
+    switch ( auth_method ) {
+        /*
+        case SOCKS5_AUTH_REJECT:
+            g_error("No acceptable authentication method...(%s,%d)", __FILE__, __LINE__);
+            return -1;
+        */
+        case SOCKS5_AUTH_NOAUTH:
+            /* nothing to do */
+            auth_result = 0;
+            break;
+
+        case SOCKS5_AUTH_USERPASS:
+            auth_result = socks5_do_auth_userpass(s);
+            break;
+
+        default:
+            g_error("Unsupported authentication method: %s...(%s,%d)",
+                    socks5_getauthname( auth_method ), __FILE__, __LINE__);
+            return -1;                              /* fail */
+    }
+    if ( auth_result != 0 ) {
+        g_error("Authentication failed.(%s,%d)", __FILE__, __LINE__);
+        return -1;
+    }
+    /* request to connect */
+    ptr = buf;
+    PUT_BYTE( ptr++, 5);                        /* SOCKS version (5) */
+    PUT_BYTE( ptr++, 1);                        /* CMD: CONNECT */
+    PUT_BYTE( ptr++, 0);                        /* FLG: 0 */
+    if ( dest_addr.sin_addr.s_addr == 0 ) {
+        /* resolved by SOCKS server */
+        PUT_BYTE( ptr++, 3);                    /* ATYP: DOMAINNAME */
+        len = strlen(dest_host);
+        PUT_BYTE( ptr++, len);                  /* DST.ADDR (len) */
+        memcpy( ptr, dest_host, len );          /* (hostname) */
+        ptr += len;
+    } else {
+        /* resolved localy */
+        PUT_BYTE( ptr++, 1 );                   /* ATYP: IPv4 */
+        memcpy( ptr, &dest_addr.sin_addr.s_addr, sizeof(dest_addr.sin_addr));
+        ptr += sizeof(dest_addr.sin_addr);
+    }
+    PUT_BYTE( ptr++, dest_port>>8);     /* DST.PORT */
+    PUT_BYTE( ptr++, dest_port&0xFF);
+    atomic_out( s, buf, ptr-buf);               /* send request */
+    atomic_in( s, buf, 4 );                     /* recv response */
+    if ( (buf[1] != SOCKS5_REP_SUCCEEDED) ) {   /* check reply code */
+        g_error("Got error response from SOCKS server: %d ...(%s,%d)",
+                buf[1], __FILE__, __LINE__);
+        return -1;
+    }
+    ptr = buf + 4;
+    switch ( buf[3] ) {                         /* case by ATYP */
+        case 1:                                     /* IP v4 ADDR*/
+            atomic_in( s, ptr, 4+2 );               /* recv IPv4 addr and port */
+            break;
+        case 3:                                     /* DOMAINNAME */
+            atomic_in( s, ptr, 1 );                 /* recv name and port */
+            atomic_in( s, ptr+1, *(unsigned char*)ptr + 2);
+            break;
+        case 4:                                     /* IP v6 ADDR */
+            atomic_in( s, ptr, 16+2 );              /* recv IPv6 addr and port */
+            break;
+    }
+
+    /* Conguraturation, connected via SOCKS5 server! */
+    return 0;
+}
+
 void  switch_ns (struct sockaddr_in *ns)
 {
     res_init();
@@ -746,6 +976,15 @@ int get_authenticated_socket( const char * host, int port)
                 case START_RETRY:
                     
                     close (remote);
+            }
+            break;
+
+        case METHOD_SOCKS: 
+            if ( begin_socks5_relay( remote ) < 0 )
+            {
+                g_debug("failed to begin relaying via SOCKS...(%s,%d)",
+                        __FILE__, __LINE__);
+                close (remote);
             }
             break;
         case METHOD_DIRECT:

@@ -1,3 +1,13 @@
+/**
+ * @file   proxypanel.c
+ * @author Xiang Wang <xiang_wang@trendmicro.com.cn>
+ * @date   Wed Jan 25 10:54:07 2012
+ * 
+ * @brief  handle proxy affairs
+ * 
+ * 
+ */
+
 #include <proxypanel.h>
 #include <gqqconfig.h>
 #include <string.h>
@@ -202,8 +212,8 @@ const char proxy_xml[] =
             "<child>\n"
               "<object class=\"GtkComboBox\" id=\"proxy_type_combobox\">\n"
                 "<property name=\"visible\">True</property>\n"
-                "<property name=\"can_focus\">False</property>\n"
-                "<property name=\"has_frame\">False</property>\n"
+                "<property name=\"can_focus\">True</property>\n"
+                "<property name=\"has_frame\">True</property>\n"
                 "<property name=\"button_sensitivity\">on</property>\n"
                 "<property name=\"entry_text_column\">3</property>\n"
               "</object>\n"
@@ -383,7 +393,7 @@ static GtkWidget * ip_entry;
 static GtkWidget * port_entry;
 static GtkWidget * user_entry;
 static GtkWidget * password_entry;
-
+static GtkWidget * proxy_type_combobox;
 
 const gchar *ip_text;
 const gchar *port_text;
@@ -392,24 +402,24 @@ const gchar * password_text;
 
 void set_proxy_btn_cb(GtkButton *btn, gpointer data)
 {
-    /*  
-     */
-    GtkBuilder      *builder;
-    GtkWidget       *window;
+    /*
+*/
+    GtkBuilder *builder;
+    GtkWidget *window;
     GError *err = NULL;
     builder = gtk_builder_new ();
     gint ret = gtk_builder_add_from_string (builder, proxy_xml, strlen(proxy_xml), &err);
     if (err || ! ret)
     {
-        g_debug("builder load fail...(%s,%d)",  __FILE__ , __LINE__);
+        g_debug("builder load fail...(%s,%d)", __FILE__ , __LINE__);
         g_warning ("Couldn't load builder file: %s", err->message);
-        g_error_free(err); 
+        g_error_free(err);
     }
     window = GTK_WIDGET (gtk_builder_get_object (builder, "ProxyPanel"));
     //gtk_builder_connect_signals (builder, NULL);
     if (! window)
     {
-        g_debug("builder generate fail...(%s,%d)",  __FILE__ , __LINE__);
+        g_debug("builder generate fail...(%s,%d)", __FILE__ , __LINE__);
         return;
     }
     
@@ -417,17 +427,29 @@ void set_proxy_btn_cb(GtkButton *btn, gpointer data)
     /* GtkWidget * port_entry = GTK_WIDGET( gtk_builder_get_object(builder,"proxy_port_entry")); */
     /* GtkWidget * user_entry = GTK_WIDGET (gtk_builder_get_object(builder, "user_entry")); */
     /* GtkWidget * password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password_entry")); */
-    GtkComboBox  *proxy_type_combobox =(GtkComboBox *) GTK_WIDGET(gtk_builder_get_object(builder,"proxy_type_combobox"));
+
+    proxy_type_combobox =(GtkWidget *) GTK_WIDGET(gtk_builder_get_object(builder,"proxy_type_combobox"));
 
     if (! proxy_type_combobox )
     {
         g_debug("Fail to get combobox...(%s,%d)",__FILE__, __LINE__);
     }
-    //gtk_combo_box_set_focus_on_click  (proxy_type_combobox,TRUE);
-    
-    //gtk_combo_box_prepend_text(proxy_type_combobox,"HTTP Proxy");
-    //gtk_combo_box_insert_text(proxy_type_combobox,1,"HTTP Proxy");
+    GtkTreeIter iter;
+    GtkListStore *store = gtk_list_store_new (1, G_TYPE_STRING);
+    gtk_list_store_append(store, &iter);
+    gtk_list_store_set(store, &iter, 0, "HTTP Proxy", -1);
+    gtk_combo_box_set_model (GTK_COMBO_BOX (proxy_type_combobox), GTK_TREE_MODEL(store));
 
+    GtkCellRenderer * cell = gtk_cell_renderer_text_new();
+    gtk_cell_layout_pack_start( GTK_CELL_LAYOUT( proxy_type_combobox ), cell, TRUE );
+    gtk_cell_layout_set_attributes( GTK_CELL_LAYOUT( proxy_type_combobox), cell, "text", 0, NULL );
+    gtk_combo_box_append_text(GTK_COMBO_BOX (proxy_type_combobox),"Socks5 Proxy");
+
+    int index = 0;
+    gqq_config_get_int(cfg, "proxy_type",&index);
+    g_debug("the proxy type index is %d... (%s,%d)", index, __FILE__, __LINE__);
+    gtk_combo_box_set_active (GTK_COMBO_BOX(proxy_type_combobox), index);
+    
     GtkWidget * detect_btn = GTK_WIDGET(gtk_builder_get_object(builder, "detect_connection_btn"));
     GtkWidget * save_btn = GTK_WIDGET(gtk_builder_get_object(builder, "save_btn"));
     
@@ -435,6 +457,8 @@ void set_proxy_btn_cb(GtkButton *btn, gpointer data)
     port_entry = GTK_WIDGET( gtk_builder_get_object(builder,"proxy_port_entry"));
     user_entry = GTK_WIDGET (gtk_builder_get_object(builder, "user_entry"));
     password_entry = GTK_WIDGET(gtk_builder_get_object(builder, "password_entry"));
+
+    
     if( ! ip_entry || ! port_entry || !user_entry|| !password_entry)
     {
         g_debug("Get Widget Object Error...(%s,%d)",__FILE__, __LINE__);
@@ -468,7 +492,7 @@ void set_proxy_btn_cb(GtkButton *btn, gpointer data)
             gtk_entry_set_text( (GtkEntry*)user_entry, user_text);
             gtk_entry_set_text( (GtkEntry *)password_entry, password_text);
             
-            g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);    
+            g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);
         }
     }
 
@@ -476,7 +500,7 @@ void set_proxy_btn_cb(GtkButton *btn, gpointer data)
     g_signal_connect(G_OBJECT(save_btn), "clicked", G_CALLBACK(on_click_save_cb),(gpointer) window);
     g_object_unref (G_OBJECT (builder));
      
-    gtk_widget_show_all(window);             
+    gtk_widget_show_all(window);
 }
 
 static void on_close_cb(GtkButton * btn, gpointer data)
@@ -486,6 +510,13 @@ static void on_close_cb(GtkButton * btn, gpointer data)
     gtk_widget_destroy (window);
 }
 
+
+/** 
+ * Call back function for detecting proxy settings
+ * 
+ * @param btn is the button in widget
+ * @param data 
+ */
 void on_click_detect_cb(GtkButton *btn, gpointer data)
 {
     g_debug("detect connection...(%s,%d)",__FILE__, __LINE__);
@@ -504,15 +535,15 @@ void on_click_detect_cb(GtkButton *btn, gpointer data)
         {
             close(sock);
             
-            GtkBuilder      *builder;
-            GtkWidget       *window;
+            GtkBuilder *builder;
+            GtkWidget *window;
             GError *err = NULL;
             builder = gtk_builder_new ();
             gint ret = gtk_builder_add_from_string (builder, success_xml, strlen(success_xml), &err);
             if (err || ! ret)
             {
-                g_debug("builder load fail...(%s,%d)",  __FILE__ , __LINE__);
-                g_error_free(err); 
+                g_debug("builder load fail...(%s,%d)", __FILE__ , __LINE__);
+                g_error_free(err);
             }
             window = GTK_WIDGET (gtk_builder_get_object (builder, "successdialog"));
             if (! window)
@@ -522,32 +553,39 @@ void on_click_detect_cb(GtkButton *btn, gpointer data)
             GtkWidget * close_btn = GTK_WIDGET(gtk_builder_get_object(builder, "close_btn"));
             g_signal_connect(G_OBJECT(close_btn), "clicked", G_CALLBACK(on_close_cb),window);
            
-            g_object_unref (G_OBJECT (builder));            
-            gtk_widget_show_all(window);     
+            g_object_unref (G_OBJECT (builder));
+            gtk_widget_show_all(window);
         }
         else{
-            GtkBuilder      *builder;
-            GtkWidget       *window;
+            GtkBuilder *builder;
+            GtkWidget *window;
             GError *err = NULL;
             builder = gtk_builder_new ();
             gint ret = gtk_builder_add_from_string (builder,fail_xml, strlen(fail_xml), &err);
             if (err || ! ret)
             {
-                g_debug("builder load fail...(%s,%d)",  __FILE__ , __LINE__);
-                g_error_free(err); 
+                g_debug("builder load fail...(%s,%d)", __FILE__ , __LINE__);
+                g_error_free(err);
             }
             window = GTK_WIDGET (gtk_builder_get_object (builder, "connection_fail"));
 
             GtkWidget * close_btn = GTK_WIDGET(gtk_builder_get_object(builder, "close_btn"));
             g_signal_connect(G_OBJECT(close_btn), "clicked", G_CALLBACK(on_close_cb),window);
             
-            g_object_unref (G_OBJECT (builder));            
-            gtk_widget_show_all(window);     
+            g_object_unref (G_OBJECT (builder));
+            gtk_widget_show_all(window);
             gtk_entry_set_text( (GtkEntry*)ip_entry, "");
             gtk_entry_set_text( (GtkEntry *)port_entry, "");
         }
     }
 }
+
+/** 
+ * Call back function for saving proxy settings
+ * 
+ * @param btn the button item which will act the save behavior.
+ * @param data the widget pointer
+ */
 
 void on_click_save_cb(GtkButton *btn, gpointer data)
 {
@@ -564,9 +602,23 @@ void on_click_save_cb(GtkButton *btn, gpointer data)
     {
         gqq_config_set_str(cfg, "proxy_user", user_text );
         gqq_config_set_str(cfg, "proxy_password", password_text );
-        g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);    
+        g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);
     }
-
-    set_relay(METHOD_HTTP, ip_text, atoi(port_text),user_text,password_text);
+    int index = gtk_combo_box_get_active (GTK_COMBO_BOX(proxy_type_combobox));
+    gqq_config_set_int(cfg,"proxy_type",index);
+    g_debug("Current combobox index is %d...(%s,%d)",index, __FILE__, __LINE__);
+    switch (index)
+    {
+        case 0:
+            set_relay(METHOD_HTTP, ip_text, atoi(port_text),user_text,password_text);
+            break;
+        case 1:
+            set_relay(METHOD_SOCKS, ip_text, atoi(port_text),user_text,password_text);
+            break;
+        default:
+            break;
+    }
     gtk_widget_destroy (window);
 }
+
+

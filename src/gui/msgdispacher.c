@@ -7,6 +7,7 @@
 #include <msgloop.h>
 #include <config.h>
 #include <sound.h>
+#include <notify.h>
 #include <mainpanel.h>
 #include <mainwindow.h>
 
@@ -50,7 +51,107 @@ static void qq_sound_notify(QQRecvMsg *msg)
 	
 	qq_play_wavfile(filename);
 }
+#endif	/* USE_GSTREAMER */
+
+#ifdef USE_LIBNOTIFY
+/* Get the raw talk message. Not need to free memory. */
+static GString * qq_get_msgstr(QQRecvMsg *msg)
+{
+	if (!msg || !msg->contents)
+		return NULL;
+	
+	int i = 0;
+	QQMsgContent *cent;
+	GPtrArray *contents = msg->contents;
+	
+	for (i = 0; i < contents->len; ++i) {
+        cent = g_ptr_array_index(contents, i);
+        if(cent && QQ_MSG_CONTENT_STRING_T == cent->type) {
+			return cent->value.str;
+		}
+    }
+	
+	return NULL;
+}
+#endif
+
+#ifdef USE_LIBNOTIFY
+static void qq_notify(QQRecvMsg *msg)
+{
+	if (!msg)
+		return ;
+
+	gchar title[256] = {0};
+	GString *body = NULL;
+	gchar *from = NULL;
+	QQBuddy *bdy = NULL;
+	QQGroup *gp = NULL;
+	GString *code = NULL;
+	
+	switch (msg->msg_type) {
+    case MSG_BUDDY_T:
+		/* Parse the sender. */
+		bdy = qq_info_lookup_buddy_by_uin(info, msg->from_uin->str);
+		if (!bdy) {
+			from = msg->from_uin->str;
+		} else {
+			from = bdy->markname->str;
+			if (bdy-> markname->len <= 0){
+				from = bdy->nick->str;
+			}
+		}
+		g_snprintf(title, sizeof(title), "New message from friend %s", from);
+    case MSG_GROUP_T:
+		/* Parse which group send this message. */
+		code = msg->group_code;
+		gp = qq_info_lookup_group_by_code(info, code->str);
+		if (!gp) {
+			from = msg -> from_uin -> str;
+		} else {
+			from = gp->name->str;
+		}
+		g_snprintf(title, sizeof(title), "New message from group %s", from);
+        break;
+    case MSG_STATUS_CHANGED_T:
+		/* Nothing */
+    case MSG_KICK_T:
+		/* No implement now */
+		return;
+    default:
+        g_warning("Unknonw poll message type! %d (%s, %d)", msg->msg_type
+				  , __FILE__, __LINE__);
+		return;
+    }
+
+	body = qq_get_msgstr(msg);
+	if (body) {
+		qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
+	}
+	else {
+		qq_notify_send(title, NULL, IMGDIR"/webqq_icon.png");
+	}
+}
+#endif
+
+static void qq_msg_notify(QQRecvMsg *msg)
+{
+	if (!msg)
+		return ;
+	
+#ifdef USE_GSTREAMER
+	/* Play a audio to notify that a new msg is coming if
+	 user dont set mute. */
+	if (!gqq_config_is_mute(cfg)) {
+		qq_sound_notify(msg);
+	}
 #endif //USE_GSTREAMER
+	
+#ifdef USE_LIBNOTIFY
+	qq_notify(msg);
+#endif
+	
+	return ;
+}
 
 static void qq_poll_dispatch_buddy_msg(QQRecvMsg *msg)
 {
@@ -137,12 +238,8 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
    
     GQQMessageLoop *loop = data;
 
-#ifdef USE_GSTREAMER
-	/* Play a audio to notify that a new msg is coming if
-	 user dont set mute. */
-	if (!gqq_config_is_mute(cfg))
-		qq_sound_notify(msg);
-#endif // USE_GSTREAMER
+	/* Make notify event if a new msg is coming. */
+	qq_msg_notify(msg);
 	
     switch(msg -> msg_type)
     {
