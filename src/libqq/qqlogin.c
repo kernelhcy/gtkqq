@@ -1,11 +1,12 @@
+#include <string.h>
+#include <stdlib.h>
+#include <glib/gprintf.h>
+
 #include <qq.h>
 #include <http.h>
 #include <url.h>
 #include <qqhosts.h>
-#include <string.h>
 #include <json.h>
-#include <stdlib.h>
-#include <glib/gprintf.h>
 
 /*
  * Get cookie from r.
@@ -357,12 +358,14 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	gchar *params = NULL;
 	GString *cookie = NULL;
 
-	params = g_strdup_printf(LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
-							 "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
-							 "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-							 "&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
-							 , info -> me -> uin -> str, p, info -> verify_code -> str
-							 , LOGIN_S_URL);
+	params = g_strdup_printf(
+		LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
+		"remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
+		"ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
+		"&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
+		, info -> me -> uin -> str, p, info -> verify_code -> str
+		, LOGIN_S_URL);
+
 	if (!params)
 		return -1;
 
@@ -375,11 +378,12 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	g_free(params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
-	request_add_header(req, "Referer", "http://ui.ptlogin2.qq.com/cgi-bin/"
-					   "login?target=self&style=4&appid=1003903&enable_ql"
-					   "ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
-					   "om%2Floginproxy.html%3Flogin_level%3D3"
-					   "&f_url=loginerroralert");
+	request_add_header(req, "Referer", 
+			"http://ui.ptlogin2.qq.com/cgi-bin/"
+			"login?target=self&style=4&appid=1003903&enable_ql"
+			"ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
+			"om%2Floginproxy.html%3Flogin_level%3D3"
+			"&f_url=loginerroralert");
 
 	/* Add cookie to http header. */
 	cookie = g_string_new("");
@@ -698,67 +702,71 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		        , const gchar *status, GError **err)
 {
 	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
-    gint retcode = NO_ERR;
-    retcode = get_version(info);
+	
+	gint retcode = NO_ERR;
+	retcode = get_version(info);
+	
 	if(retcode != NO_ERR){
-        create_error_msg(err, retcode, "Get version error.");
+		create_error_msg(err, retcode, "Get version error.");
 		return retcode;
 	}
 
-    if(info -> verify_code == NULL){
-        g_warning("Need verify code!!(%s, %d)", __FILE__, __LINE__);
-        create_error_msg(err, WRONGVC_ERR, "Need verify code.");
-        return WRONGVC_ERR;
-    }
+	if(info -> verify_code == NULL){
+		g_warning("Need verify code!!(%s, %d)", __FILE__, __LINE__);
+		create_error_msg(err, WRONGVC_ERR, "Need verify code.");
+		return WRONGVC_ERR;
+	}
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
 	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str, err);
 
 	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
 	gint ret = get_ptcz_skey(info, md5 -> str);
+	g_string_free(md5, TRUE);
+
+
 	if(ret != 0){
-		g_string_free(md5, TRUE);
 		const gchar * msg;
 		switch(ret)
 		{
 		case 1:
 			msg = "System busy! Please try again.";
-            retcode = NETWORK_ERR;
+			retcode = NETWORK_ERR;
 			break;
 		case 2:
 			msg = "Out of date QQ number.";
-            retcode = WRONGUIN_ERR;
+			retcode = WRONGUIN_ERR;
 			break;
 		case 3:
 		case 6:
 			msg = "Wrong password.";
-            retcode = WRONGPWD_ERR;
+			retcode = WRONGPWD_ERR;
 			break;
 		case 4:
 			msg = "Wrong verify code.";
-            retcode = WRONGVC_ERR;
+			retcode = WRONGVC_ERR;
 			break;
 		case 5:
 			msg = "Verify failed.";
-            retcode = OTHER_ERR;
+			retcode = OTHER_ERR;
 			break;
 		default:
 			msg = "Error occured! Please try again.";
-            retcode = OTHER_ERR;
+			retcode = OTHER_ERR;
 			break;
 		}
-        create_error_msg(err, retcode, msg);
+		create_error_msg(err, retcode, msg);
 		return retcode;
 	}
-	g_string_free(md5, TRUE);
 
 	g_debug("Get psessionid...(%s, %d)", __FILE__, __LINE__);
-    retcode = get_psessionid(info);
+	
+	retcode = get_psessionid(info);
 	if(retcode != NO_ERR){
-        create_error_msg(err, retcode, "Get psessionid error.");
+		create_error_msg(err, retcode, "Get psessionid error.");
 		return retcode;
 	}
-    
+
 	g_debug("Initial done.(%s, %d)", __FILE__, __LINE__);
 	return NO_ERR;
 }
@@ -768,45 +776,48 @@ gint qq_login(QQInfo *info, const gchar *qqnum, const gchar *passwd
 {
 	if(info == NULL){
 		g_warning("info == NULL. (%s, %d)", __FILE__, __LINE__);
-        create_error_msg(err, PARAMETER_ERR, "info == NULL");
+		create_error_msg(err, PARAMETER_ERR, "info == NULL");
 		return PARAMETER_ERR;
 	}
 	if(qqnum == NULL || passwd == NULL || strlen(qqnum) == 0){
 		g_warning("qqnumber or passwd == NULL.(%s, %d)"
 				, __FILE__, __LINE__);
-        create_error_msg(err, PARAMETER_ERR, "qqnum or passwd  == NULL");
+		create_error_msg(err, PARAMETER_ERR, 
+				"qqnum or passwd  == NULL");
 		return PARAMETER_ERR;
 	}
 
-    //
-    // The user's uin and qq number are the same.
-    //
-    qq_buddy_set(info -> me, "qqnumber", qqnum);
-    qq_buddy_set(info -> me, "uin", qqnum);
+	/*
+	 * The user's uin and qq number are the same.
+	 */
+	qq_buddy_set(info -> me, "qqnumber", qqnum);
+	qq_buddy_set(info -> me, "uin", qqnum);
 
-	if(status != NULL){
-        qq_buddy_set(info -> me, "status", status);
-	}else{
-        qq_buddy_set(info -> me, "status", "online");
+	if(status != NULL ){
+		qq_buddy_set(info -> me, "status", status);
+	} else {
+		qq_buddy_set(info -> me, "status", "online");
 	}
 
-    return do_login(info, qqnum, passwd, status, err);
+	return do_login(info, qqnum, passwd, status, err);
 }
 
 static gint do_logout(QQInfo *info, GError **err)
 {
-    gint ret_code = 0;
+	gint ret_code = 0;
 	gint res = 0;
 	g_debug("Logout... (%s, %d)", __FILE__, __LINE__);
+	
 	if(info -> psessionid == NULL || info -> psessionid -> len <= 0){
 		g_warning("Need psessionid !!(%s, %d)", __FILE__, __LINE__);
 		return -1;
 	}
 
 	gchar *params = NULL;
-	params = g_strdup_printf(LOGOUTPATH"?clientid=%s&psessionid=%s&t=%ld"
-							 , info -> clientid -> str
-							 , info -> psessionid -> str, get_now_millisecond());
+	params = g_strdup_printf(LOGOUTPATH"?clientid=%s&psessionid=%s&t=%ld",
+			info -> clientid -> str, info -> psessionid -> str, 
+				get_now_millisecond());
+	
 	if (!params)
 		return -1;
 	
@@ -887,7 +898,7 @@ gint qq_logout(QQInfo *info, GError **err)
 	if(info == NULL){
 		return -1;
 	}
-	return do_logout(info, err);;
+	return do_logout(info, err);
 }
 
 /*
