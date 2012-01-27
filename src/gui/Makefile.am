@@ -37,5 +37,6 @@ gtkqq_SOURCES=main.c \
           statusbutton.h statusbutton.c\
 		  sound.h sound.c\
 		  notify.h notify.c\
-		  proxypanel.c proxypanel.h
+		  proxypanel.c proxypanel.h\
+		  settingdialog.c settingdialog.h
 
