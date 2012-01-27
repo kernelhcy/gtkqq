@@ -13,12 +13,11 @@
 #ifdef USE_PROXY
 #include <proxypanel.h>
 #endif	/* USE_PROXY */
+
 /*
  * The global value
  * in main.c
  */
-
-
 extern QQInfo *info;
 extern GQQConfig *cfg;
 extern QQTray *tray;
@@ -40,7 +39,7 @@ static GQQMessageLoop gtkloop;
 
 static GPtrArray* login_users = NULL;
 
-GtkType qq_loginpanel_get_type()
+GType qq_loginpanel_get_type()
 {
     static GType t = 0;
     if(!t){
@@ -123,13 +122,14 @@ static gint do_login(QQLoginPanel *panel)
     g_warning("Login error! %s (%s, %d)", err -> message, __FILE__, __LINE__);
     g_error_free(err);
     //show err message
-    gqq_mainloop_attach(&gtkloop, gtk_label_set_text, 2, panel -> err_label, msg);
+    gqq_mainloop_attach(&gtkloop, gtk_label_set_text, 2, 
+		    panel -> err_label, msg);
     return -1;
 }
 
-//
-// Update the details.
-//
+/**
+ * Update the details.
+ */
 static void update_details(QQInfo *info, QQLoginPanel *panel)
 {
     // update my information
@@ -154,7 +154,7 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
     gint i;
     QQGroup *grp;
     gchar num[100];
-    for(i = 0; i < info -> groups -> len; ++i){
+    for(i = 0; i < info->groups->len; ++i){
         grp = g_ptr_array_index(info -> groups, i);
         if(grp == NULL){
             continue;
@@ -162,15 +162,12 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
         qq_get_qq_number(info, grp -> code -> str, num, NULL);
         qq_group_set(grp, "gnumber", num);
     }
-    gqq_mainloop_attach(&gtkloop
-                        , qq_mainpanel_update_group_info 
-                        , 1
-                        , QQ_MAINWINDOW(panel -> container) -> main_panel);
+    gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_group_info , 1,
+		    QQ_MAINWINDOW(panel -> container) -> main_panel);
 
     //update face image
-    update_face_image(info
-                      , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
-                      -> main_panel);
+    update_face_image(info, 
+		    (QQMainPanel*)QQ_MAINWINDOW(panel->container)-> main_panel);
 }
 
 //login state machine state.
@@ -325,21 +322,30 @@ static GQQLoginUser *get_current_login_user(GPtrArray* all_users)
 	
 	return usr;
 }
+
+/**
+ * login_cb(QQLoginPanel *panel)
+ * show the splashpanel and start the login procedure.
+ */
 static void login_cb(QQLoginPanel* panel)
 {
     GtkWidget *win = panel -> container;
     qq_mainwindow_show_splashpanel(win);
 		
 
+    /* get user information from the login panel */
     panel -> uin = qq_loginpanel_get_uin(panel);
     panel -> passwd = qq_loginpanel_get_passwd(panel);
     panel -> status = qq_loginpanel_get_status(panel);
-	panel -> rempw = qq_loginpanel_get_rempw(panel);
+    panel -> rempw = qq_loginpanel_get_rempw(panel);
 
-    g_debug("Start login... qqnum: %s, status: %s (%s, %d)", panel -> uin
-            , panel -> status, __FILE__, __LINE__);
+    g_debug("Start login... qqnum: %s, status: %s (%s, %d)", panel -> uin,
+		    panel -> status, __FILE__, __LINE__);
 
-    // run the login state machine
+    /* *
+     * run the login state machine
+     * we have a login state machine for login 
+     */
     g_debug("Run login state machine...(%s, %d)", __FILE__, __LINE__);
     state = LOGIN_SM_CHECKVC;
     run_login_state_machine(panel);
@@ -366,30 +372,34 @@ static void login_cb(QQLoginPanel* panel)
     gqq_config_save_last_login_user(cfg);
 }
 /*
-*actived when RETURN pressed at uin_entry or passwd_entry
-*/
-gboolean quick_login(GtkWidget* widget,GdkEvent* e,gpointer data){
+ * actived when RETURN pressed at uin_entry or passwd_entry
+ */
+gboolean quick_login(GtkWidget* widget,GdkEvent* e,gpointer data)
+{
 	GdkEventKey *event = (GdkEventKey*)e;
-    if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter|| event -> keyval == GDK_ISO_Enter){
-         if((event -> state & GDK_CONTROL_MASK) != 0
+	if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter|| 
+			event -> keyval == GDK_ISO_Enter){
+		if((event -> state & GDK_CONTROL_MASK) != 0
                          || (event -> state & GDK_SHIFT_MASK) != 0){
-             return FALSE;
-         }
-         login_cb(QQ_LOGINPANEL(data));
-         return TRUE;
+			return FALSE;
+         	}
+         	login_cb(QQ_LOGINPANEL(data));
+         	return TRUE;
 	}
 	return FALSE;
 
 }
-/*
- * Callback of login_btn button
-*/
 
+/**
+ * Callback of login_btn button
+ */
 static void login_btn_cb(GtkButton *btn, gpointer data)
 {
-    QQLoginPanel *panel = QQ_LOGINPANEL(data);
+	QQLoginPanel *panel = QQ_LOGINPANEL(data);
 	login_cb(panel);
 }
+
+
 static void qq_loginpanel_init(QQLoginPanel *obj)
 {
     login_users = gqq_config_get_all_login_user(cfg);
@@ -412,6 +422,13 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     }
 
     obj -> uin_label = gtk_label_new("QQ Number:");
+    /**
+     * WARNING:
+     * 		gtk_combo_box_entry_new_text() 
+     * 		gtk_combo_box_append_text()
+     * 		is mark as deprecated and should not be used in newly-written 
+     * 		code. It can't port to new GTK+ library.
+     */
     obj -> uin_entry = gtk_combo_box_entry_new_text();
     for(i = 0; i < login_users -> len; ++i){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
@@ -669,10 +686,10 @@ static gpointer get_buddy_face_thread_func(gpointer data)
     return NULL;
 }
 
-//
-// Get all buddies' and groups' face images
-// Run in get_info_loop.
-//
+/**
+ * Get all buddies' and groups' face images
+ * Run in get_info_loop.
+ */
 static void update_face_image(QQInfo *info, QQMainPanel *panel)
 {
     if(info == NULL || panel == NULL){
@@ -747,4 +764,3 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
     gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_buddy_faceimg, 1, panel);
     gqq_mainloop_attach(&gtkloop, qq_mainpanel_update_group_info, 1, panel);
 }
-
