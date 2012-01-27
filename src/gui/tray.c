@@ -1,6 +1,7 @@
 #include <qq.h>
 #include <config.h>
 #include "tray.h"
+#include "settingdialog.h"
 #include "gqqconfig.h"
 #include "mainwindow.h"
 
@@ -236,6 +237,8 @@ static void qq_tray_personal_setting_menu_item_activate(GtkMenuItem *item,
 								gpointer data)
 {
     g_debug("Tray personal setting (%s, %d)", __FILE__, __LINE__);
+    GtkWidget* settingdialog=qq_setting_dialog_new();
+    gtk_widget_show_all(settingdialog);
 }
 static void qq_tray_system_setting_menu_item_activate(GtkMenuItem *item,
 								gpointer data)
