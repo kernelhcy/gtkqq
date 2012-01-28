@@ -946,21 +946,33 @@ int get_authenticated_socket( const char * host, int port)
     
     if (0 < connect_timeout)
         set_timeout (connect_timeout);
-    //if (check_direct(dest_host))
-    //   relay_method = METHOD_DIRECT;
-  
-    if ( relay_method == METHOD_DIRECT ) {
-        remote = open_connection (dest_host, dest_port);
-        if ( remote == SOCKET_ERROR )
-            g_error( "Unable to connect to destination host, errno=%d\n",
-                     socket_errno());
-    } else {
-        remote = open_connection (relay_host, relay_port);
-        if ( remote == SOCKET_ERROR )
-            g_error( "Unable to connect to relay host, errno=%d\n",
-                     socket_errno());
+
+#define MAX_TIME_RETRY 100
+    int i = 0 ; 
+    for ( i =1; i <= MAX_TIME_RETRY; i ++ )
+    {
+        if ( relay_method == METHOD_DIRECT ) {
+            remote = open_connection (dest_host, dest_port);
+            if ( remote == SOCKET_ERROR )
+                g_debug( "Unable to connect to destination host, errno=%d\n",
+                         socket_errno());
+        } else {
+            remote = open_connection (relay_host, relay_port);
+            if ( remote == SOCKET_ERROR )
+                g_debug( "Unable to connect to relay host, errno=%d\n",
+                         socket_errno());
+        }
+
+        if ( SOCKET_ERROR != remote)
+            break;
     }
 
+    if (SOCKET_ERROR == remote)
+    {
+        g_error("Unable to connect to host within %d times...(%s,%d)",
+                MAX_TIME_RETRY, __FILE__, __LINE__);
+    }
+    
     if (socks_ns.sin_addr.s_addr != 0)
         switch_ns (&socks_ns);
 

@@ -5,4 +5,4 @@ aclocal 					\
 && libtoolize 	--copy --force --automake 	\
 && autoreconf --install				\
 && [ -d usr ] || mkdir usr			\
-&& ./configure --enable-proxy --enable-debug --prefix=`pwd`/usr
+&& ./configure --enable-debug --enable-proxy --prefix=`pwd`/usr
