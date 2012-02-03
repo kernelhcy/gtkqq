@@ -1,5 +1,6 @@
 #include <qq.h>
 #include <config.h>
+#include <glib/gi18n.h>
 #include "tray.h"
 #include "gqqconfig.h"
 #include "mainwindow.h"
@@ -199,33 +200,6 @@ void qq_tray_set_mute_item(QQTray *tray, gboolean mute)
 			GTK_CHECK_MENU_ITEM(priv->mute_item), mute);
 }
 
-/**
- * simple about dialog
- */
-static void qq_show_about_dialog()
-{
-	GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(IMGDIR"webqq_icon.png",
-			NULL);
-
-	GtkWidget *dialog = gtk_about_dialog_new();
-
-	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog),
-			PACKAGE_NAME);
-	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog),
-			PACKAGE_VERSION);
-	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog), 
-			"GPL v3");
-	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog), 
-			"GtkQQ is a QQ client based on web qq protocol.");
-	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog), 
-			"http://github.com/kernelhcy/gtkqq");
-	gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), pixbuf);
-
-	g_object_unref(pixbuf);
-	gtk_dialog_run(GTK_DIALOG(dialog));
-	gtk_widget_destroy(dialog);
-}
-
 static void qq_tray_status_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
     const gchar *status = data;
@@ -244,10 +218,44 @@ static void qq_tray_system_setting_menu_item_activate(GtkMenuItem *item,
 
 }
 
+/** 
+ * Show about window
+ * 
+ * @param item 
+ * @param data 
+ */
 static void qq_tray_about_menu_item_activate(GtkMenuItem *item, gpointer data)
 {
-    g_debug("Tray about(%s, %d)", __FILE__, __LINE__);
-    qq_show_about_dialog();
+	gchar *copyright = "Copyright © 2011–2012 kernelhcy";
+	gchar *comment = _("A QQ client based on web qq protocol");
+	gchar *licence = "GPL v3";
+	GdkPixbuf *logo = NULL;
+	gchar *authors[] = {
+		"HuangCongyu <huangcongyu2006@gmail.com>",
+		"Xiang Wang <wxjeacen@gmail.com>",
+		"mathslinux <riegamaths@gmail.com>",
+		NULL
+	};
+
+	g_debug("Tray about(%s, %d)", __FILE__, __LINE__);
+	
+	/* Our logo */
+	logo = gdk_pixbuf_new_from_file(IMGDIR"webqq_icon.png", NULL);
+
+	GtkWidget *dialog = gtk_about_dialog_new();
+
+	gtk_about_dialog_set_program_name(GTK_ABOUT_DIALOG(dialog), PACKAGE_NAME);
+	gtk_about_dialog_set_version(GTK_ABOUT_DIALOG(dialog), PACKAGE_VERSION);
+	gtk_about_dialog_set_license(GTK_ABOUT_DIALOG(dialog), licence);
+	gtk_about_dialog_set_copyright(GTK_ABOUT_DIALOG(dialog), copyright);
+	gtk_about_dialog_set_authors(GTK_ABOUT_DIALOG(dialog), (const gchar **)authors);
+	gtk_about_dialog_set_comments(GTK_ABOUT_DIALOG(dialog), comment);
+	gtk_about_dialog_set_website(GTK_ABOUT_DIALOG(dialog), PACKAGE_URL);
+	gtk_about_dialog_set_logo(GTK_ABOUT_DIALOG(dialog), logo);
+
+	g_object_unref(logo);
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_widget_destroy(dialog);
 }
 
 static void qq_tray_quit_menu_item_activate(GtkMenuItem *item, gpointer data)

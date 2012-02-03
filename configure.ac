@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.6])
-AC_INIT([GtkQQ], [0.1], [huangcongyu2006@gmail.com])
+AC_INIT([GtkQQ], [0.1], [huangcongyu2006@gmail.com], [gtkqq], [http://github.com/kernelhcy/gtkqq])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror])
