@@ -2,12 +2,12 @@
 #define __GTKQQ_LOGINWIN_H
 #include <gtk/gtk.h>
 
-#define QQ_LOGINPANEL(obj)    GTK_CHECK_CAST(obj, qq_loginpanel_get_type()\
+#define QQ_LOGINPANEL(obj)    G_TYPE_CHECK_INSTANCE_CAST(obj, qq_loginpanel_get_type()\
                                         , QQLoginPanel)
-#define QQ_LOGINPANEL_CLASS(c)    GTK_CHECK_CLASS_CAST(c\
+#define QQ_LOGINPANEL_CLASS(c)    G_TYPE_CHECK_CLASS_CAST(c\
                                         , qq_loginpanel_get_type()\
                                         , QQLoginPanelClass)
-#define QQ_IS_LOGINPANEL(obj)    GTK_CHECK_TYPE(obj, qq_loginpanel_get_type())
+#define QQ_IS_LOGINPANEL(obj)    G_TYPE_CHECK_INSTANCE_TYPE(obj, qq_loginpanel_get_type())
 
 typedef struct _QQLoginPanel            QQLoginPanel;
 typedef struct _QQLoginPanelClass       QQLoginPanelClass;
@@ -35,15 +35,15 @@ struct _QQLoginPanel{
     /*< private >*/
     GtkWidget *uin_label, *uin_entry;
     GtkWidget *passwd_label, *passwd_entry;
-    GtkWidget *rempwcb;             //rember password check button
-    GtkWidget *err_label;           //show error infomation.
+    GtkWidget *rempwcb;             /* remember password check button */
+    GtkWidget *err_label;           /* show error infomation. */
     GtkWidget *login_btn, *status_comb;
 #ifdef USE_PROXY
 	GtkWidget *set_proxy_btn;
 #endif	/* USE_PROXY */
 
     const gchar *uin, *passwd, *status;
-	gint rempw;
+    gint rempw;
 
     GtkWidget *container;
 
@@ -55,20 +55,20 @@ struct _QQLoginPanelClass{
     GtkVBoxClass parent;
 };
 
-/*
+/**
  * Create a new instance of QQLoginPanel.
  *
- * @param container the container which contains this instance. Can be
+ * @param container : the container which contains this instance. Can be
  *     set to NULL.
  */
 GtkWidget* qq_loginpanel_new(GtkWidget *container);
-GtkType qq_loginpanel_get_type();
+GType qq_loginpanel_get_type();
 
-/*
+/**
  * Get the inputs
  */
 const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel);
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel  *loginpanel);
 const gchar* qq_loginpanel_get_status(QQLoginPanel *loginpanel);
 gint qq_loginpanel_get_rempw(QQLoginPanel *loginpanel);
-#endif
+#endif /* __GTKQQ_LOGINWIN_H */

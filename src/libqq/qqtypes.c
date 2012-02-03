@@ -49,6 +49,7 @@ void qq_info_free(QQInfo *info)
     FREE_STR(vc_image_type);
     FREE_STR(verify_code);
     FREE_STR(ptvfsession);
+	FREE_STR(verifysession);
     FREE_STR(version);
     FREE_STR(ptuserinfo);
     FREE_STR(ptwebqq);

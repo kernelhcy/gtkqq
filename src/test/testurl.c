@@ -3,7 +3,7 @@
 #include <stdio.h>
 int main(int argc, char ** argv)
 {
-	log_init();
+	log_init(TRUE);
 	Connection *con = connect_to_host("web2.qq.com", 80);
 	if(con == NULL){
 		return 0;

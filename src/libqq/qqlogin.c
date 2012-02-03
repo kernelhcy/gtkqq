@@ -213,6 +213,12 @@ static gint get_vc_image(QQInfo *info)
 				, rps -> msg -> len);
     info -> vc_image_size = rps -> msg -> len;
 
+	/* Store verifysession */
+	info->verifysession = get_cookie(rps, "verifysession");
+	if (info->verifysession) {
+		g_debug("Get verifysession: %s(%s, %d)", info->verifysession->str, __FILE__, __LINE__);
+	}
+
 	gchar *ct = response_get_header_chars(rps, "Content-Type");
 	gchar *vc_ftype = g_strstr_len(ct, -1, "image/");
 	g_debug("vc content type: %s(%s, %d)", vc_ftype, __FILE__, __LINE__);
@@ -264,12 +270,13 @@ static gint get_version(QQInfo *info)
 	res = rcv_response(con, &rps);
 	close_con(con);
 	connection_free(con);
-	const gchar *retstatus = rps -> status -> str;
 	if (-1 == res || !rps) {
 		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
 		ret = -1;
 		goto error;
 	}
+
+	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
 				, __FILE__, __LINE__);
@@ -348,6 +355,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	gint ret = 0;
 	gint res = 0;
 	gchar *params = NULL;
+	GString *cookie = NULL;
 
 	params = g_strdup_printf(LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
 							 "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
@@ -357,7 +365,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 							 , LOGIN_S_URL);
 	if (!params)
 		return -1;
-	
+
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
@@ -368,25 +376,33 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
 	request_add_header(req, "Referer", "http://ui.ptlogin2.qq.com/cgi-bin/"
-						"login?target=self&style=4&appid=1003903&enable_ql"
-						"ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
-						"om%2Floginproxy.html%3Flogin_level%3D3"
-						"&f_url=loginerroralert");
-	if(info -> ptvfsession != NULL){
-		params = g_strdup_printf("ptvfsession=%s; "
-								 , info -> ptvfsession -> str);
-		if (!params) {
-			request_del(req);
-			return -1;
-		}
-		request_add_header(req, "Cookie", params);
-		g_free(params);
+					   "login?target=self&style=4&appid=1003903&enable_ql"
+					   "ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
+					   "om%2Floginproxy.html%3Flogin_level%3D3"
+					   "&f_url=loginerroralert");
+
+	/* Add cookie to http header. */
+	cookie = g_string_new("");
+	if (!cookie) {
+		goto error;
 	}
+	if (info->ptvfsession){
+		g_string_append_printf(cookie, "ptvfsession=%s; ", info->ptvfsession->str);
+	}
+	/* NOTE!!! verifysession is import if server told us to input verify code. */
+	if (info->verifysession) {
+		g_string_append_printf(cookie, "verifysession=%s; ", info->verifysession->str);
+	}
+	if (cookie->len > 0) {
+		g_debug("Add cookie: %s(%s, %d)", cookie->str, __FILE__, __LINE__);
+		request_add_header(req, "Cookie", cookie->str);
+	}
+	g_string_free(cookie, TRUE);
 
 	Connection *con = connect_to_host(LOGINHOST, 80);
 	if(con == NULL){
 		g_warning("Can NOT connect to server!(%s, %d)"
-				, __FILE__, __LINE__);
+				  , __FILE__, __LINE__);
 		request_del(req);
 		return -1;
 	}
@@ -404,7 +420,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	const gchar *retstatus = rps -> status -> str;
 	if(g_strstr_len(retstatus, -1, "200") == NULL){
 		g_warning("Server status %s (%s, %d)", retstatus
-				, __FILE__, __LINE__);
+				  , __FILE__, __LINE__);
 		ret = -1;
 		goto error;
 	}
@@ -421,12 +437,12 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 		g_debug("Success.(%s, %d)", __FILE__, __LINE__);
 	}else if(status == 1){
 		g_warning("Server busy! Please try again.(%s, %d)"
-				, __FILE__, __LINE__);
+				  , __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Server busy!");
 		goto error;
 	}else if(status == 2){
 		g_warning("Out of date QQ number!(%s, %d)"
-				, __FILE__, __LINE__);
+				  , __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Out of date QQ number.");
 		goto error;
 	}else if(status == 3){
@@ -443,7 +459,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 		goto error;
 	}else if(status == 6){
 		g_warning("You may need to try login again.(%s, %d)", __FILE__
-				, __LINE__);
+				  , __LINE__);
 		//g_sprintf(info -> errmsg, "Please try again.");
 		goto error;
 	}else if(status == 7){
@@ -452,12 +468,12 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 		goto error;
 	}else if(status == 8){
 		g_warning("Too many logins on this IP. Please try again.(%s, %d)"
-				, __FILE__, __LINE__);
+				  , __FILE__, __LINE__);
 		//g_sprintf(info -> errmsg, "Too many logins on this IP.");
 		goto error;
 	}else{
 		g_warning("Server response message:(%s, %d)\n\t%s"
-				, __FILE__, __LINE__, rps -> msg -> str);
+				  , __FILE__, __LINE__, rps -> msg -> str);
 		goto error;
 	}
 
@@ -468,22 +484,35 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
     info -> uin = get_cookie(rps, "uin");
     info -> ptisp = get_cookie(rps, "ptisp");
     info -> pt2gguin = get_cookie(rps, "pt2gguin");
+	
 	//sotre the cookie
 	info -> cookie = g_string_new("");
-    g_string_append(info -> cookie, "ptcz=");
-    g_string_append(info -> cookie, info -> ptcz -> str);
-    g_string_append(info -> cookie, ";skey=");
-    g_string_append(info -> cookie, info -> skey -> str);
-    g_string_append(info -> cookie, ";ptwebqq=");
-    g_string_append(info -> cookie, info -> ptwebqq -> str);
-    g_string_append(info -> cookie, ";ptuserinfo=");
-    g_string_append(info -> cookie, info -> ptuserinfo -> str);
-    g_string_append(info -> cookie, ";uin=");
-    g_string_append(info -> cookie, info -> uin -> str);
-    g_string_append(info -> cookie, ";ptisp=");
-    g_string_append(info -> cookie, info -> ptisp -> str);
-    g_string_append(info -> cookie, ";pt2gguin=");
-    g_string_append(info -> cookie, info -> pt2gguin -> str);
+	if (info->verifysession) {
+		g_string_append_printf(info->cookie, "verifysession=%s; ", info->verifysession->str);
+	}
+	if (info->ptcz) {
+		g_string_append_printf(info->cookie, "ptcz=%s; ", info->ptcz->str);
+	}
+	if (info->skey) {
+		g_string_append_printf(info->cookie, "skey=%s; ", info->skey->str);
+	}
+	if (info->ptwebqq) {
+		g_string_append_printf(info->cookie, "ptwebqq=%s; ", info->ptwebqq->str);
+	}
+	if (info->ptuserinfo) {
+		g_string_append_printf(info->cookie, "ptuserinfo=%s; ", info->ptuserinfo->str);
+	}
+	if (info->uin) {
+		g_string_append_printf(info->cookie, "uin=%s; ", info->uin->str);
+	}
+	if (info->ptisp) {
+		g_string_append_printf(info->cookie, "ptisp=%s; ", info->ptisp->str);
+	}
+	if (info->pt2gguin) {
+		g_string_append_printf(info->cookie, "pt2gguin=%s; ", info->pt2gguin->str);
+	}
+	g_debug("Store cookie: %s(%s, %d)", info->cookie->str, __FILE__, __LINE__);
+	
 error:
 	request_del(req);
 	response_del(rps);

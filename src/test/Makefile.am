@@ -3,7 +3,7 @@ AM_CFLAGS+=-I${srcdir}/../comm/
 AM_CFLAGS+=-I${srcdir}/../gui/
 AM_CFLAGS+=${GLIB_CFLAGS} -DGTKQQ_DEBUG -Wall -Werror
 
-bin_PROGRAMS=testhttp testjson testcprint testlog testurl testpro testproxy
+noinst_PROGRAMS=testhttp testjson testcprint testlog testurl testpro testproxy
 
 testhttp_SOURCES= testhttp.c
 testhttp_LDADD=${srcdir}/../libqq/libwebqq.la $(GLIB_LIBS)

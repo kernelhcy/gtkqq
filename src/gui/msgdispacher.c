@@ -101,6 +101,7 @@ static void qq_notify(QQRecvMsg *msg)
 			}
 		}
 		g_snprintf(title, sizeof(title), "New message from friend %s", from);
+		break;
     case MSG_GROUP_T:
 		/* Parse which group send this message. */
 		code = msg->group_code;
@@ -122,13 +123,28 @@ static void qq_notify(QQRecvMsg *msg)
 				  , __FILE__, __LINE__);
 		return;
     }
-
 	body = qq_get_msgstr(msg);
-	if (body) {
-		qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
-	}
-	else {
+	if (!body) {
+		g_warning("Message pasre error (%s, %d)\n", __FILE__, __LINE__);
 		qq_notify_send(title, NULL, IMGDIR"/webqq_icon.png");
+		return ;
+	}
+	
+	/* The msg is from qq buddy. */
+	if (MSG_BUDDY_T == msg->msg_type) {
+		if (bdy && bdy->qqnumber) {
+			gchar buf[200];
+			g_snprintf(buf,200,"%s/%s",QQ_FACEDIR,bdy->qqnumber->str);
+			qq_notify_send(title, body->str, buf);
+		} else {
+			/* BUG? */
+			g_warning("Buddy pasre error (%s, %d)\n", __FILE__, __LINE__);
+			qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
+			return ;
+		}
+	} else if (MSG_GROUP_T == msg->msg_type) {
+		/* The msg is from qq group */
+		qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
 	}
 }
 #endif
@@ -227,7 +243,17 @@ static void qq_poll_dispatch_status_changed_msg(QQRecvMsg *msg)
 
 static void qq_poll_dispatch_kick_msg(QQRecvMsg *msg)
 {
-
+	/**
+	 * NOTE:
+	 * 	Just a temporary fix.  
+	 * 	It's really awful that I couldn't be aware of I had got kicked
+	 * 	in the back.
+	 */
+	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(main_win),
+			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_CLOSE, "You got kicked in the back.");
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_main_quit();
 }
 
 gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
@@ -235,6 +261,8 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
     if(msg == NULL || data == NULL){
         return 0;
     }
+
+    static gboolean got = FALSE; /* whether got kicked */
    
     GQQMessageLoop *loop = data;
 
@@ -253,7 +281,9 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
         gqq_mainloop_attach(loop, qq_poll_dispatch_status_changed_msg, 1, msg);
         break;
     case MSG_KICK_T:
-        gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+	if (!got)
+        	gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+	got = TRUE;
         break;
     default:
         g_warning("Unknonw poll message type! %d (%s, %d)", msg -> msg_type

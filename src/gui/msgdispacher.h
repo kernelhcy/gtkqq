@@ -3,11 +3,11 @@
 #include <qq.h>
 #include <glib.h>
 
-//
-// The callback of the message poll
-// For every received message, this function will be called.
-// This function will be called out the gtk main event loop.
-//
+/**
+ * The callback of the message poll
+ * For every received message, this function will be called.
+ * This function will be called out of the gtk main event loop.
+ */
 gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data);
 
-#endif
+#endif /* _GTKQQ_MSG_DISPACHER_H_ */

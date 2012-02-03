@@ -42,16 +42,12 @@ AC_CHECK_LIB([zlib], [compress])
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdint.h\
           stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h zlib.h])
 
-AC_ARG_ENABLE(debug,
-        [ --enable-debug turn on debug],
-        CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb")
-
 AC_ARG_ENABLE(unity,
-        [ --enable-unity build on ubuntu unity],
+        [AS_HELP_STRING([--enable-unity], [build on ubuntu unity])],
         CFLAGS="$CFLAGS -DUSE_UNITY")
 
 AC_ARG_ENABLE(proxy,
-        [ --enable-proxy build on ubuntu unity],
+        [AS_HELP_STRING([--enable-proxy], [build on ubuntu unity])],
         CFLAGS="$CFLAGS -DUSE_PROXY")		
 		
 #AC_ARG_ENABLE(libnotify,
@@ -109,23 +105,23 @@ PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
              ])
 
 # checks for libnotify
-#if test "x$enable_libnotify" = "xyes"; then
-#PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
-#            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
-#                             notification])
-#            AC_SUBST(LIBNOTIFY_CFLAGS)
-#            AC_SUBST(LIBNOTIFY_LIBS)
-#        ] , [
-#            echo ""
-#            echo "configure: error: "
-#            echo "libnotify development headers not found."
-#            echo "Use --disable-libnotify if you do not need it."
-#            echo "If you're using debian or ubuntu,install it by "
-#            echo "\"sudo apt-get install libnotify-dev\""
-#            echo ""
-#            exit -1
-#            ])
-#fi
+if test "x$enable_libnotify" = "xyes"; then
+PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
+            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
+                             notification])
+            AC_SUBST(LIBNOTIFY_CFLAGS)
+            AC_SUBST(LIBNOTIFY_LIBS)
+        ] , [
+            echo ""
+            echo "configure: error: "
+            echo "libnotify development headers not found."
+            echo "Use --disable-libnotify if you do not need it."
+            echo "If you're using debian or ubuntu,install it by "
+            echo "\"sudo apt-get install libnotify-dev\""
+            echo ""
+            exit -1
+            ])
+fi
 
 # checks for gstreamer-0.10
 #if test "x$enable_gst" = "xyes"; then
@@ -265,11 +261,18 @@ AC_CONFIG_FILES([Makefile
          src/misc/status/Makefile
          src/misc/qqfaces/Makefile
          src/misc/sound/Makefile
-         src/test/Makefile]
- 		 pixmaps/Makefile)
+         src/test/Makefile
+         pixmaps/Makefile
+         
+         Packages/Makefile
+         Packages/rpm/Makefile
+         Packages/rpm/gtkqq.spec
+         ])
 AC_OUTPUT
 
-echo Use libnotify................. : $enable_libnotify
+echo ======== OPTIONS ============
+#echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
+echo =============================
