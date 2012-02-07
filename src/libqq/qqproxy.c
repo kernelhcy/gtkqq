@@ -434,9 +434,9 @@ int atomic_in( SOCKET s, char *buf, int size )
     while ( 0 < size ) {
         len = recv( s, buf+ret, size, 0 );
         if ( len == -1 ) {
-            g_error("atomic_in() failed to recv(), %d\n", socket_errno());
+            g_debug("atomic_in() failed to recv(), %d... (%s,%d)", socket_errno(), __FILE__ , __LINE__ );
         } else if ( len == 0 ) {
-            g_error( "Connection closed by peer.\n");
+            g_debug( "Connection closed by peer...(%s,%d)", __FILE__, __LINE__);
         }
         ret += len;
         size -= len;
