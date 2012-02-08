@@ -47,9 +47,15 @@ AC_ARG_ENABLE(unity,
         CFLAGS="$CFLAGS -DUSE_UNITY")
 
 AC_ARG_ENABLE(proxy,
-        [AS_HELP_STRING([--enable-proxy], [build on ubuntu unity])],
-        CFLAGS="$CFLAGS -DUSE_PROXY")		
-		
+        [AS_HELP_STRING([--disable-proxy], [compile without proxy setting])],
+        enable_proxy="$enableval", enable_proxy="yes")
+        
+if test "x$enable_proxy" != "xno" ; then
+        CFLAGS="$CFLAGS -DUSE_PROXY"
+else
+        $enable_proxy="no"
+fi
+
 #AC_ARG_ENABLE(libnotify,
 #              AS_HELP_STRING([--enable-libnotify],
 #                             [Enable libnotify support (used to show message\
@@ -275,4 +281,5 @@ echo ======== OPTIONS ============
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
+echo Build with Proxy support ..... : $enable_proxy
 echo =============================
