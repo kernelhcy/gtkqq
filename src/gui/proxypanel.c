@@ -604,19 +604,27 @@ void on_click_save_cb(GtkButton *btn, gpointer data)
         gqq_config_set_str(cfg, "proxy_password", password_text );
         g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);
     }
-    int index = gtk_combo_box_get_active (GTK_COMBO_BOX(proxy_type_combobox));
-    gqq_config_set_int(cfg,"proxy_type",index);
-    g_debug("Current combobox index is %d...(%s,%d)",index, __FILE__, __LINE__);
-    switch (index)
+
+    if (  ! ip_text ||  0 == strcmp(ip_text , "") )
     {
-        case 0:
-            set_relay(METHOD_HTTP, ip_text, atoi(port_text),user_text,password_text);
-            break;
-        case 1:
-            set_relay(METHOD_SOCKS, ip_text, atoi(port_text),user_text,password_text);
-            break;
-        default:
-            break;
+        set_relay(METHOD_DIRECT, NULL, -1, NULL, NULL);
+    }
+    else
+    {
+        int index = gtk_combo_box_get_active (GTK_COMBO_BOX(proxy_type_combobox));
+        gqq_config_set_int(cfg,"proxy_type",index);
+        g_debug("Current combobox index is %d...(%s,%d)",index, __FILE__, __LINE__);
+        switch (index)
+        {
+            case 0:
+                set_relay(METHOD_HTTP, ip_text, atoi(port_text),user_text,password_text);
+                break;
+            case 1:
+                set_relay(METHOD_SOCKS, ip_text, atoi(port_text),user_text,password_text);
+                break;
+            default:
+                break;
+        }
     }
     gtk_widget_destroy (window);
 }
