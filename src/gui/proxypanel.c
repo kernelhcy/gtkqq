@@ -596,21 +596,28 @@ void on_click_save_cb(GtkButton *btn, gpointer data)
     port_text = gtk_entry_get_text((GtkEntry *)port_entry);
     user_text = gtk_entry_get_text((GtkEntry *)user_entry);
     password_text = gtk_entry_get_text((GtkEntry *)password_entry);
-    gqq_config_set_str(cfg, "proxy_ip", ip_text );
-    gqq_config_set_str(cfg, "proxy_port",port_text );
-    if (user_text && password_text)
-    {
-        gqq_config_set_str(cfg, "proxy_user", user_text );
-        gqq_config_set_str(cfg, "proxy_password", password_text );
-        g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);
-    }
 
-    if (  ! ip_text ||  0 == strcmp(ip_text , "") )
+    
+    if ( ! ip_text ||  0 == strcmp(ip_text , "") )
     {
         set_relay(METHOD_DIRECT, NULL, -1, NULL, NULL);
+        gqq_config_set_str(cfg, "proxy_user", NULL);
+        gqq_config_set_str(cfg, "proxy_password", NULL );
+        gqq_config_set_str(cfg, "proxy_ip", NULL );
+        gqq_config_set_str(cfg, "proxy_port", NULL);
+        gqq_config_set_int(cfg, "proxy_type", 0 );
     }
     else
     {
+        if ( 0 != strcmp(user_text,"") && 0 != strcmp(password_text,""))
+        {
+            gqq_config_set_str(cfg, "proxy_user", user_text );
+            gqq_config_set_str(cfg, "proxy_password", password_text );
+            g_debug("using proxy %s:%s...(%s,%d)", ip_text, port_text, __FILE__, __LINE__);
+        }
+        
+        gqq_config_set_str(cfg, "proxy_ip", ip_text );
+        gqq_config_set_str(cfg, "proxy_port",port_text );
         int index = gtk_combo_box_get_active (GTK_COMBO_BOX(proxy_type_combobox));
         gqq_config_set_int(cfg,"proxy_type",index);
         g_debug("Current combobox index is %d...(%s,%d)",index, __FILE__, __LINE__);
