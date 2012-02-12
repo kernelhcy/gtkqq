@@ -24,7 +24,7 @@ void qq_notify_send(const gchar *title, const gchar *body, const gchar *icon)
 		notify_init(PACKAGE_NAME);
 	}
 	
-	notify = notify_notification_new(title, body, icon,NULL);
+	notify = notify_notification_new(title, body, icon);
 	if (!notify) {
 		g_warning("notify new failed. (%s, %d)\n", __FILE__, __LINE__);
 		goto notify_exit;
