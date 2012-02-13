@@ -23,8 +23,14 @@ void qq_notify_send(const gchar *title, const gchar *body, const gchar *icon)
 		g_debug("initialy notify. (%s, %d)\n", __FILE__, __LINE__);
 		notify_init(PACKAGE_NAME);
 	}
-	
+    
+#ifdef NOTIFY_CHECK_VERSION
+#if NOTIFY_CHECK_VERSION(0,7,0)
 	notify = notify_notification_new(title, body, icon);
+#else
+    notify = notify_notification_new(title, body, icon, NULL);
+#endif
+#endif
 	if (!notify) {
 		g_warning("notify new failed. (%s, %d)\n", __FILE__, __LINE__);
 		goto notify_exit;
