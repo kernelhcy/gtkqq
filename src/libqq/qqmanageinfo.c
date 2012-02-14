@@ -94,7 +94,7 @@ gint qq_get_qq_number(QQInfo *info, const gchar *uin, gchar *num, GError **err)
         break;
     default:
         g_warning("json_parser_document: syntax error. (%s, %d)"
-                , __FILE__, __LINE__);
+                  , __FILE__, __LINE__);
         ret_code = -1;
         goto error;
     }

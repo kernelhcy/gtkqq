@@ -632,7 +632,7 @@ static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel)
     }
 
     gint i;
-    gint t_num = 6;
+    gint t_num = 100;
     GThread **threads = g_malloc(sizeof(GThread*) * t_num);
     GError *err = NULL;
     ThreadFuncPar *par = NULL;
@@ -732,7 +732,7 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
         g_ptr_array_add(fimgs, img);
     }
 #endif
-    gint t_num = 2;
+    gint t_num = 100;
     GThread **threads = g_malloc(sizeof(GThread*) * t_num);
     GError *err = NULL;
     ThreadFuncPar *par = NULL;
