@@ -414,7 +414,7 @@ int atomic_out( SOCKET s, char *buf, int size )
     while ( 0 < size ) {
         len = send( s, buf+ret, size, 0 );
         if ( len == -1 )
-            g_error("atomic_out() failed to send(), %d\n", socket_errno());
+            g_error("atomic_out() failed to send(), %d...(%s,%d)", socket_errno(),__FILE__, __LINE__);
         ret += len;
         size -= len;
     }
@@ -499,7 +499,7 @@ int sendf(SOCKET s, const char *fmt,...)
 
     //report_text(">>>", buf);
     if ( send(s, buf, strlen(buf), 0) == SOCKET_ERROR ) {
-        g_debug("failed to send http request. errno=%d\n", socket_errno());
+        g_debug("failed to send http request. errno=%d...(%s,%d)", socket_errno(), __FILE__ , __LINE__);
         return -1;
     }
     return 0;
@@ -599,13 +599,13 @@ int begin_http_relay( SOCKET s )
 
     
     if ( line_input(s, buf, sizeof(buf)) < 0 ) {
-        g_debug("failed to read http response.\n");
+        g_debug("failed to read http response...(%s,%d)", __FILE__, __LINE__);
         return START_ERROR;
     }
 
    
     if (!strchr(buf, ' ')) {
-        g_error ("Unexpected http response: '%s'.\n", buf);
+        g_warning ("Unexpected http response: '%s'...(%s,%d)", buf, __FILE__, __LINE__);
         return START_ERROR;
     }
     result = atoi(strchr(buf,' '));
@@ -982,7 +982,7 @@ int get_authenticated_socket( const char * host, int port)
             switch (ret) {
                 case START_ERROR:
                     close (remote);
-                    g_error("failed to begin relaying via HTTP.\n");
+                    g_warning("failed to begin relaying via HTTP...(%s,%d)", __FILE__ , __LINE__ );
                 case START_OK:
                     break;
                 case START_RETRY:
