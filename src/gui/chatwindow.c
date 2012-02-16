@@ -7,6 +7,10 @@
 #include <gdk/gdkkeysyms.h>
 #include <chatwidget.h>
 
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif
+
 extern QQInfo *info;
 extern GQQConfig *cfg;
 extern QQTray *tray;
@@ -169,9 +173,15 @@ static gboolean qq_input_textview_key_press(GtkWidget *widget, GdkEvent *e
                                             , gpointer data)
 {
     GdkEventKey *event = (GdkEventKey*)e;
+#ifndef USE_GTK3
     if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter
                         || event -> keyval == GDK_ISO_Enter){
-        if((event -> state & GDK_CONTROL_MASK) != 0 
+#else
+    if(event -> keyval == GDK_KEY_Return || event -> keyval == GDK_KEY_KP_Enter
+                        || event -> keyval == GDK_KEY_ISO_Enter){
+	    
+#endif /* USE_GTK3 */
+	if((event -> state & GDK_CONTROL_MASK) != 0 
                         || (event -> state & GDK_SHIFT_MASK) != 0){
             return FALSE;
         }
@@ -188,9 +198,15 @@ static gboolean qq_chatwindow_key_press(GtkWidget *widget, GdkEvent *e
                                             , gpointer data)
 {
     GdkEventKey *event = (GdkEventKey*)e;
+#ifndef USE_GTK3
     if((event -> state & GDK_CONTROL_MASK) != 0 
                     && (event -> keyval == GDK_w || event -> keyval == GDK_W)){
-        QQChatWindowPriv *priv = data;
+#else
+    if((event -> state & GDK_CONTROL_MASK) != 0 
+                    && (event -> keyval == GDK_KEY_w || event -> keyval == GDK_KEY_W)){
+#endif /* USE_GTK3 */
+	    
+	QQChatWindowPriv *priv = data;
         gqq_config_remove_ht(cfg, "chat_window_map", priv -> uin);
         gtk_widget_destroy(widget);
     }

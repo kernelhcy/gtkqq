@@ -49,7 +49,12 @@ AC_ARG_ENABLE(unity,
 AC_ARG_ENABLE(proxy,
         [AS_HELP_STRING([--disable-proxy], [compile without proxy setting])],
         enable_proxy="$enableval", enable_proxy="yes")
-        
+
+AC_ARG_ENABLE(gtk3, 
+	[AS_HELP_STRING([--enable-gtk3], [enable gtk3 support])], 
+	enable_gtk3="yes")
+
+
 if test "x$enable_proxy" != "xno" ; then
         CFLAGS="$CFLAGS -DUSE_PROXY"
 else
@@ -75,13 +80,25 @@ PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
             AC_SUBST(ZLIB_LIBS)
             ] ,
             )
-# checks for gtk+2.0
+
+
+# checks for gtk+-2.0 or gtk+-3.0
+if test x"$enable_gtk3" = x"yes"; then
+PKG_CHECK_MODULES(GTK, [gtk+-3.0 >= 3.2], [
+	    AC_DEFINE(USE_GTK3, 1, [Use GTK])
+	    AC_SUBST(GTK_CFLAGS)
+	    AC_SUBST(GTK_LIBS)
+	    ] ,
+	    )
+else
 PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.24], [
-            AC_DEFINE(USE_GTK, 1, [Use GTK])
+            AC_DEFINE(USE_GTK2, 1, [Use GTK])
             AC_SUBST(GTK_CFLAGS)
             AC_SUBST(GTK_LIBS)
             ] ,
             )
+fi
+
 # checks for glib2.0
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.18], [
             AC_DEFINE(USE_GLIB, 1, [Use GLIB])
@@ -282,4 +299,5 @@ echo ======== OPTIONS ============
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
 echo Build with Proxy support ..... : $enable_proxy
+echo Build with gtk3 support ...... : $enable_gtk3
 echo =============================

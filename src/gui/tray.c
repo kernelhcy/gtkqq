@@ -77,7 +77,9 @@ static void qq_tray_blinking(QQTray *tray, const gchar *uin)
     }
     gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
     g_object_unref(pb);
+#ifndef USE_GTK3 
     gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), TRUE);
+#endif /* USE_GTK3 */
 }
 
 //
@@ -128,7 +130,9 @@ static gboolean qq_tray_button_press(GtkStatusIcon *tray, GdkEvent *event
 	     * 		and will be removed in GTK+ 3
 	     * 		maybe we should try libnotify
 	     */
-        gtk_status_icon_set_blinking(tray, FALSE);
+#ifndef USE_GTK3 
+        gtk_status_icon_set_blinking(tray, FALSE); 
+#endif /* USE_GTK3 */
         GdkPixbuf *pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png"
                                                     , NULL);
         gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
@@ -401,8 +405,10 @@ void qq_tray_stop_blinking_for(QQTray *tray, const gchar *uin)
 
     GdkPixbuf *pb;
     if(g_queue_is_empty(priv -> blinking_queue)){
+#ifndef USE_GTK3
         // no more blinking
         gtk_status_icon_set_blinking(GTK_STATUS_ICON(tray), FALSE);
+#endif /* USE_GTK3 */
         pb = gdk_pixbuf_new_from_file(IMGDIR"/webqq_icon.png", NULL);
         gtk_status_icon_set_from_pixbuf(GTK_STATUS_ICON(tray), pb);
         g_object_unref(pb);

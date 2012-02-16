@@ -132,7 +132,7 @@ static void qq_statusbuttonclass_init(QQStatusButtonClass *c)
 static gboolean expose_event_cb(GtkWidget *widget
 			, GdkEventExpose *event, gpointer data)
 {
-	cairo_t *ct = gdk_cairo_create(widget -> window);
+	cairo_t *ct = gdk_cairo_create(gtk_widget_get_window(widget));
 	GdkPixbuf *pb = this_class -> pb[QQ_STATUSBUTTON(widget) -> status];
 	gint pbw, pbh, arroww, arrowh, gap = 5;
 	pbw = gdk_pixbuf_get_width(pb);
