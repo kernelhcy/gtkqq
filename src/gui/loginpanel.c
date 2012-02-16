@@ -10,6 +10,11 @@
 #include <msgloop.h>
 #include <msgdispacher.h>
 #include <string.h>
+
+#ifdef HAVE_CONFIG_H
+#include <config.h>
+#endif 
+
 #ifdef USE_PROXY
 #include <proxypanel.h>
 #endif	/* USE_PROXY */
@@ -27,8 +32,11 @@ extern GQQMessageLoop *send_loop;
 
 static void qq_loginpanelclass_init(QQLoginPanelClass *c);
 static void qq_loginpanel_init(QQLoginPanel *obj);
+#ifndef USE_GTK3
 static void qq_loginpanel_destroy(GtkObject *obj);
-
+#else
+static void qq_loginpanel_destroy(GtkWidget *obj);
+#endif /* USE_GTK3 */
 static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data);
 static void update_face_image(QQInfo *info, QQMainPanel *panel);
 static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel);
@@ -72,9 +80,13 @@ GtkWidget* qq_loginpanel_new(GtkWidget *container)
 
 static void qq_loginpanelclass_init(QQLoginPanelClass *c)
 {
+#ifndef USE_GTK3
     GtkObjectClass *object_class = NULL;
-
     object_class = GTK_OBJECT_CLASS(c);
+#else
+    GtkWidgetClass *object_class = NULL;
+    object_class = GTK_WIDGET_CLASS(c);
+#endif /* USE_GTK3 */
     object_class -> destroy = qq_loginpanel_destroy;
 
     /*
@@ -277,8 +289,19 @@ static void read_verifycode(gpointer p)
                                                     , GTK_WINDOW(w), GTK_DIALOG_MODAL
                                                     , GTK_STOCK_OK, GTK_RESPONSE_OK
                                                     , NULL);
+
+	/**
+	 * After GTK+-3.0 GtkDialog struct contains only private fields and 
+	 * should not be directly accessed.
+	 */
+#ifndef USE_GTK3
     GtkWidget *vbox = GTK_DIALOG(dialog) -> vbox;
+#else
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 0);
+    gtk_dialog_add_action_widget(GTK_DIALOG(dialog), vbox, 2);
+#endif /* USE_GTK3 */
     GtkWidget *img = gtk_image_new_from_file(fn);
+
     gtk_box_pack_start(GTK_BOX(vbox), gtk_label_new("VerifyCode：")
                        , FALSE, FALSE, 20);    
     gtk_box_pack_start(GTK_BOX(vbox), img, FALSE, FALSE, 0); 
@@ -377,8 +400,13 @@ static void login_cb(QQLoginPanel* panel)
 gboolean quick_login(GtkWidget* widget,GdkEvent* e,gpointer data)
 {
 	GdkEventKey *event = (GdkEventKey*)e;
+#ifndef USE_GTK3
 	if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter|| 
 			event -> keyval == GDK_ISO_Enter){
+#else
+	if(event -> keyval == GDK_KEY_Return || event -> keyval == GDK_KEY_KP_Enter|| 
+			event -> keyval == GDK_KEY_ISO_Enter){
+#endif /* USE_GTK3 */
 		if((event -> state & GDK_CONTROL_MASK) != 0
                          || (event -> state & GDK_SHIFT_MASK) != 0){
 			return FALSE;
@@ -429,10 +457,10 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
      * 		is mark as deprecated and should not be used in newly-written 
      * 		code. It can't port to new GTK+ library.
      */
-    obj -> uin_entry = gtk_combo_box_entry_new_text();
+    obj -> uin_entry = gtk_combo_box_text_new_with_entry();
     for(i = 0; i < login_users -> len; ++i){
         usr = (GQQLoginUser*)g_ptr_array_index(login_users, i);
-        gtk_combo_box_append_text(GTK_COMBO_BOX(obj -> uin_entry)
+        gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(obj -> uin_entry)
                                   , usr -> qqnumber);
     }
     gtk_combo_box_set_active(GTK_COMBO_BOX(obj -> uin_entry), 0);
@@ -519,7 +547,9 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_box_pack_start(GTK_BOX(hbox_proxy_setting), obj -> set_proxy_btn, FALSE, FALSE, 0);
 #endif	/* USE_PROXY */
 	
+    
     //error informatin label
+#ifndef USE_GTK3
     obj -> err_label = gtk_label_new("");
     GdkColor color;
     GdkColormap *cmap = gdk_colormap_get_system();
@@ -528,6 +558,12 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     //change text color to red
     //MUST modify fb, not text
     gtk_widget_modify_fg(obj -> err_label, GTK_STATE_NORMAL, &color);
+#else
+    GdkRGBA color;
+    gdk_rgba_parse(&color, "#fff000000"); /* red */
+    gtk_widget_override_color(obj-> err_label, GTK_STATE_NORMAL, &color);
+#endif /* USE_GTK3 */
+
     hbox2 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox2), obj -> err_label, TRUE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(vbox), hbox2, TRUE, FALSE, 0);
@@ -561,7 +597,11 @@ static void qqnumber_combox_changed(GtkComboBox *widget, gpointer data)
 /*
  * Destroy the instance of QQLoginPanel
  */
+#ifndef USE_GTK3
 static void qq_loginpanel_destroy(GtkObject *obj)
+#else
+static void qq_loginpanel_destroy(GtkWidget *obj)
+#endif /* USE_GTK3 */
 {
     /*
      * Child widgets will be destroied by their parents.
@@ -573,8 +613,10 @@ static void qq_loginpanel_destroy(GtkObject *obj)
 const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
-    return gtk_combo_box_get_active_text(
-        GTK_COMBO_BOX(panel -> uin_entry));    
+    /* return gtk_combo_box_get_active_text(
+        GTK_COMBO_BOX(panel -> uin_entry));     */
+    return gtk_combo_box_text_get_active_text(
+		    GTK_COMBO_BOX_TEXT(panel->uin_entry));
 
 }
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)

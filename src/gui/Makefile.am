@@ -1,4 +1,4 @@
-SUBDIRS=tencent test
+SUBDIRS=test
 
 AM_CFLAGS=-I$(srcdir)/../libqq/\
       -I$(srcdir)/../comm/\
