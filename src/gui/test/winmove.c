@@ -48,7 +48,7 @@ int main(int argc, char **argv)
 	gtk_widget_show(window);
 
 	//Must be called _after_ the widget is realized
-	gdk_window_set_events(window -> window, GDK_ALL_EVENTS_MASK);
+	gdk_window_set_events(gtk_widget_get_window(window), GDK_ALL_EVENTS_MASK);
 	gtk_main();
 	return 0;
 }

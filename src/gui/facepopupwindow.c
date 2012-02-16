@@ -115,8 +115,8 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
 	gtk_window_set_default_size(GTK_WINDOW(win) , 450 , 250);
     gtk_window_set_skip_taskbar_hint(GTK_WINDOW(win), TRUE);
 
-	g_signal_connect(win, "focus-out-event"
-			        , GTK_SIGNAL_FUNC(qq_face_popup_window_focus_out), win);
+	g_signal_connect(win, "focus-out-event", 
+			G_CALLBACK(qq_face_popup_window_focus_out), win);
 
     GtkWidget *table, *img, *eventbox, *frame;
     gint i, j, k;
@@ -136,17 +136,14 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
             par -> face = face_transfer_table[k];
             par -> win = GTK_WIDGET(win);
             ++k;
-            g_signal_connect(eventbox , "button-release-event" 
-                                , GTK_SIGNAL_FUNC(face_popup_window_clicked)
-                                , par);
+            g_signal_connect(eventbox , "button-release-event", 
+			    G_CALLBACK(face_popup_window_clicked), par);
             frame = gtk_frame_new(NULL);
             gtk_container_add(GTK_CONTAINER(frame), eventbox);
-            g_signal_connect(eventbox , "enter-notify-event" 
-                                , GTK_SIGNAL_FUNC(face_enter_notify_event)
-                                , frame);
-            g_signal_connect(eventbox , "leave-notify-event" 
-                                , GTK_SIGNAL_FUNC(face_leave_notify_event)
-                                , frame);
+            g_signal_connect(eventbox , "enter-notify-event",
+			    G_CALLBACK(face_enter_notify_event), frame);
+            g_signal_connect(eventbox , "leave-notify-event",
+			    G_CALLBACK(face_leave_notify_event), frame);
 			gtk_table_attach_defaults(GTK_TABLE(table), frame
                                             , j, j + 1, i, i + 1);
         }
