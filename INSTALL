@@ -32,38 +32,31 @@ After that, begin to configure
 $ ./configure
 
 Some useful options for configure:
-
---enable-unity
-
-  If you are using Ubuntu 11.04 or later distributions, you must use this
-  option or you will encounter problems when sending message.
-  
---enable-debug
-
-  DEBUG support
-  
+ 
 --prefix=/usr
 
-  Install in the /usr directory instead.
+  Install in the /usr directory instead (By default it would install in
+  /usr/local, you can also change the install directory to anything you
+  like).
   
---enable-proxy
 
-  proxy support (experimental)
-
-  
 BUILD
 =====
 Run the following command after configure,
 
 $ make
 
+
 INSTALL
 =======
-Run the following command if you want to install it into your system
+Run the following command if you want to install it into your system.
+Note: you may probably need root permission to install, according to your
+install directory defined in configure.
 
-# make install
+$ sudo make install
 
 If you want a package to install, please refer to PACKAGES.
+
 
 RUN
 ===
@@ -72,10 +65,16 @@ Or directly from terminal:
 
 $ gtkqq
 
+By the way, you can DEBUG gtkqq if you use parameter "-d":
+
+$ gtkqq -d
+
 
 UNINSTALL
 =========
-To uninstall, run
+To uninstall, run the following commands.
+Note: you may probably need root permission to uninstall, according to your
+install directory defined in configure.
 
 $ sudo make uninstall
 $ ./autoclean.sh
