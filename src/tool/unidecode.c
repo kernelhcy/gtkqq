@@ -15,7 +15,7 @@ static guint hex2char(gchar c)
 	if(c >= 'A' && c <= 'F'){
 		return c - 'A' + 10;
 	}
-	return 0;	
+	return -1;	
 }
 
 static void decodeunicode(GString *to, const gchar *from)
