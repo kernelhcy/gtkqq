@@ -61,6 +61,7 @@ else
         $enable_proxy="no"
 fi
 
+
 #AC_ARG_ENABLE(libnotify,
 #              AS_HELP_STRING([--enable-libnotify],
 #                             [Enable libnotify support (used to show message\
@@ -299,5 +300,5 @@ echo ======== OPTIONS ============
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
 echo Build with Proxy support ..... : $enable_proxy
-echo Build with gtk3 support ...... : $enable_gtk3
+echo Build with gtk3 support ...... : ${enable_gtk3:="no"}
 echo =============================
