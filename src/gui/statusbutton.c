@@ -82,7 +82,7 @@ static void qq_statusbutton_init(QQStatusButton *btn)
 	event_mask |= GDK_ENTER_NOTIFY_MASK;
 	event_mask |= GDK_LEAVE_NOTIFY_MASK;
 	gtk_widget_set_events(GTK_WIDGET(btn), event_mask);
-#ifdef USE_GTK3
+#ifndef USE_GTK3
 	g_signal_connect(GTK_WIDGET(btn), "expose-event"
 			, G_CALLBACK(expose_event_cb), NULL);
 #else

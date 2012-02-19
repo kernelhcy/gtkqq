@@ -87,6 +87,7 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c)
     GtkWidgetClass *object_class = NULL;
     object_class = GTK_WIDGET_CLASS(c);
 #endif /* USE_GTK3 */
+    
     object_class -> destroy = qq_loginpanel_destroy;
 
     /*
@@ -135,7 +136,7 @@ static gint do_login(QQLoginPanel *panel)
     g_error_free(err);
     //show err message
     gqq_mainloop_attach(&gtkloop, gtk_label_set_text, 2, 
-		    panel -> err_label, msg);
+		    GTK_LABEL(panel -> err_label), msg);
     return -1;
 }
 
@@ -549,8 +550,8 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 	
     
     //error informatin label
-#ifndef USE_GTK3
     obj -> err_label = gtk_label_new("");
+#ifndef USE_GTK3
     GdkColor color;
     GdkColormap *cmap = gdk_colormap_get_system();
     gdk_colormap_alloc_color(cmap, &color, TRUE, TRUE);
@@ -561,7 +562,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 #else
     GdkRGBA color;
     gdk_rgba_parse(&color, "#fff000000"); /* red */
-    gtk_widget_override_color(obj-> err_label, GTK_STATE_NORMAL, &color);
+    gtk_widget_override_color(GTK_WIDGET(obj-> err_label), GTK_STATE_NORMAL, &color);
 #endif /* USE_GTK3 */
 
     hbox2 = gtk_hbox_new(FALSE, 0);
