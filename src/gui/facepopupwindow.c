@@ -1,9 +1,6 @@
 #include <facepopupwindow.h>
 #include <gqqconfig.h>
 
-extern QQInfo *info;
-extern GQQConfig *cfg;
-
 static void qq_face_popup_window_init(QQFacePopupWindow *win);
 static void qq_face_popup_windowclass_init(QQFacePopupWindowClass *klass);
 
@@ -22,8 +19,8 @@ static gint face_transfer_table[] = {14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
                                     , 61, 89, 90, 31, 94, 65, 35, 66, 67, 68
                                     , 69, 70, 15, 16, 17, 18, 19, 28, 30, 40
                                     , 41, 43, 44, 48, 49};
-typedef struct{
-}QQFacePopupWindowPriv;
+typedef struct {
+} QQFacePopupWindowPriv;
 
 GType qq_face_popup_window_get_type()
 {
@@ -110,12 +107,13 @@ static gboolean face_leave_notify_event(GtkWidget *widget
 }
 static void qq_face_popup_window_init(QQFacePopupWindow *win)
 {
-	gtk_window_set_decorated(GTK_WINDOW(win) , FALSE);
+	/*gtk_window_set_decorated(GTK_WINDOW(win) , FALSE);
 	gtk_window_set_type_hint(GTK_WINDOW(win), GDK_WINDOW_TYPE_HINT_DIALOG);
 	gtk_window_set_default_size(GTK_WINDOW(win) , 450 , 250);
     gtk_window_set_skip_taskbar_hint(GTK_WINDOW(win), TRUE);
 
-	g_signal_connect(win, "focus-out-event", 
+    */
+	g_signal_connect(G_OBJECT(win), "focus-out-event", 
 			G_CALLBACK(qq_face_popup_window_focus_out), win);
 
     GtkWidget *table, *img, *eventbox, *frame;
