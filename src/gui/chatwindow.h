@@ -30,4 +30,5 @@ GType qq_chatwindow_get_type();
 //
 void qq_chatwindow_add_recv_message(GtkWidget *widget, QQRecvMsg *msg);
 void qq_chatwindow_add_send_message(GtkWidget *widget, QQSendMsg *msg);
-#endif
+
+#endif /* __GTKQQ_CHATWINDOW_H */

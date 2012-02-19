@@ -18,11 +18,11 @@ typedef struct __QQFacePopupWindow 		QQFacePopupWindow;
 typedef struct __QQFacePopupWindowClass		QQFacePopupWindowClass;
 
 struct __QQFacePopupWindow{
-	GtkTextView parent;
+	GtkWindow parent;
 };
 
 struct __QQFacePopupWindowClass{
-	GtkTextViewClass parent;
+	GtkWindowClass parent;
 
 	void (*face_clicked_default_handler)(gpointer instance, gint face,
 		    					gpointer usrdata);

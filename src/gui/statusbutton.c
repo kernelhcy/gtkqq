@@ -1,4 +1,5 @@
 #include <statusbutton.h>
+#include <config.h>
 
 static const gchar *status_label[] = {"online", "hidden", "away", "offline"
                                        , "callme", "busy", "silent", NULL};
