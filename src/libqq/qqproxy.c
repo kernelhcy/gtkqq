@@ -388,7 +388,7 @@ int open_connection( const char *host, short port )
 
     /* resolve address of proxy or direct target */
     if (local_resolve (host, &saddr) < 0) {
-        g_error("can't resolve hostname: %s\n", host);
+        g_error("can't resolve hostname: %s ...(%s,%d)", host, __FILE__, __LINE__);
         return SOCKET_ERROR;
     }
     saddr.sin_port = htons(port);
