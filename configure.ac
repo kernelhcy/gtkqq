@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 
 AC_PREREQ([2.6])
-AC_INIT([GtkQQ], [0.1], [huangcongyu2006@gmail.com])
+AC_INIT([GtkQQ], [0.1], [huangcongyu2006@gmail.com], [gtkqq], [http://github.com/kernelhcy/gtkqq])
 AC_CONFIG_AUX_DIR([build-aux])
 AC_CONFIG_MACRO_DIR([m4])
 AM_INIT_AUTOMAKE([-Wall -Werror])
@@ -42,18 +42,26 @@ AC_CHECK_LIB([zlib], [compress])
 AC_CHECK_HEADERS([arpa/inet.h fcntl.h netdb.h netinet/in.h stdint.h\
           stdlib.h string.h sys/ioctl.h sys/socket.h unistd.h zlib.h])
 
-AC_ARG_ENABLE(debug,
-        [ --enable-debug turn on debug],
-        CFLAGS="$CFLAGS -DGTKQQ_DEBUG -ggdb")
-
 AC_ARG_ENABLE(unity,
-        [ --enable-unity build on ubuntu unity],
+        [AS_HELP_STRING([--enable-unity], [build on ubuntu unity])],
         CFLAGS="$CFLAGS -DUSE_UNITY")
 
 AC_ARG_ENABLE(proxy,
-        [ --enable-proxy build on ubuntu unity],
-        CFLAGS="$CFLAGS -DUSE_PROXY")		
-		
+        [AS_HELP_STRING([--disable-proxy], [compile without proxy setting])],
+        enable_proxy="$enableval", enable_proxy="yes")
+
+AC_ARG_ENABLE(gtk3, 
+	[AS_HELP_STRING([--enable-gtk3], [enable gtk3 support])], 
+	enable_gtk3="yes")
+
+
+if test "x$enable_proxy" != "xno" ; then
+        CFLAGS="$CFLAGS -DUSE_PROXY"
+else
+        $enable_proxy="no"
+fi
+
+
 #AC_ARG_ENABLE(libnotify,
 #              AS_HELP_STRING([--enable-libnotify],
 #                             [Enable libnotify support (used to show message\
@@ -73,13 +81,25 @@ PKG_CHECK_MODULES(ZLIB, [zlib >= 1.2], [
             AC_SUBST(ZLIB_LIBS)
             ] ,
             )
-# checks for gtk+2.0
+
+
+# checks for gtk+-2.0 or gtk+-3.0
+if test x"$enable_gtk3" = x"yes"; then
+PKG_CHECK_MODULES(GTK, [gtk+-3.0 >= 3.2], [
+	    AC_DEFINE(USE_GTK3, 1, [Use GTK])
+	    AC_SUBST(GTK_CFLAGS)
+	    AC_SUBST(GTK_LIBS)
+	    ] ,
+	    )
+else
 PKG_CHECK_MODULES(GTK, [gtk+-2.0 >= 2.24], [
-            AC_DEFINE(USE_GTK, 1, [Use GTK])
+            AC_DEFINE(USE_GTK2, 1, [Use GTK])
             AC_SUBST(GTK_CFLAGS)
             AC_SUBST(GTK_LIBS)
             ] ,
             )
+fi
+
 # checks for glib2.0
 PKG_CHECK_MODULES(GLIB, [glib-2.0 >= 2.18], [
             AC_DEFINE(USE_GLIB, 1, [Use GLIB])
@@ -109,23 +129,23 @@ PKG_CHECK_MODULES(SQLITE3, [sqlite3 > 3.3], [
              ])
 
 # checks for libnotify
-#if test "x$enable_libnotify" = "xyes"; then
-#PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
-#            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
-#                             notification])
-#            AC_SUBST(LIBNOTIFY_CFLAGS)
-#            AC_SUBST(LIBNOTIFY_LIBS)
-#        ] , [
-#            echo ""
-#            echo "configure: error: "
-#            echo "libnotify development headers not found."
-#            echo "Use --disable-libnotify if you do not need it."
-#            echo "If you're using debian or ubuntu,install it by "
-#            echo "\"sudo apt-get install libnotify-dev\""
-#            echo ""
-#            exit -1
-#            ])
-#fi
+if test "x$enable_libnotify" = "xyes"; then
+PKG_CHECK_MODULES(LIBNOTIFY, [libnotify], [
+            AC_DEFINE(USE_LIBNOTIFY, 1, [Use libnotify for\
+                             notification])
+            AC_SUBST(LIBNOTIFY_CFLAGS)
+            AC_SUBST(LIBNOTIFY_LIBS)
+        ] , [
+            echo ""
+            echo "configure: error: "
+            echo "libnotify development headers not found."
+            echo "Use --disable-libnotify if you do not need it."
+            echo "If you're using debian or ubuntu,install it by "
+            echo "\"sudo apt-get install libnotify-dev\""
+            echo ""
+            exit -1
+            ])
+fi
 
 # checks for gstreamer-0.10
 #if test "x$enable_gst" = "xyes"; then
@@ -207,6 +227,26 @@ Use --disable-gstreamer if you do not need GStreamer (sound) support.
 fi
 
 dnl #######################################################################
+dnl # Check for libnotify
+dnl #######################################################################
+dnl
+AC_ARG_ENABLE(libnotify, AS_HELP_STRING([--disable-libnotify],[compile without libnotify support]),,enable_libnotify=yes)
+
+if test "x$enable_libnotify" = "xyes"; then
+    PKG_CHECK_MODULES([LIBNOTIFY], [libnotify],enable_libnotify=yes,enable_libnotify=no)
+	AC_SUBST(LIBNOTIFY_CFLAGS)
+    AC_SUBST(LIBNOTIFY_LIBS)
+else
+    enable_libnotify=no
+fi
+
+if test "x$enable_libnotify" = "xyes"; then
+	AC_DEFINE(USE_LIBNOTIFY, 1, [Define if libnotify support is enabled])
+fi
+
+AM_CONDITIONAL(WITH_LIBNOTIFY, test "x$enable_libnotify" = "xyes")
+
+dnl #######################################################################
 dnl # Check for GStreamer Interfaces
 dnl #######################################################################
 if test "x$enable_gst" != "xno"; then
@@ -245,11 +285,20 @@ AC_CONFIG_FILES([Makefile
          src/misc/status/Makefile
          src/misc/qqfaces/Makefile
          src/misc/sound/Makefile
-         src/test/Makefile]
- 		 pixmaps/Makefile)
+         src/test/Makefile
+         pixmaps/Makefile
+         
+         Packages/Makefile
+         Packages/rpm/Makefile
+         Packages/rpm/gtkqq.spec
+         ])
 AC_OUTPUT
 
+echo ======== OPTIONS ============
 #echo Use libnotify................. : $enable_libnotify
 #echo Use gstreamer0.10............. : $enable_gst
 #echo Use NetworkManager............ : $enable_nm
 echo Build with GStreamer support.. : $enable_gst
+echo Build with Proxy support ..... : $enable_proxy
+echo Build with gtk3 support ...... : ${enable_gtk3:="no"}
+echo =============================

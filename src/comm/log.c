@@ -1,6 +1,8 @@
 #include <log.h>
 #include <cprint.h>
 #include <unistd.h>
+
+static gboolean gtkqq_debug = FALSE;
 /* 
  * the log handler
  */
@@ -18,12 +20,12 @@ static void log_handler(const gchar *log_domain,
 		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, "\n");
 		break;
 	case G_LOG_LEVEL_DEBUG:
-#ifdef GTKQQ_DEBUG
-		fcprintf(STDOUT_FILENO, BLUE_F, UNSET_B, HIGHLIGHT
-				, "DEBUG : ");
-		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, message);
-		fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, "\n");
-#endif
+		if (gtkqq_debug) {
+			fcprintf(STDOUT_FILENO, BLUE_F, UNSET_B, HIGHLIGHT
+				 , "DEBUG : ");
+			fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, message);
+			fcprintf(STDOUT_FILENO, UNSET_F, UNSET_B, UNSET_T, "\n");
+		}
 		break;
 	case G_LOG_LEVEL_WARNING:
 		fcprintf(STDERR_FILENO, PURPLE_F, UNSET_B, HIGHLIGHT
@@ -45,8 +47,11 @@ static void log_handler(const gchar *log_domain,
 }
 
 
-void log_init()
+void log_init(gboolean debug)
 {
+	/* Open debug mode? */
+	gtkqq_debug = debug;
+	
 	g_log_set_handler(NULL, G_LOG_LEVEL_MESSAGE, log_handler, NULL);
 	g_log_set_handler(NULL, G_LOG_LEVEL_DEBUG, log_handler, NULL);
 	g_log_set_handler(NULL, G_LOG_LEVEL_WARNING, log_handler, NULL);

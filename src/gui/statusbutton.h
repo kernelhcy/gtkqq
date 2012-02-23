@@ -7,13 +7,13 @@
  * QQ status button.
  * Show and change the status.
  */
-#define QQ_STATUSBUTTON(obj) 		GTK_CHECK_CAST(obj\
+#define QQ_STATUSBUTTON(obj) 		G_TYPE_CHECK_INSTANCE_CAST(obj\
 						, qq_statusbutton_get_type()\
 						, QQStatusButton)
-#define QQ_STATUSBUTTONCLASS(c)		GTK_CHECK_CLASS_CAST(c\
+#define QQ_STATUSBUTTONCLASS(c)		G_TYPE_CHECK_CLASS_CAST(c\
 						, qq_statusbutton_get_type()\
 						, QQStatusButtonClass)
-#define QQ_IS_STATUSBUTTON(obj) 	GTK_CHECK_TYPE(obj\
+#define QQ_IS_STATUSBUTTON(obj) 	G_TYPE_CHECK_INSTANCE_TYPE(obj\
 						, qq_statusbutton_get_type())
 #define QQ_TYPE_STATUSBUTTON 		qq_statusbutton_get_type()
 

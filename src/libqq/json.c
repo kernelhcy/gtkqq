@@ -25,7 +25,7 @@
 #include <assert.h>
 #include <memory.h>
 #include <sys/types.h>
-
+#include <glib.h>
 
 enum LEX_VALUE
 { LEX_MORE = 0,
@@ -427,8 +427,12 @@ json_free_value (json_t ** value)
 	json_t *cursor = *value;
 
 	assert (value);
-	assert (*value);
-
+	//assert (*value);
+	if (! *value)
+	{
+		g_warning("Invalid json value...(%s,%d)", __FILE__, __LINE__);
+		return ;
+	}
 	while (*value)
 	{
 		json_t *parent;

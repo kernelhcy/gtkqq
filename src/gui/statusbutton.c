@@ -1,4 +1,5 @@
 #include <statusbutton.h>
+#include <config.h>
 
 static const gchar *status_label[] = {"online", "hidden", "away", "offline"
                                        , "callme", "busy", "silent", NULL};
@@ -82,9 +83,13 @@ static void qq_statusbutton_init(QQStatusButton *btn)
 	event_mask |= GDK_ENTER_NOTIFY_MASK;
 	event_mask |= GDK_LEAVE_NOTIFY_MASK;
 	gtk_widget_set_events(GTK_WIDGET(btn), event_mask);
-
+#ifndef USE_GTK3
 	g_signal_connect(GTK_WIDGET(btn), "expose-event"
 			, G_CALLBACK(expose_event_cb), NULL);
+#else
+	g_signal_connect(GTK_WIDGET(btn), "draw"
+			, G_CALLBACK(expose_event_cb), NULL);
+#endif /* USE_GTK3 */
 	g_signal_connect(GTK_WIDGET(btn), "changed"
 			, G_CALLBACK(change_img_cb), NULL);
 	g_signal_connect(GTK_WIDGET(btn), "enter-notify-event"
@@ -132,7 +137,7 @@ static void qq_statusbuttonclass_init(QQStatusButtonClass *c)
 static gboolean expose_event_cb(GtkWidget *widget
 			, GdkEventExpose *event, gpointer data)
 {
-	cairo_t *ct = gdk_cairo_create(widget -> window);
+	cairo_t *ct = gdk_cairo_create(gtk_widget_get_window(widget));
 	GdkPixbuf *pb = this_class -> pb[QQ_STATUSBUTTON(widget) -> status];
 	gint pbw, pbh, arroww, arrowh, gap = 5;
 	pbw = gdk_pixbuf_get_width(pb);

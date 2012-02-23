@@ -23,7 +23,12 @@ QQInfo* qq_info_new()
     info -> groups_ht = g_hash_table_new(g_str_hash, g_str_equal);
     info -> groups_number_ht = g_hash_table_new(g_str_hash, g_str_equal);
 
+#if GLIB_CHECK_VERSION(2,32,0)
+    g_mutex_init (info -> lock_impl);
+    info -> lock = &info -> lock_impl;
+#else
     info -> lock = g_mutex_new();
+#endif
     info -> clientid = g_string_new("");
     info -> psessionid = g_string_new("");
 
@@ -49,6 +54,7 @@ void qq_info_free(QQInfo *info)
     FREE_STR(vc_image_type);
     FREE_STR(verify_code);
     FREE_STR(ptvfsession);
+	FREE_STR(verifysession);
     FREE_STR(version);
     FREE_STR(ptuserinfo);
     FREE_STR(ptwebqq);
@@ -91,7 +97,11 @@ void qq_info_free(QQInfo *info)
     g_hash_table_unref(info -> buddies_number_ht);
     g_hash_table_unref(info -> groups_number_ht);
 
+#if GLIB_CHECK_VERSION(2,32,0)
+    g_mutex_clear(info -> lock_impl);
+#else
     g_mutex_free(info -> lock);
+#endif
     g_slice_free(QQInfo, info);
 }
 

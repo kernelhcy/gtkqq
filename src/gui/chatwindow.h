@@ -3,12 +3,12 @@
 #include <gtk/gtk.h>
 #include <qq.h>
 
-#define QQ_CHATWINDOW(obj)      GTK_CHECK_CAST(obj, qq_chatwindow_get_type()\
+#define QQ_CHATWINDOW(obj)      G_TYPE_CHECK_INSTANCE_CAST(obj, qq_chatwindow_get_type()\
                                                 , QQChatWindow)
-#define QQ_CHATWINDOWCLASS(c)   GTK_CHECK_CLASS_CAST(c\
+#define QQ_CHATWINDOWCLASS(c)   G_TYPE_CHECK_CLASS_CAST(c\
                                                 , qq_chatwindow_get_type()\
                                                 , QQChatWindowClass)
-#define QQ_IS_CHATWINDOW(obj)   GTK_CHECK_TYPE(obj, qq_chatwindow_get_type())
+#define QQ_IS_CHATWINDOW(obj)   G_TYPE_CHECK_INSTANCE_TYPE(obj, qq_chatwindow_get_type())
 
 typedef struct __QQChatWindow         QQChatWindow;
 typedef struct __QQChatWindowClass    QQChatWindowClass;
@@ -30,4 +30,5 @@ GType qq_chatwindow_get_type();
 //
 void qq_chatwindow_add_recv_message(GtkWidget *widget, QQRecvMsg *msg);
 void qq_chatwindow_add_send_message(GtkWidget *widget, QQSendMsg *msg);
-#endif
+
+#endif /* __GTKQQ_CHATWINDOW_H */

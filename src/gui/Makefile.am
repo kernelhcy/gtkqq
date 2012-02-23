@@ -1,4 +1,4 @@
-SUBDIRS=tencent test
+SUBDIRS=test
 
 AM_CFLAGS=-I$(srcdir)/../libqq/\
       -I$(srcdir)/../comm/\
@@ -6,6 +6,7 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
       $(GTK_CFLAGS)\
       $(SQLITE3_CFLAGS)\
 	  $(GSTREAMER_CFLAGS)\
+	  $(LIBNOTIFY_CFLAGS)\
 	  $(GSTINTERFACES_CFLAGS)\
       -DIMGDIR=\"$(pkgdatadir)/misc/\"\
       -DCONFIGDIR=\"$(HOME)/.gtkqq/\"\
@@ -13,7 +14,7 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
       -Wall -Werror
 
 bin_PROGRAMS=gtkqq
-gtkqq_LDADD = $(GTK_LIBS) $(GSTREAMER_LIBS) $(GSTINTERFACES_LIBS) ${srcdir}/../libqq/libwebqq.la $(SQLITE3_LIBS)
+gtkqq_LDADD = $(GTK_LIBS) $(GSTREAMER_LIBS) $(GSTINTERFACES_LIBS) ${srcdir}/../libqq/libwebqq.la $(SQLITE3_LIBS) $(LIBNOTIFY_LIBS)
 gtkqq_SOURCES=main.c \
           msgloop.c msgloop.h\
           dao.c dao.h\
@@ -35,5 +36,6 @@ gtkqq_SOURCES=main.c \
           gqqconfig.h gqqconfig.c\
           statusbutton.h statusbutton.c\
 		  sound.h sound.c\
+		  notify.h notify.c\
 		  proxypanel.c proxypanel.h
 

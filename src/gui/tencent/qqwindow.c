@@ -1,5 +1,5 @@
 #include "qqwindow.h"
-#include <gtk/gtkmain.h>
+#include <gtk/gtk.h>
 #include <cairo.h>
 #include <math.h>
 
@@ -19,6 +19,30 @@ static gboolean configure_event_cb	(GtkWidget *widget, GdkEventConfigure *event
 
 static void qq_window_set_shape_mask	(QQWindow *qwin);
 
+GType qq_window_get_type()
+{
+	static GType type = 0;
+	if(type == 0){
+		static const GTypeInfo type_info = 
+		{
+			sizeof(QQWindowClass),
+			NULL,
+			NULL,
+			(GClassInitFunc)qq_window_class_init,
+			NULL,
+			NULL,
+			sizeof(QQWindow),
+			0,
+			(GInstanceInitFunc)qq_window_init
+		};
+
+		type = g_type_register_static(GTK_TYPE_WINDOW
+					, "QQWindow"
+					, &type_info
+					, (GTypeFlags)0);
+	}
+	return type;
+}
 
 GtkWidget* qq_window_new()
 {
@@ -48,30 +72,7 @@ void qq_window_maximize(QQWindow *qwin)
 
 	return;
 }
-GtkType qq_window_get_type()
-{
-	static GType type = 0;
-	if(type == 0){
-		static const GTypeInfo type_info = 
-		{
-			sizeof(QQWindowClass),
-			NULL,
-			NULL,
-			(GClassInitFunc)qq_window_class_init,
-			NULL,
-			NULL,
-			sizeof(QQWindow),
-			0,
-			(GInstanceInitFunc)qq_window_init
-		};
 
-		type = g_type_register_static(GTK_TYPE_WINDOW
-					, "QQWindow"
-					, &type_info
-					, (GTypeFlags)0);
-	}
-	return type;
-}
 
 /*
  * Instance initial function
@@ -114,7 +115,7 @@ void qq_window_init(QQWindow *qwin, gpointer data)
 	 * created, before we can set the events mask.
 	 */
 	gtk_widget_show(widget);
-	gdk_window_set_events(widget -> window, GDK_ALL_EVENTS_MASK);
+	gdk_window_set_events(gtk_widget_get_window(widget), GDK_ALL_EVENTS_MASK);
 	/*
 	 * We do NOT want to show the window at the creation.
 	 * So we hide it.
@@ -247,7 +248,7 @@ gboolean motion_event_cb(GtkWidget *widget, GdkEventMotion *event
 	gtk_window_get_size(GTK_WINDOW(widget), &width, &height);
 
 	GdkCursor *cur, *nc;
-	nc = gdk_window_get_cursor(widget -> window);
+	nc = gdk_window_get_cursor(gtk_widget_get_window(widget));
 
 	if(x < c -> resize_border && y < c -> resize_border){
 		cur = c -> tlc;
@@ -273,7 +274,7 @@ gboolean motion_event_cb(GtkWidget *widget, GdkEventMotion *event
 		cur = NULL;
 	}
 	if(cur != nc && ! QQ_WINDOW(widget) -> is_maxsize){
-		gdk_window_set_cursor(widget -> window, cur);
+		gdk_window_set_cursor(gtk_widget_get_window(widget), cur);
 	}
 
 	return FALSE;

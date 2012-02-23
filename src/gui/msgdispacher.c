@@ -7,6 +7,7 @@
 #include <msgloop.h>
 #include <config.h>
 #include <sound.h>
+#include <notify.h>
 #include <mainpanel.h>
 #include <mainwindow.h>
 
@@ -50,7 +51,123 @@ static void qq_sound_notify(QQRecvMsg *msg)
 	
 	qq_play_wavfile(filename);
 }
+#endif	/* USE_GSTREAMER */
+
+#ifdef USE_LIBNOTIFY
+/* Get the raw talk message. Not need to free memory. */
+static GString * qq_get_msgstr(QQRecvMsg *msg)
+{
+	if (!msg || !msg->contents)
+		return NULL;
+	
+	int i = 0;
+	QQMsgContent *cent;
+	GPtrArray *contents = msg->contents;
+	
+	for (i = 0; i < contents->len; ++i) {
+        cent = g_ptr_array_index(contents, i);
+        if(cent && QQ_MSG_CONTENT_STRING_T == cent->type) {
+			return cent->value.str;
+		}
+    }
+	
+	return NULL;
+}
+#endif
+
+#ifdef USE_LIBNOTIFY
+static void qq_notify(QQRecvMsg *msg)
+{
+	if (!msg)
+		return ;
+
+	gchar title[256] = {0};
+	GString *body = NULL;
+	gchar *from = NULL;
+	QQBuddy *bdy = NULL;
+	QQGroup *gp = NULL;
+	GString *code = NULL;
+	
+	switch (msg->msg_type) {
+    case MSG_BUDDY_T:
+		/* Parse the sender. */
+		bdy = qq_info_lookup_buddy_by_uin(info, msg->from_uin->str);
+		if (!bdy) {
+			from = msg->from_uin->str;
+		} else {
+			from = bdy->markname->str;
+			if (bdy-> markname->len <= 0){
+				from = bdy->nick->str;
+			}
+		}
+		g_snprintf(title, sizeof(title), "New message from friend %s", from);
+		break;
+    case MSG_GROUP_T:
+		/* Parse which group send this message. */
+		code = msg->group_code;
+		gp = qq_info_lookup_group_by_code(info, code->str);
+		if (!gp) {
+			from = msg -> from_uin -> str;
+		} else {
+			from = gp->name->str;
+		}
+		g_snprintf(title, sizeof(title), "New message from group %s", from);
+        break;
+    case MSG_STATUS_CHANGED_T:
+		/* Nothing */
+    case MSG_KICK_T:
+		/* No implement now */
+		return;
+    default:
+        g_warning("Unknonw poll message type! %d (%s, %d)", msg->msg_type
+				  , __FILE__, __LINE__);
+		return;
+    }
+	body = qq_get_msgstr(msg);
+	if (!body) {
+		g_warning("Message pasre error (%s, %d)\n", __FILE__, __LINE__);
+		qq_notify_send(title, NULL, IMGDIR"/webqq_icon.png");
+		return ;
+	}
+	
+	/* The msg is from qq buddy. */
+	if (MSG_BUDDY_T == msg->msg_type) {
+		if (bdy && bdy->qqnumber) {
+			gchar buf[200];
+			g_snprintf(buf,200,"%s/%s",QQ_FACEDIR,bdy->qqnumber->str);
+			qq_notify_send(title, body->str, buf);
+		} else {
+			/* BUG? */
+			g_warning("Buddy pasre error (%s, %d)\n", __FILE__, __LINE__);
+			qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
+			return ;
+		}
+	} else if (MSG_GROUP_T == msg->msg_type) {
+		/* The msg is from qq group */
+		qq_notify_send(title, body->str, IMGDIR"/webqq_icon.png");
+	}
+}
+#endif
+
+static void qq_msg_notify(QQRecvMsg *msg)
+{
+	if (!msg)
+		return ;
+	
+#ifdef USE_GSTREAMER
+	/* Play a audio to notify that a new msg is coming if
+	 user dont set mute. */
+	if (!gqq_config_is_mute(cfg)) {
+		qq_sound_notify(msg);
+	}
 #endif //USE_GSTREAMER
+	
+#ifdef USE_LIBNOTIFY
+	qq_notify(msg);
+#endif
+	
+	return ;
+}
 
 static void qq_poll_dispatch_buddy_msg(QQRecvMsg *msg)
 {
@@ -126,7 +243,17 @@ static void qq_poll_dispatch_status_changed_msg(QQRecvMsg *msg)
 
 static void qq_poll_dispatch_kick_msg(QQRecvMsg *msg)
 {
-
+	/**
+	 * NOTE:
+	 * 	Just a temporary fix.  
+	 * 	It's really awful that I couldn't be aware of I had got kicked
+	 * 	in the back.
+	 */
+	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(main_win),
+			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
+			GTK_BUTTONS_CLOSE, "You got kicked in the back.");
+	gtk_dialog_run(GTK_DIALOG(dialog));
+	gtk_main_quit();
 }
 
 gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
@@ -134,15 +261,13 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
     if(msg == NULL || data == NULL){
         return 0;
     }
+
+    static gboolean got = FALSE; /* whether got kicked */
    
     GQQMessageLoop *loop = data;
 
-#ifdef USE_GSTREAMER
-	/* Play a audio to notify that a new msg is coming if
-	 user dont set mute. */
-	if (!gqq_config_is_mute(cfg))
-		qq_sound_notify(msg);
-#endif // USE_GSTREAMER
+	/* Make notify event if a new msg is coming. */
+	qq_msg_notify(msg);
 	
     switch(msg -> msg_type)
     {
@@ -156,7 +281,9 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
         gqq_mainloop_attach(loop, qq_poll_dispatch_status_changed_msg, 1, msg);
         break;
     case MSG_KICK_T:
-        gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+	if (!got)
+        	gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+	got = TRUE;
         break;
     default:
         g_warning("Unknonw poll message type! %d (%s, %d)", msg -> msg_type

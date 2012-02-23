@@ -1,9 +1,6 @@
 #include <facepopupwindow.h>
 #include <gqqconfig.h>
 
-extern QQInfo *info;
-extern GQQConfig *cfg;
-
 static void qq_face_popup_window_init(QQFacePopupWindow *win);
 static void qq_face_popup_windowclass_init(QQFacePopupWindowClass *klass);
 
@@ -22,8 +19,8 @@ static gint face_transfer_table[] = {14, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11
                                     , 61, 89, 90, 31, 94, 65, 35, 66, 67, 68
                                     , 69, 70, 15, 16, 17, 18, 19, 28, 30, 40
                                     , 41, 43, 44, 48, 49};
-typedef struct{
-}QQFacePopupWindowPriv;
+typedef struct {
+} QQFacePopupWindowPriv;
 
 GType qq_face_popup_window_get_type()
 {
@@ -51,8 +48,7 @@ GType qq_face_popup_window_get_type()
 
 GtkWidget* qq_face_popup_window_new()
 {
-    return GTK_WIDGET(g_object_new(qq_face_popup_window_get_type()
-                        , "type", GTK_WINDOW_TOPLEVEL, NULL));
+    return GTK_WIDGET(g_object_new(qq_face_popup_window_get_type(), NULL));
 }
 //
 // Focus out event handler
@@ -115,8 +111,9 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
 	gtk_window_set_default_size(GTK_WINDOW(win) , 450 , 250);
     gtk_window_set_skip_taskbar_hint(GTK_WINDOW(win), TRUE);
 
-	g_signal_connect(win, "focus-out-event"
-			        , GTK_SIGNAL_FUNC(qq_face_popup_window_focus_out), win);
+   
+	g_signal_connect(G_OBJECT(win), "focus-out-event", 
+			G_CALLBACK(qq_face_popup_window_focus_out), win);
 
     GtkWidget *table, *img, *eventbox, *frame;
     gint i, j, k;
@@ -136,17 +133,14 @@ static void qq_face_popup_window_init(QQFacePopupWindow *win)
             par -> face = face_transfer_table[k];
             par -> win = GTK_WIDGET(win);
             ++k;
-            g_signal_connect(eventbox , "button-release-event" 
-                                , GTK_SIGNAL_FUNC(face_popup_window_clicked)
-                                , par);
+            g_signal_connect(eventbox , "button-release-event", 
+			    G_CALLBACK(face_popup_window_clicked), par);
             frame = gtk_frame_new(NULL);
             gtk_container_add(GTK_CONTAINER(frame), eventbox);
-            g_signal_connect(eventbox , "enter-notify-event" 
-                                , GTK_SIGNAL_FUNC(face_enter_notify_event)
-                                , frame);
-            g_signal_connect(eventbox , "leave-notify-event" 
-                                , GTK_SIGNAL_FUNC(face_leave_notify_event)
-                                , frame);
+            g_signal_connect(eventbox , "enter-notify-event",
+			    G_CALLBACK(face_enter_notify_event), frame);
+            g_signal_connect(eventbox , "leave-notify-event",
+			    G_CALLBACK(face_leave_notify_event), frame);
 			gtk_table_attach_defaults(GTK_TABLE(table), frame
                                             , j, j + 1, i, i + 1);
         }
