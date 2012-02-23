@@ -41,7 +41,7 @@ static gboolean toStringTraverseFunc(gpointer key
                 , gpointer value
                 , gpointer data)
 {
-    if(data == NULL || key == NULL || data == NULL){
+    if(data == NULL || key == NULL ){
         return TRUE;
     }
     

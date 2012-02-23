@@ -210,7 +210,7 @@ const char proxy_xml[] =
               "</packing>\n"
             "</child>\n"
             "<child>\n"
-              "<object class=\"GtkComboBoxText\" id=\"proxy_type_combobox\">\n"
+              "<object class=\"GtkComboBox\" id=\"proxy_type_combobox\">\n"
                 "<property name=\"visible\">True</property>\n"
                 "<property name=\"can_focus\">True</property>\n"
                 "<property name=\"has_frame\">True</property>\n"
@@ -443,7 +443,7 @@ void set_proxy_btn_cb(GtkButton *btn, gpointer data)
     GtkCellRenderer * cell = gtk_cell_renderer_text_new();
     gtk_cell_layout_pack_start( GTK_CELL_LAYOUT( proxy_type_combobox ), cell, TRUE );
     gtk_cell_layout_set_attributes( GTK_CELL_LAYOUT( proxy_type_combobox), cell, "text", 0, NULL );
-    gtk_combo_box_text_append_text(GTK_COMBO_BOX_TEXT(proxy_type_combobox),"Socks5 Proxy");
+    gtk_combo_box_append_text(GTK_COMBO_BOX(proxy_type_combobox),"Socks5 Proxy");
 
     int index = 0;
     gqq_config_get_int(cfg, "proxy_type",&index);
