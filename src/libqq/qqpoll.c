@@ -408,7 +408,7 @@ gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err)
     par -> data = data;
 
 #if GLIB_CHECK_VERSION(2,31,0)
-    GThread *thread = g_thread_new("", do_poll, NULL);
+    GThread *thread = g_thread_new("", do_poll, par);
 #else
     GThread *thread = g_thread_create(do_poll, par, FALSE, err);
 #endif
