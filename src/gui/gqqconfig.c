@@ -101,7 +101,7 @@ GQQConfig* gqq_config_new(QQInfo *info)
         return NULL;
     }
 
-    GQQConfig *cfg = (GQQConfig*)g_object_new(GQQ_TYPE_CONFIG, "info", info);
+    GQQConfig *cfg = (GQQConfig*)g_object_new(GQQ_TYPE_CONFIG, "info", info, NULL);
     return cfg;
 }
 
