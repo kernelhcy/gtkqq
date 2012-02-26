@@ -74,7 +74,11 @@ gint save_img_to_file(const gchar *data, gint len, const gchar *path )
     }
 
 error:
+#if GLIB_CHECK_VERSION(2,32,0)
+    g_io_channel_shutdown(ioc);
+#else
     g_io_channel_close(ioc);
+#endif
     g_io_channel_unref(ioc);
     return 0;
 }

@@ -266,7 +266,12 @@ struct Par{
     gpointer data;
 };
 
+#if GLIB_CHECK_VERSION(2,32,0)
+static GMutex  lock_impl;
+static GMutex *lock = &lock_impl;
+#else
 static GMutex *lock = NULL;
+#endif
 static gboolean run = TRUE;
 static gpointer do_poll(gpointer data)
 {
@@ -386,10 +391,15 @@ gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err)
         }
         return -1;
     }
+#if !GLIB_CHECK_VERSION(2,32,0)
     if(!g_thread_supported()){
         g_thread_init(NULL);
     }
+
     lock = g_mutex_new();
+#else
+    g_mutex_init(&lock_impl);
+#endif
     run = TRUE;
 
     struct Par *par= g_slice_new0(struct Par);
@@ -397,7 +407,11 @@ gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err)
     par -> cb = cb;
     par -> data = data;
 
+#if GLIB_CHECK_VERSION(2,32,0)
+    GThread *thread = g_thread_new("", do_poll, NULL);
+#else
     GThread *thread = g_thread_create(do_poll, par, FALSE, err);
+#endif
     if(thread == NULL){
         g_error("Create poll thread failed... (%s, %d)", __FILE__, __LINE__);
         return -1;
@@ -414,6 +428,10 @@ void qq_stop_poll(QQInfo *info)
     g_mutex_lock(lock);
     run = FALSE;
     g_mutex_unlock(lock);
+#if GLIB_CHECK_VERSION(2,32,0)
+    g_mutex_clear(&lock_impl);
+#else
     g_mutex_free(lock);
+#endif
     info -> pollthread = NULL;
 }
