@@ -52,7 +52,7 @@ GQQMessageLoop* gqq_msgloop_start(const gchar *name)
 
     GError *err = NULL;
     if(
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
         g_thread_new("", thread_main, ml)
 #else
         g_thread_create(thread_main, ml, FALSE, &err)

@@ -266,7 +266,7 @@ struct Par{
     gpointer data;
 };
 
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
 static GMutex  lock_impl;
 static GMutex *lock = &lock_impl;
 #else
@@ -391,7 +391,7 @@ gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err)
         }
         return -1;
     }
-#if !GLIB_CHECK_VERSION(2,32,0)
+#if !GLIB_CHECK_VERSION(2,31,0)
     if(!g_thread_supported()){
         g_thread_init(NULL);
     }
@@ -407,7 +407,7 @@ gint qq_start_poll(QQInfo *info, QQPollCallBack cb, gpointer data, GError **err)
     par -> cb = cb;
     par -> data = data;
 
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
     GThread *thread = g_thread_new("", do_poll, NULL);
 #else
     GThread *thread = g_thread_create(do_poll, par, FALSE, err);
@@ -428,7 +428,7 @@ void qq_stop_poll(QQInfo *info)
     g_mutex_lock(lock);
     run = FALSE;
     g_mutex_unlock(lock);
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
     g_mutex_clear(&lock_impl);
 #else
     g_mutex_free(lock);

@@ -105,13 +105,13 @@ struct _QQInfo{
      * Maybe we need a lock...
      */
     GMutex *lock;            
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
     /* 
-     * For some reasons, GThread 2.32.0 changed a way to handle the 
+     * For some reasons, GThread 2.31.0 changed a way to handle the 
      * GMutex object. So we need a 'real' GMutex object.
      * 
      * In order to be compitable with lower versions of GThread,
-     * We used a tricky way. Maybe we will use only the GThread 2.32 code
+     * We used a tricky way. Maybe we will use only the GThread 2.31 code
      * in the future.
      */
     GMutex lock_impl;
