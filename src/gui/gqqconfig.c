@@ -37,7 +37,7 @@ typedef struct{
     // the hash table of the string key hash table
     GHashTable *ht_ht;
     // lock of previous hash table
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
     GMutex  ht_lock_impl;
 #endif
     GMutex *ht_lock;
@@ -101,7 +101,7 @@ GQQConfig* gqq_config_new(QQInfo *info)
         return NULL;
     }
 
-    GQQConfig *cfg = (GQQConfig*)g_object_new(GQQ_TYPE_CONFIG, "info", info);
+    GQQConfig *cfg = (GQQConfig*)g_object_new(GQQ_TYPE_CONFIG, "info", info, NULL);
     return cfg;
 }
 
@@ -288,7 +288,7 @@ static void gqq_config_init(GQQConfig *self)
     priv -> db_con = db_open();
     priv -> ht_ht = g_hash_table_new_full(g_str_hash, g_str_equal
                                           , g_free, NULL);
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
     g_mutex_init (&priv -> ht_lock_impl);
     priv -> ht_lock = &priv -> ht_lock_impl;
 #else
@@ -410,7 +410,7 @@ static void gqq_config_finalize(GObject *obj)
     db_close(priv -> db_con);
 
     g_hash_table_unref(priv -> ht_ht);
-#if GLIB_CHECK_VERSION(2,32,0)
+#if GLIB_CHECK_VERSION(2,31,0)
     g_mutex_clear(&priv -> ht_lock_impl);
 #else
     g_mutex_free(priv -> ht_lock);
