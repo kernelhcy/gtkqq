@@ -673,7 +673,7 @@ static void update_buddy_qq_number(QQInfo *info, QQMainPanel *panel)
 
     GThreadPool * thread_pool;
 
-#if !GLIB_CHECK_VERSION(2,32,0)
+#if !GLIB_CHECK_VERSION(2,31,0)
     g_thread_init(NULL);
 #endif
     ThreadFuncPar * par = NULL;
@@ -767,7 +767,7 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
     
     GThreadPool * thread_pool;
 
-#if !GLIB_CHECK_VERSION(2,32,0)
+#if !GLIB_CHECK_VERSION(2,31,0)
     g_thread_init(NULL);
 #endif
     ThreadFuncPar * par = NULL;
