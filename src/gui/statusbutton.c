@@ -216,7 +216,7 @@ void qq_statusbutton_set_status_string(GtkWidget *btn
 void qq_statusbutton_set_status(GtkWidget *btn
                                         , QQStatusButtonStatus status)
 {
-    if(btn == NULL || status >= STATUS_NUM|| status < 0){
+    if(btn == NULL || status >= STATUS_NUM|| (gint)status < 0){
         return;
     }
 

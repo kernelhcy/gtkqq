@@ -17,7 +17,7 @@ static const gchar *font_names[] = {"宋体", "黑体", "隶书", "微软雅黑"
 static guint scale_255(guint v)
 {
     guint re = (guint)(v / 65535.0 * 255.0 + 0.5);
-    re = re < 0 ? 0 : re;
+	//re = re < 0 ? 0 : re;  clang output error: comparison of unsigned expression < 0 is always false
     re = re > 255 ? 255 : re;
     return re;
 }
