@@ -108,7 +108,7 @@ GQQConfig* gqq_config_new(QQInfo *info)
 static void gqq_config_getter(GObject *object, guint property_id,  
                               GValue *value, GParamSpec *pspec)
 {
-    if(object == NULL || value == NULL || property_id < 0){
+    if(object == NULL || value == NULL || (gint)property_id < 0){
         return;
     }
         
@@ -150,7 +150,7 @@ static void gqq_config_getter(GObject *object, guint property_id,
 static void gqq_config_setter(GObject *object, guint property_id,  
                               const GValue *value, GParamSpec *pspec)
 {
-    if(object == NULL || value == NULL || property_id < 0){
+    if(object == NULL || value == NULL || (gint)property_id < 0){
         return;
     }
     g_debug("GQQConfig setter: %s (%s, %d)", pspec -> name, __FILE__, __LINE__);

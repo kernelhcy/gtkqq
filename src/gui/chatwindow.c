@@ -298,7 +298,7 @@ static void qq_chatwindow_init(QQChatWindow *win)
 static void qq_chatwindow_getter(GObject *object, guint property_id,  
                                     GValue *value, GParamSpec *pspec)
 {
-    if(object == NULL || value == NULL || property_id < 0){
+    if(object == NULL || value == NULL || (gint)property_id < 0){
             return;
     }
     
@@ -323,7 +323,7 @@ static void qq_chatwindow_getter(GObject *object, guint property_id,
 static void qq_chatwindow_setter(GObject *object, guint property_id,  
                                  const GValue *value, GParamSpec *pspec)
 {
-    if(object == NULL || value == NULL || property_id < 0){
+    if(object == NULL || value == NULL || (gint)property_id < 0){
             return;
     }
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
