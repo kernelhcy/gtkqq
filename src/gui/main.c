@@ -69,6 +69,9 @@ int main(int argc, char **argv)
 	context = g_option_context_new(NULL);
 	g_option_context_add_main_entries(context, entries, NULL);
 	g_option_context_add_group(context, gtk_get_option_group(TRUE));
+#ifdef USE_GSTREAMER
+	g_option_context_add_group(context, gst_init_get_option_group());
+#endif
 	if (!g_option_context_parse(context, &argc, &argv, &error)) {
 		g_print("option parsing failed: %s\n", error->message);
 		exit(1);
