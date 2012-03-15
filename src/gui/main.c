@@ -41,60 +41,48 @@ GQQMessageLoop *get_number_faceimg_loop = NULL;
 //
 GQQMessageLoop *send_loop = NULL;
 
-static void usage()
+
+
+gboolean debug = FALSE;		/* Whether handle debug message */
+
+static gboolean  _print_version_and_exit(const char *option_name, 
+					const char *value, gpointer data, 
+					GError **error)
 {
-	fprintf(stdout, "Usage: gtkqq [options]...\n"
-			"gtkqq: A qq client based on gtk+ uses webqq protocol\n"
-			"  -v, --version\n"
-			"      Show version of program\n"
-			"  -d, --debug\n"
-			"      Open debug mode\n"
-			"  -h, --help\n"
-			"      Print help and exit\n"
-		);
+	g_print("%s %s\n", PACKAGE, VERSION);
+	exit(EXIT_SUCCESS);
+	return TRUE;
 }
+
+static GOptionEntry entries[] = 
+{
+	{"debug", 'd', 0, G_OPTION_ARG_NONE, &debug, "Open debug mode", NULL},
+	{"version", 'v', G_OPTION_FLAG_NO_ARG, G_OPTION_ARG_CALLBACK, 
+	 _print_version_and_exit, "Show the application's version", NULL},
+	{NULL}
+};
 
 int main(int argc, char **argv)
 {
-	gboolean debug = FALSE;		/* Whether handle debug message */
-	int c, err = 0;
-	static const struct option long_options[] = {
-		{ "version", 0, 0, 'v' },
-		{ "debug", 0, 0, 'd' },
-		{ "help", 0, 0, 'h' },
-		{ 0, 0, 0, 0 }
-	};
-		
+	GError *error = NULL;
+	GOptionContext *context;
+	context = g_option_context_new(NULL);
+	g_option_context_add_main_entries(context, entries, NULL);
+	g_option_context_add_group(context, gtk_get_option_group(TRUE));
+#ifdef USE_GSTREAMER
+	g_option_context_add_group(context, gst_init_get_option_group());
+#endif
+	if (!g_option_context_parse(context, &argc, &argv, &error)) {
+		g_print("option parsing failed: %s\n", error->message);
+		exit(1);
+	}
+	g_option_context_free(context);
+
 #ifdef USE_GSTREAMER
 	gst_init(NULL, NULL);
 #endif
-    gtk_init(&argc, &argv);
+	gtk_init(&argc, &argv);
 
-	while ((c = getopt_long(argc, argv, "vdh",
-							long_options, NULL)) != EOF) {
-		switch (c) {
-		case 'v':
-			printf("" PACKAGE " " VERSION "\n");
-			exit(0);
-
-		case 'd':
-			debug = TRUE;
-			break;
-
-		case 'h':
-			usage();
-			exit(0);
-
-		default:
-			err++;
-			break;
-		}
-	}
-	if (err || argc > optind) {
-		usage();
-		exit(1);
-	}
-	
     log_init(debug);
     info = qq_init(NULL);
     if(info == NULL){
