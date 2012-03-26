@@ -37,7 +37,7 @@ typedef struct{
 
     // The chat text area
     GtkWidget *chatwidget;
-    
+
     // memo view
     GtkWidget *memo_textview;
     GtkWidget *memo_frame;
@@ -80,7 +80,7 @@ GtkWidget* qq_group_chatwindow_new(const gchar *code)
 {
     return GTK_WIDGET(g_object_new(qq_group_chatwindow_get_type()
                                     , "type", GTK_WINDOW_TOPLEVEL
-                                    , "code", code 
+                                    , "code", code
                                     , NULL));
 }
 
@@ -96,7 +96,7 @@ static gboolean qq_member_list_on_show_tooltip(GtkWidget* widget
 {
     gchar *name, *num;
 	GtkTreeView *tree = GTK_TREE_VIEW(widget);
-    GtkTreeModel *model = gtk_tree_view_get_model(tree); 
+    GtkTreeModel *model = gtk_tree_view_get_model(tree);
     GtkTreePath *path;
     GtkTreeIter iter;
 
@@ -166,7 +166,7 @@ static void qq_group_chatwindow_update(QQGroupChatWindow *win)
     QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(win
                                         , qq_group_chatwindow_get_type()
                                         , QQGroupChatWindowPriv);
-    QQGroup *grp = qq_info_lookup_group_by_code(info, priv -> code); 
+    QQGroup *grp = qq_info_lookup_group_by_code(info, priv -> code);
     if(grp == NULL){
         return;
     }
@@ -175,7 +175,7 @@ static void qq_group_chatwindow_update(QQGroupChatWindow *win)
 
     // update header
     g_snprintf(buf, 500, "<b>%s</b>", grp -> name -> str);
-    gtk_label_set_markup(GTK_LABEL(priv -> name_label), buf); 
+    gtk_label_set_markup(GTK_LABEL(priv -> name_label), buf);
     g_snprintf(buf, 500, "<span color='#808080'>%s</span>"
                                     , grp -> fingermemo -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> fingermemo_label), buf);
@@ -185,7 +185,7 @@ static void qq_group_chatwindow_update(QQGroupChatWindow *win)
     GtkTextBuffer *buffer = gtk_text_view_get_buffer(
                                     GTK_TEXT_VIEW(priv -> memo_textview));
     gtk_text_buffer_set_text(buffer, buf, -1);
-    
+
     // update member list
     GtkListStore *store = (GtkListStore*)gtk_tree_view_get_model(
                                         GTK_TREE_VIEW(priv -> member_list));
@@ -385,9 +385,9 @@ static gboolean qq_input_textview_key_press(GtkWidget *widget
                                                 , gpointer data)
 {
     GdkEventKey *event = (GdkEventKey*)e;
-    if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter
-                        || event -> keyval == GDK_ISO_Enter){
-        if((event -> state & GDK_CONTROL_MASK) != 0 
+    if(event -> keyval == GDK_KEY_Return || event -> keyval == GDK_KEY_KP_Enter
+                        || event -> keyval == GDK_KEY_ISO_Enter){
+        if((event -> state & GDK_CONTROL_MASK) != 0
                         || (event -> state & GDK_SHIFT_MASK) != 0){
             return FALSE;
         }
@@ -405,8 +405,8 @@ static gboolean qq_group_chatwindow_key_press(GtkWidget *widget
                                                 , gpointer data)
 {
     GdkEventKey *event = (GdkEventKey*)e;
-    if((event -> state & GDK_CONTROL_MASK) != 0 
-                    && (event -> keyval == GDK_w || event -> keyval == GDK_W)){
+    if((event -> state & GDK_CONTROL_MASK) != 0
+                    && (event -> keyval == GDK_KEY_w || event -> keyval == GDK_KEY_W)){
         QQGroupChatWindowPriv *priv = data;
         gqq_config_remove_ht(cfg, "chat_window_map", priv -> code);
         gtk_widget_destroy(widget);
@@ -439,20 +439,20 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
     priv -> name_label = gtk_label_new("");
     priv -> fingermemo_label = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(header_hbox), priv -> faceimage
-                                        , FALSE, FALSE, 5); 
+                                        , FALSE, FALSE, 5);
     GtkWidget *name_hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(name_hbox), priv -> name_label
                                             , FALSE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), name_hbox, FALSE, FALSE, 0); 
+    gtk_box_pack_start(GTK_BOX(vbox), name_hbox, FALSE, FALSE, 0);
 
     gtk_box_pack_start(GTK_BOX(vbox), priv -> fingermemo_label
-                                            , FALSE, FALSE, 0); 
-    gtk_box_pack_start(GTK_BOX(header_hbox), vbox, FALSE, FALSE, 5); 
+                                            , FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(header_hbox), vbox, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(body_vbox), header_hbox
                                         , FALSE, FALSE, 5);
 
     GtkWidget *hpaned, *vpaned;
-    GtkWidget *scrolled_win; 
+    GtkWidget *scrolled_win;
     GtkWidget *frame;
 
     hpaned = gtk_hpaned_new();
@@ -518,7 +518,7 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
     gtk_spinner_start(GTK_SPINNER(priv -> member_load_spinner));
 
     gtk_paned_pack2(GTK_PANED(hpaned), vpaned, TRUE, FALSE);
-    gtk_box_pack_start(GTK_BOX(body_vbox), hpaned, TRUE, TRUE, 3); 
+    gtk_box_pack_start(GTK_BOX(body_vbox), hpaned, TRUE, TRUE, 3);
 
     // buttons
     GtkWidget *buttonbox = gtk_hbutton_box_new();
@@ -532,7 +532,7 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
                              G_CALLBACK(qq_group_chatwindow_on_send_clicked), win);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> close_btn);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> send_btn);
-    gtk_box_pack_start(GTK_BOX(body_vbox), buttonbox, FALSE, FALSE, 3); 
+    gtk_box_pack_start(GTK_BOX(body_vbox), buttonbox, FALSE, FALSE, 3);
 
     GtkWidget *w = GTK_WIDGET(win);
     gtk_window_resize(GTK_WINDOW(w), 600, 490);
@@ -562,17 +562,17 @@ static void qq_group_chatwindow_init(QQGroupChatWindow *win)
 /*
  * The getter.
  */
-static void qq_group_chatwindow_getter(GObject *object, guint property_id,  
+static void qq_group_chatwindow_getter(GObject *object, guint property_id,
                                     GValue *value, GParamSpec *pspec)
 {
     if(object == NULL || value == NULL || property_id < 0){
             return;
     }
-    
+
     QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     object, qq_group_chatwindow_get_type()
                                     , QQGroupChatWindowPriv);
-    
+
     switch (property_id)
     {
     case QQ_GROUP_CHATWINDOW_PROPERTY_CODE:
@@ -587,7 +587,7 @@ static void qq_group_chatwindow_getter(GObject *object, guint property_id,
 /*
  * The setter.
  */
-static void qq_group_chatwindow_setter(GObject *object, guint property_id,  
+static void qq_group_chatwindow_setter(GObject *object, guint property_id,
                                  const GValue *value, GParamSpec *pspec)
 {
     if(object == NULL || value == NULL || property_id < 0){
@@ -596,7 +596,7 @@ static void qq_group_chatwindow_setter(GObject *object, guint property_id,
     QQGroupChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     object, qq_group_chatwindow_get_type()
                                     , QQGroupChatWindowPriv);
-    gchar buf[500]; 
+    gchar buf[500];
     switch (property_id)
     {
     case QQ_GROUP_CHATWINDOW_PROPERTY_CODE:
@@ -621,7 +621,7 @@ static void qq_group_chatwindow_setter(GObject *object, guint property_id,
     // set fingermemo
     g_snprintf(buf, 500, "<b>%s</b>", grp -> fingermemo -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> fingermemo_label), buf);
-    // set name 
+    // set name
     g_snprintf(buf, 500, "<b>%s</b>", grp -> name -> str);
     gtk_label_set_markup(GTK_LABEL(priv -> name_label), buf);
     // set memo
@@ -646,7 +646,7 @@ static void qq_group_chatwindowclass_init(QQGroupChatWindowClass *wc)
                                 , "QQ group code"
                                 , "qq code"
                                 , ""
-                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT 
+                                , G_PARAM_READABLE | G_PARAM_CONSTRUCT
                                         | G_PARAM_WRITABLE);
     g_object_class_install_property(G_OBJECT_CLASS(wc)
                                     , QQ_GROUP_CHATWINDOW_PROPERTY_CODE

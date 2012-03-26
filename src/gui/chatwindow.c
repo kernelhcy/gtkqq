@@ -31,7 +31,7 @@ typedef struct{
     GtkWidget *name_label, *lnick_label;
 
     GtkWidget *chat_widget;
-    
+
     GtkWidget *send_btn, *close_btn;
 }QQChatWindowPriv;
 
@@ -169,9 +169,9 @@ static gboolean qq_input_textview_key_press(GtkWidget *widget, GdkEvent *e
                                             , gpointer data)
 {
     GdkEventKey *event = (GdkEventKey*)e;
-    if(event -> keyval == GDK_Return || event -> keyval == GDK_KP_Enter
-                        || event -> keyval == GDK_ISO_Enter){
-        if((event -> state & GDK_CONTROL_MASK) != 0 
+    if(event -> keyval == GDK_KEY_Return || event -> keyval == GDK_KEY_KP_Enter
+                        || event -> keyval == GDK_KEY_ISO_Enter){
+        if((event -> state & GDK_CONTROL_MASK) != 0
                         || (event -> state & GDK_SHIFT_MASK) != 0){
             return FALSE;
         }
@@ -188,8 +188,8 @@ static gboolean qq_chatwindow_key_press(GtkWidget *widget, GdkEvent *e
                                             , gpointer data)
 {
     GdkEventKey *event = (GdkEventKey*)e;
-    if((event -> state & GDK_CONTROL_MASK) != 0 
-                    && (event -> keyval == GDK_w || event -> keyval == GDK_W)){
+    if((event -> state & GDK_CONTROL_MASK) != 0
+                    && (event -> keyval == GDK_KEY_w || event -> keyval == GDK_KEY_W)){
         QQChatWindowPriv *priv = data;
         gqq_config_remove_ht(cfg, "chat_window_map", priv -> uin);
         gtk_widget_destroy(widget);
@@ -215,7 +215,7 @@ static void qq_chatwindow_init(QQChatWindow *win)
     pb = gdk_pixbuf_new_from_file(buf, NULL);
     gtk_window_set_icon(GTK_WINDOW(win), pb);
     g_object_unref(pb);
-    g_snprintf(buf, 500, "Talking with %s", bdy == NULL ? priv -> uin 
+    g_snprintf(buf, 500, "Talking with %s", bdy == NULL ? priv -> uin
                                                     : bdy -> nick -> str);
     gtk_window_set_title(GTK_WINDOW(win), buf);
 
@@ -227,17 +227,17 @@ static void qq_chatwindow_init(QQChatWindow *win)
     priv -> name_label = gtk_label_new("");
     priv -> lnick_label = gtk_label_new("");
     gtk_box_pack_start(GTK_BOX(header_hbox), priv -> faceimage
-                                        , FALSE, FALSE, 5); 
-    gtk_box_pack_start(GTK_BOX(vbox), priv -> name_label, FALSE, FALSE, 0); 
-    gtk_box_pack_start(GTK_BOX(vbox), priv -> lnick_label, FALSE, FALSE, 0); 
-    gtk_box_pack_start(GTK_BOX(header_hbox), vbox, FALSE, FALSE, 5); 
+                                        , FALSE, FALSE, 5);
+    gtk_box_pack_start(GTK_BOX(vbox), priv -> name_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), priv -> lnick_label, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(header_hbox), vbox, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(priv -> body_vbox), header_hbox
                                         , FALSE, FALSE, 5);
 
     // message text view
     priv -> chat_widget = qq_chatwidget_new();
     gtk_box_pack_start(GTK_BOX(priv -> body_vbox), priv -> chat_widget
-                                                , TRUE, TRUE, 0); 
+                                                , TRUE, TRUE, 0);
 
     // buttons
     GtkWidget *buttonbox = gtk_hbutton_box_new();
@@ -251,7 +251,7 @@ static void qq_chatwindow_init(QQChatWindow *win)
                              G_CALLBACK(qq_chatwindow_on_send_clicked), win);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> close_btn);
     gtk_container_add(GTK_CONTAINER(buttonbox), priv -> send_btn);
-    gtk_box_pack_start(GTK_BOX(priv -> body_vbox), buttonbox, FALSE, FALSE, 3); 
+    gtk_box_pack_start(GTK_BOX(priv -> body_vbox), buttonbox, FALSE, FALSE, 3);
 
     GtkWidget *w = GTK_WIDGET(win);
     gtk_window_resize(GTK_WINDOW(w), 500, 450);
@@ -279,17 +279,17 @@ static void qq_chatwindow_init(QQChatWindow *win)
 /*
  * The getter.
  */
-static void qq_chatwindow_getter(GObject *object, guint property_id,  
+static void qq_chatwindow_getter(GObject *object, guint property_id,
                                     GValue *value, GParamSpec *pspec)
 {
     if(object == NULL || value == NULL || property_id < 0){
             return;
     }
-    
+
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     object, qq_chatwindow_get_type()
                                     , QQChatWindowPriv);
-    
+
     switch (property_id)
     {
     case QQ_CHATWINDOW_PROPERTY_UIN:
@@ -304,7 +304,7 @@ static void qq_chatwindow_getter(GObject *object, guint property_id,
 /*
  * The setter.
  */
-static void qq_chatwindow_setter(GObject *object, guint property_id,  
+static void qq_chatwindow_setter(GObject *object, guint property_id,
                                  const GValue *value, GParamSpec *pspec)
 {
     if(object == NULL || value == NULL || property_id < 0){
@@ -313,7 +313,7 @@ static void qq_chatwindow_setter(GObject *object, guint property_id,
     QQChatWindowPriv *priv = G_TYPE_INSTANCE_GET_PRIVATE(
                                     object, qq_chatwindow_get_type()
                                     , QQChatWindowPriv);
-    gchar buf[500]; 
+    gchar buf[500];
     GdkPixbuf *pb = NULL;
     switch (property_id)
     {
@@ -351,7 +351,7 @@ static void qq_chatwindow_setter(GObject *object, guint property_id,
         name = bdy -> markname -> str;
     }
     // set status and name
-    if(g_strcmp0("online", bdy -> status -> str) == 0 
+    if(g_strcmp0("online", bdy -> status -> str) == 0
                     || g_strcmp0("away", bdy -> status -> str) == 0
                     || g_strcmp0("busy", bdy -> status -> str) == 0
                     || g_strcmp0("silent", bdy -> status -> str) == 0
