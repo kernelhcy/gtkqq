@@ -4,13 +4,13 @@
 #include <qq.h>
 
 #define QQ_TYPE_GROUP_CHATWINDOW        qq_group_chatwindow_get_type()
-#define QQ_GROUP_CHATWINDOW(obj)        GTK_CHECK_CAST(obj\
+#define QQ_GROUP_CHATWINDOW(obj)        G_TYPE_CHECK_INSTANCE_CAST(obj\
                                                 , QQ_TYPE_GROUP_CHATWINDOW\
                                                 , QQGroupChatWindow)
-#define QQ_GROUP_CHATWINDOWCLASS(c)     GTK_CHECK_CLASS_CAST(c\
+#define QQ_GROUP_CHATWINDOWCLASS(c)     G_TYPE_CHECK_CLASS_CAST(c\
                                                 , QQ_TYPE_GROUP_CHATWINDOW()\
                                                 , QQGroupChatWindowClass)
-#define QQ_IS_GROUP_CHATWINDOW(obj)     GTK_CHECK_TYPE(obj\
+#define QQ_IS_GROUP_CHATWINDOW(obj)     G_TYPE_CHECK_INSTANCE_TYPE(obj\
                                                 , QQ_TYPE_GROUP_CHATWINDOW())
 
 typedef struct __QQGroupChatWindow         QQGroupChatWindow;

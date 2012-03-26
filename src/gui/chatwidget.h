@@ -25,12 +25,12 @@
 // |                                            |
 // ----------------------------------------------
 //
-#define QQ_CHATWIDGET(obj)      GTK_CHECK_CAST(obj, qq_chatwidget_get_type()\
+#define QQ_CHATWIDGET(obj)      G_TYPE_CHECK_INSTANCE_CAST(obj, qq_chatwidget_get_type()\
                                                 , QQChatWidget)
-#define QQ_CHATWIDGETCLASS(c)   GTK_CHECK_CLASS_CAST(c\
+#define QQ_CHATWIDGETCLASS(c)   G_TYPE_CHECK_CLASS_CAST(c\
                                                 , qq_chatwidget_get_type()\
                                                 , QQChatWidgetClass)
-#define QQ_IS_CHATWIDGET(obj)   GTK_CHECK_TYPE(obj, qq_chatwidget_get_type())
+#define QQ_IS_CHATWIDGET(obj)   G_TYPE_CHECK_INSTANCE_TYPE(obj, qq_chatwidget_get_type())
 
 typedef struct __QQChatWidget         QQChatWidget;
 typedef struct __QQChatWidgetClass    QQChatWidgetClass;

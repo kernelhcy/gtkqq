@@ -25,13 +25,13 @@
 // ------------------------------------------
 //
 
-#define QQ_CHAT_TEXTVIEW(obj)	    GTK_CHECK_CAST(obj\
+#define QQ_CHAT_TEXTVIEW(obj)	    G_TYPE_CHECK_INSTANCE_CAST(obj\
                                                 , qq_chat_textview_get_type()\
 						                        , QQChatTextview)
-#define QQ_CHAT_TEXTVIEWCLASS(c)	GTK_CHECK_CLASS_CAST(c\
+#define QQ_CHAT_TEXTVIEWCLASS(c)	G_TYPE_CHECK_CLASS_CAST(c\
 						                        , qq_chat_textview_get_type()\
 						                        , QQChatTextviewClass)
-#define QQ_IS_CHAT_TEXTVIEW(obj)	GTK_CHECK_TYPE(obj\
+#define QQ_IS_CHAT_TEXTVIEW(obj)	G_TYPE_CHECK_INSTANCE_TYPE(obj\
                                                 , qq_chat_textview_get_type())
 
 typedef struct __QQChatTextview 		QQChatTextview;
