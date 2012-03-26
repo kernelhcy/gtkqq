@@ -62,7 +62,7 @@ struct _QQLoginPanelClass{
  *     set to NULL.
  */
 GtkWidget* qq_loginpanel_new(GtkWidget *container);
-GtkType qq_loginpanel_get_type();
+GType qq_loginpanel_get_type();
 
 /*
  * Get the inputs

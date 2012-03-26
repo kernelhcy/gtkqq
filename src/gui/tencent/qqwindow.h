@@ -55,7 +55,7 @@ struct _QQWindowClass{
 };
 
 GtkWidget* 	qq_window_new();
-GtkType 	qq_window_get_type();
+GType 	qq_window_get_type();
 
 /*
  * Maximizes the windows

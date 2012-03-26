@@ -21,6 +21,6 @@ struct _QQSplashPanelClass{
 };
 
 GtkWidget *qq_splashpanel_new();
-GtkType qq_splashpanel_get_type();
+GType qq_splashpanel_get_type();
 
 #endif

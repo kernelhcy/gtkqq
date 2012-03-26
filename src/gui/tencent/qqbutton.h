@@ -70,5 +70,5 @@ struct _QQButtonClass{
 };
 
 QQButton* 	qq_button_new(QQButtonType type);
-GtkType 	qq_button_get_type();
+GType 	qq_button_get_type();
 #endif
