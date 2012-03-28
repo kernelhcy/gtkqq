@@ -48,7 +48,7 @@ void qq_window_maximize(QQWindow *qwin)
 
 	return;
 }
-GtkType qq_window_get_type()
+GType qq_window_get_type()
 {
 	static GType type = 0;
 	if(type == 0){

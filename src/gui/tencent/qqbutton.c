@@ -36,7 +36,7 @@ QQButton* qq_button_new(QQButtonType type)
 	return btn;
 }
 
-GtkType qq_button_get_type()
+GType qq_button_get_type()
 {
 	static GType type = 0;
 	if(type == 0){

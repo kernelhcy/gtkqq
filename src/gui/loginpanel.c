@@ -39,7 +39,7 @@ static GQQMessageLoop gtkloop;
 
 static GPtrArray* login_users = NULL;
 
-GtkType qq_loginpanel_get_type()
+GType qq_loginpanel_get_type()
 {
     static GType t = 0;
     if(!t){
@@ -79,7 +79,7 @@ static void qq_loginpanelclass_init(QQLoginPanelClass *c)
 
     /*
      * get the default main evet loop context.
-     * 
+     *
      * I think this will work...
      */
     gtkloop.ctx = g_main_context_default();
@@ -147,7 +147,7 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
 
     //update qq number
     update_buddy_qq_number(info
-                           , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+                           , (QQMainPanel*)QQ_MAINWINDOW(panel -> container)
                            -> main_panel);
     // update group number
     gint i;
@@ -162,13 +162,13 @@ static void update_details(QQInfo *info, QQLoginPanel *panel)
         qq_group_set(grp, "gnumber", num);
     }
     gqq_mainloop_attach(&gtkloop
-                        , qq_mainpanel_update_group_info 
+                        , qq_mainpanel_update_group_info
                         , 1
                         , QQ_MAINWINDOW(panel -> container) -> main_panel);
 
     //update face image
     update_face_image(info
-                      , (QQMainPanel*)QQ_MAINWINDOW(panel -> container) 
+                      , (QQMainPanel*)QQ_MAINWINDOW(panel -> container)
                       -> main_panel);
 }
 
@@ -224,7 +224,7 @@ static void login_state_machine(gpointer data)
                 qq_start_poll(info, qq_poll_message_callback, &gtkloop, NULL);
                 // update main panel
                 gqq_mainloop_attach(&gtkloop, qq_mainpanel_update
-                                    , 1, QQ_MAINWINDOW(panel -> container) 
+                                    , 1, QQ_MAINWINDOW(panel -> container)
                                     -> main_panel);
                 // show main panel
                 gqq_mainloop_attach(&gtkloop, qq_mainwindow_show_mainpanel
@@ -250,7 +250,7 @@ static void login_state_machine(gpointer data)
 //
 static void run_login_state_machine(QQLoginPanel *panel)
 {
-    gqq_mainloop_attach(get_info_loop, login_state_machine, 1, panel); 
+    gqq_mainloop_attach(get_info_loop, login_state_machine, 1, panel);
 }
 
 // In libqq/qqutils.c
@@ -282,24 +282,24 @@ static void read_verifycode(gpointer p)
     GtkWidget *vbox = GTK_DIALOG(dialog) -> vbox;
     GtkWidget *img = gtk_image_new_from_file(fn);
     gtk_box_pack_start(GTK_BOX(vbox), gtk_label_new("VerifyCode：")
-                       , FALSE, FALSE, 20);    
-    gtk_box_pack_start(GTK_BOX(vbox), img, FALSE, FALSE, 0); 
+                       , FALSE, FALSE, 20);
+    gtk_box_pack_start(GTK_BOX(vbox), img, FALSE, FALSE, 0);
 
     GtkWidget *vc_entry = gtk_entry_new();
     gtk_widget_set_size_request(vc_entry, 200, -1);
     GtkWidget *hbox = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox), vc_entry, TRUE, FALSE, 0);
-    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 10);    
+    gtk_box_pack_start(GTK_BOX(vbox), hbox, FALSE, FALSE, 10);
 
     gtk_widget_set_size_request(dialog, 300, 220);
     gtk_widget_show_all(dialog);
     gtk_dialog_run(GTK_DIALOG(dialog));
-    
+
     //got the verify code
     info -> verify_code = g_string_new(
         gtk_entry_get_text(GTK_ENTRY(vc_entry)));
-    gtk_widget_destroy(dialog); 
-    
+    gtk_widget_destroy(dialog);
+
     //restart the state machine
     run_login_state_machine(panel);
 }
@@ -309,7 +309,7 @@ static GQQLoginUser *get_current_login_user(GPtrArray* all_users)
 {
 	if (!all_users)
 		return NULL;
-	
+
     gint i;
     GQQLoginUser *usr = NULL;
     for(i = 0; i < login_users -> len; ++i){
@@ -321,7 +321,7 @@ static GQQLoginUser *get_current_login_user(GPtrArray* all_users)
             break;
         }
     }
-	
+
 	return usr;
 }
 
@@ -333,7 +333,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
     QQLoginPanel *panel = QQ_LOGINPANEL(data);
     GtkWidget *win = panel -> container;
     qq_mainwindow_show_splashpanel(win);
-		
+
 
     panel -> uin = qq_loginpanel_get_uin(panel);
     panel -> passwd = qq_loginpanel_get_passwd(panel);
@@ -364,7 +364,7 @@ static void login_btn_cb(GtkButton *btn, gpointer data)
 	GQQLoginUser *usr = get_current_login_user(login_users);
 	if (usr)
 		qq_tray_set_mute_item(tray, usr->mute);
-	
+
     //clear the error message.
     gtk_label_set_text(GTK_LABEL(panel -> err_label), "");
     gqq_config_save_last_login_user(cfg);
@@ -411,11 +411,11 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     }
     g_signal_connect(G_OBJECT(obj -> uin_entry), "changed"
                      , G_CALLBACK(qqnumber_combox_changed), obj);
-    //not visibily 
+    //not visibily
     gtk_entry_set_visibility(GTK_ENTRY(obj -> passwd_entry), FALSE);
     gtk_widget_set_size_request(obj -> uin_entry, 200, -1);
     gtk_widget_set_size_request(obj -> passwd_entry, 220, -1);
-    
+
     GtkWidget *vbox = gtk_vbox_new(FALSE, 10);
 
     //uin label and entry
@@ -432,7 +432,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     GtkWidget *passwd_vbox = gtk_vbox_new(FALSE, 2);
     gtk_box_pack_start(GTK_BOX(passwd_vbox), passwd_hbox, FALSE, FALSE, 0);
     gtk_box_pack_start(GTK_BOX(passwd_vbox), obj -> passwd_entry, FALSE, FALSE, 0);
-    
+
     //put uin and password in a vbox
     gtk_box_pack_start(GTK_BOX(vbox), uin_vbox, FALSE, FALSE, 2);
     gtk_box_pack_start(GTK_BOX(vbox), passwd_vbox, FALSE, FALSE, 2);
@@ -467,7 +467,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     g_signal_connect(G_OBJECT(obj -> set_proxy_btn), "clicked"
                      , G_CALLBACK(set_proxy_btn_cb), (gpointer)obj);
 #endif	/* USE_PROXY */
-    
+
     GtkWidget *hbox1 = gtk_hbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(hbox1), vbox, TRUE, FALSE, 0);
 
@@ -482,7 +482,7 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
     gtk_button_box_set_layout(GTK_BUTTON_BOX(hbox_proxy_setting), GTK_BUTTONBOX_CENTER);
     gtk_box_pack_start(GTK_BOX(hbox_proxy_setting), obj -> set_proxy_btn, FALSE, FALSE, 0);
 #endif	/* USE_PROXY */
-	
+
     //error informatin label
     obj -> err_label = gtk_label_new("");
     GdkColor color;
@@ -501,10 +501,10 @@ static void qq_loginpanel_init(QQLoginPanel *obj)
 #ifdef USE_PROXY
     gtk_box_pack_start(GTK_BOX(vbox), hbox_proxy_setting, TRUE, TRUE, 10);
 #endif	/* USE_PROXY */
-    
+
     gtk_box_set_homogeneous(GTK_BOX(obj), FALSE);
     GtkWidget *logo = gtk_image_new_from_file(IMGDIR"webqq_icon.png");
-    gtk_widget_set_size_request(logo, -1, 150);    
+    gtk_widget_set_size_request(logo, -1, 150);
     gtk_box_pack_start(GTK_BOX(obj), logo, FALSE, FALSE, 5);
     gtk_box_pack_start(GTK_BOX(obj), hbox1, FALSE, FALSE, 15);
 }
@@ -538,7 +538,7 @@ const gchar* qq_loginpanel_get_uin(QQLoginPanel *loginpanel)
 {
     QQLoginPanel *panel = QQ_LOGINPANEL(loginpanel);
     return gtk_combo_box_get_active_text(
-        GTK_COMBO_BOX(panel -> uin_entry));    
+        GTK_COMBO_BOX(panel -> uin_entry));
 
 }
 const gchar* qq_loginpanel_get_passwd(QQLoginPanel *loginpanel)
@@ -666,18 +666,18 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
     QQFaceImg *img = NULL;
 
     // me
-    img = qq_faceimg_new(); 
+    img = qq_faceimg_new();
     qq_faceimg_set(img, "uin", info -> me -> uin);
     qq_faceimg_set(img, "num", info -> me  -> qqnumber);
     g_ptr_array_add(fimgs, img);
-    
-    // buddies 
+
+    // buddies
     for(i = 0; i < info -> buddies -> len; ++i){
         bdy = g_ptr_array_index(info -> buddies, i);
         if(bdy == NULL){
             continue;
         }
-        img = qq_faceimg_new(); 
+        img = qq_faceimg_new();
         qq_faceimg_set(img, "uin", bdy -> uin);
         qq_faceimg_set(img, "num", bdy -> qqnumber);
         g_ptr_array_add(fimgs, img);
@@ -690,7 +690,7 @@ static void update_face_image(QQInfo *info, QQMainPanel *panel)
         if(grp == NULL){
             continue;
         }
-        img = qq_faceimg_new(); 
+        img = qq_faceimg_new();
         qq_faceimg_set(img, "uin", grp -> code);
         qq_faceimg_set(img, "num", grp -> gnumber);
         g_ptr_array_add(fimgs, img);
