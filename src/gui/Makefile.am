@@ -14,7 +14,7 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
       -Wall -Werror
 
 bin_PROGRAMS=gtkqq
-gtkqq_LDADD = $(GTK_LIBS) $(GSTREAMER_LIBS) $(GSTINTERFACES_LIBS) ../../libqq/libwebqq.la $(SQLITE3_LIBS) $(LIBNOTIFY_LIBS)
+gtkqq_LDADD = $(GTK_LIBS) $(GSTREAMER_LIBS) $(GSTINTERFACES_LIBS) ../libqq/libwebqq.la $(SQLITE3_LIBS) $(LIBNOTIFY_LIBS)
 gtkqq_SOURCES=main.c \
           msgloop.c msgloop.h\
           dao.c dao.h\

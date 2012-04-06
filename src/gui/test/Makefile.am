@@ -6,5 +6,5 @@ winmove_SOURCES= winmove.c
 
 splashpanel_SOURCES= test-splashpanel.c ../splashpanel.c
 
-splashpanel_CFLAGS= -I.. $(GTK_CFLAGS) -DIMGDIR=\"../../misc/\"
+splashpanel_CFLAGS= -I$(srcdir)/.. $(GTK_CFLAGS) -DIMGDIR=\"../../misc/\"
 splashpanel_LDADD = $(GTK_LIBS)
