@@ -19,7 +19,7 @@ static GString* get_cookie(Response *r, const gchar *key)
 				,__FILE__, __LINE__);
 		return NULL;
 	}
-	
+
 	gchar *val = g_strstr_len(cookie, -1, key);
 	if(val == NULL){
 		g_warning("No cookie! %s(%s, %d)", key, __FILE__, __LINE__);
@@ -54,14 +54,14 @@ static gint check_verify_code(QQInfo *info)
 							 , info -> me -> uin -> str, g_random_double());
 	if (!params)
 		return -1;
-	
+
 	req = request_new();
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
 
 	request_set_uri(req, params);
 	g_free(params);
-	
+
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
 
@@ -91,10 +91,10 @@ static gint check_verify_code(QQInfo *info)
 	 * 	ptui_checkVC('1','9ed32e3f644d968809e8cbeaaf2cce42de62df
 	 * 					ee12c14b74');
 	 * 	ptui_checkVC('0','!LOB');
-	 * The former means we need verify code image and the second 
+	 * The former means we need verify code image and the second
 	 * parameter is vc_type.
 	 * The later means we don't need the verify code image. The second
-	 * parameter is the verify code. The vc_type is in the header 
+	 * parameter is the verify code. The vc_type is in the header
 	 * "Set-Cookie".
 	 */
 
@@ -116,7 +116,7 @@ static gint check_verify_code(QQInfo *info)
 		info -> need_vcimage = FALSE;
 		s = c;
 		c = g_strstr_len(s, -1, "'");
-		s = c + 1; 
+		s = c + 1;
 		c = g_strstr_len(s, -1, "'");
 		s = c + 1;
 		c = g_strstr_len(s, -1, "'");
@@ -172,7 +172,7 @@ static gint get_vc_image(QQInfo *info)
 							 , info -> vc_type -> str);
 	if (!params)
 		return -1;
-	
+
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
@@ -194,7 +194,7 @@ static gint get_vc_image(QQInfo *info)
 	res = rcv_response(con, &rps);
 	close_con(con);
 	connection_free(con);
-	
+
 	if (-1 == res || !rps) {
 		g_warning("Null point access (%s, %d)\n", __FILE__, __LINE__);
 		ret = -1;
@@ -283,7 +283,7 @@ static gint get_version(QQInfo *info)
 		ret = NETWORK_ERR;
 		goto error;
 	}
-	
+
 	gchar *lb, *rb;
 	gchar *ms = rps -> msg -> str;
 	lb = g_strstr_len(ms, -1, "(");
@@ -315,17 +315,17 @@ GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
 {
 	guint8 buf[100] = {0};
 	gsize bsize = 100;
-	
+
 	GChecksum *cs = g_checksum_new(G_CHECKSUM_MD5);
 	g_checksum_update(cs, (const guchar*)pwd, strlen(pwd));
 	g_checksum_get_digest(cs, buf, &bsize);
 	g_checksum_free(cs);
-	
+
 	cs = g_checksum_new(G_CHECKSUM_MD5);
 	g_checksum_update(cs, buf, bsize);
 	g_checksum_get_digest(cs, buf, &bsize);
 	g_checksum_free(cs);
-	
+
 	cs = g_checksum_new(G_CHECKSUM_MD5);
 	g_checksum_update(cs, buf, bsize);
 	const gchar * md5_3 = g_checksum_get_string(cs);
@@ -370,7 +370,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	Response *rps = NULL;
 	request_set_method(req, "GET");
 	request_set_version(req, "HTTP/1.1");
-	
+
 	request_set_uri(req, params);
 	g_free(params);
 	request_set_default_headers(req);
@@ -484,7 +484,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
     info -> uin = get_cookie(rps, "uin");
     info -> ptisp = get_cookie(rps, "ptisp");
     info -> pt2gguin = get_cookie(rps, "pt2gguin");
-	
+
 	//sotre the cookie
 	info -> cookie = g_string_new("");
 	if (info->verifysession) {
@@ -512,7 +512,7 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 		g_string_append_printf(info->cookie, "pt2gguin=%s; ", info->pt2gguin->str);
 	}
 	g_debug("Store cookie: %s(%s, %d)", info->cookie->str, __FILE__, __LINE__);
-	
+
 error:
 	request_del(req);
 	response_del(rps);
@@ -553,7 +553,7 @@ static int get_psessionid(QQInfo *info)
 		g_warning("Need ptwebqq!!(%s, %d)", __FILE__, __LINE__);
 		return PARAMETER_ERR;
 	}
-	
+
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "POST");
@@ -642,6 +642,20 @@ static int get_psessionid(QQInfo *info)
 		ret = NETWORK_ERR;
 		goto error;
 	}
+
+    val = json_find_first_label_all(json, "result");
+    if(val != NULL){
+        json_t *uin_node = json_find_first_label_all(val, "uin");
+        if (uin_node != NULL) {
+            qq_buddy_set(info -> me, "uin", uin_node->child->text);
+            qq_buddy_set(info -> me, "qqnumber", uin_node->child->text);
+            g_debug("get_psessionid: line %d: set uin: %s", __LINE__, uin_node->child->text);
+        }else{
+            g_debug("get_psessionid: line %d: no uin in response", __LINE__);
+        }
+    }else{
+        g_debug("get_psessionid: line %d: no result in response", __LINE__);
+    }
 	val = json_find_first_label_all(json, "seskey");
 	if(val != NULL){
 		g_debug("seskey: %s (%s, %d)", val -> child -> text
@@ -682,7 +696,7 @@ static int get_psessionid(QQInfo *info)
 	}
 
 error:
-	json_free_value(&json);	
+	json_free_value(&json);
 	close_con(con);
 	connection_free(con);
 	request_del(req);
@@ -758,7 +772,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
         create_error_msg(err, retcode, "Get psessionid error.");
 		return retcode;
 	}
-    
+
 	g_debug("Initial done.(%s, %d)", __FILE__, __LINE__);
 	return NO_ERR;
 }
@@ -809,7 +823,7 @@ static gint do_logout(QQInfo *info, GError **err)
 							 , info -> psessionid -> str, get_now_millisecond());
 	if (!params)
 		return -1;
-	
+
 	Request *req = request_new();
 	Response *rps = NULL;
 	request_set_method(req, "GET");
@@ -873,7 +887,7 @@ static gint do_logout(QQInfo *info, GError **err)
 	}else{
 		g_debug("(%s, %d)%s", __FILE__, __LINE__, rps -> msg -> str);
 	}
-	
+
 	json_free_value(&json);
 error:
 	request_del(req);
