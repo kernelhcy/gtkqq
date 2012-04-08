@@ -2,7 +2,7 @@ SUBDIRS=test
 
 AM_CFLAGS=-I$(srcdir)/../libqq/\
       -I$(srcdir)/../comm/\
-      -I$(srcdir)/.\
+      -I$(srcdir)\
       $(GTK_CFLAGS)\
       $(SQLITE3_CFLAGS)\
 	  $(GSTREAMER_CFLAGS)\
@@ -14,7 +14,7 @@ AM_CFLAGS=-I$(srcdir)/../libqq/\
       -Wall -Werror
 
 bin_PROGRAMS=gtkqq
-gtkqq_LDADD = $(GTK_LIBS) $(GSTREAMER_LIBS) $(GSTINTERFACES_LIBS) ${srcdir}/../libqq/libwebqq.la $(SQLITE3_LIBS) $(LIBNOTIFY_LIBS)
+gtkqq_LDADD = $(GTK_LIBS) $(GSTREAMER_LIBS) $(GSTINTERFACES_LIBS) ../libqq/libwebqq.la $(SQLITE3_LIBS) $(LIBNOTIFY_LIBS)
 gtkqq_SOURCES=main.c \
           msgloop.c msgloop.h\
           dao.c dao.h\
@@ -30,8 +30,8 @@ gtkqq_SOURCES=main.c \
           loginpanel.c loginpanel.h \
           mainpanel.h mainpanel.c\
           mainwindow.h mainwindow.c \
-          ${srcdir}/../comm/log.c\
-          ${srcdir}/../comm/cprint.c\
+          $(srcdir)/../comm/log.c\
+          $(srcdir)/../comm/cprint.c\
           splashpanel.h splashpanel.c\
           gqqconfig.h gqqconfig.c\
           statusbutton.h statusbutton.c\
