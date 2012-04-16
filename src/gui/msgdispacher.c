@@ -28,25 +28,25 @@ static void qq_sound_notify(QQRecvMsg *msg)
 		return ;
 	
 	switch (msg->msg_type) {
-    case MSG_BUDDY_T:
-    case MSG_GROUP_T:
-		/* When new message is coming, play a msg audio. */ 
-		g_snprintf(filename, sizeof(filename), SOUNDDIR"/Classic/msg.wav");
-        break;
-    case MSG_STATUS_CHANGED_T:
-		if (!g_strcmp0(msg->status->str, "online")) {
-			g_snprintf(filename, sizeof(filename), SOUNDDIR"/Classic/Global.wav");
-			break;
-		} else {
-			return;
-		}
-    case MSG_KICK_T:
-		/* No implement now */
-		return;
-    default:
-        g_warning("Unknonw poll message type! %d (%s, %d)", msg->msg_type
-				  , __FILE__, __LINE__);
-		return;
+        case MSG_BUDDY_T:
+        case MSG_GROUP_T:
+            /* When new message is coming, play a msg audio. */ 
+            g_snprintf(filename, sizeof(filename), SOUNDDIR"/Classic/msg.wav");
+            break;
+        case MSG_STATUS_CHANGED_T:
+            if (!g_strcmp0(msg->status->str, "online")) {
+                g_snprintf(filename, sizeof(filename), SOUNDDIR"/Classic/Global.wav");
+                break;
+            } else {
+                return;
+            }
+        case MSG_KICK_T:
+            /* No implement now */
+            return;
+        default:
+            g_warning("Unknonw poll message type! %d (%s, %d)", msg->msg_type
+                      , __FILE__, __LINE__);
+            return;
     }
 	
 	qq_play_wavfile(filename);
@@ -89,39 +89,39 @@ static void qq_notify(QQRecvMsg *msg)
 	GString *code = NULL;
 	
 	switch (msg->msg_type) {
-    case MSG_BUDDY_T:
-		/* Parse the sender. */
-		bdy = qq_info_lookup_buddy_by_uin(info, msg->from_uin->str);
-		if (!bdy) {
-			from = msg->from_uin->str;
-		} else {
-			from = bdy->markname->str;
-			if (bdy-> markname->len <= 0){
-				from = bdy->nick->str;
-			}
-		}
-		g_snprintf(title, sizeof(title), "New message from friend %s", from);
-		break;
-    case MSG_GROUP_T:
-		/* Parse which group send this message. */
-		code = msg->group_code;
-		gp = qq_info_lookup_group_by_code(info, code->str);
-		if (!gp) {
-			from = msg -> from_uin -> str;
-		} else {
-			from = gp->name->str;
-		}
-		g_snprintf(title, sizeof(title), "New message from group %s", from);
-        break;
-    case MSG_STATUS_CHANGED_T:
-		/* Nothing */
-    case MSG_KICK_T:
-		/* No implement now */
-		return;
-    default:
-        g_warning("Unknonw poll message type! %d (%s, %d)", msg->msg_type
-				  , __FILE__, __LINE__);
-		return;
+        case MSG_BUDDY_T:
+            /* Parse the sender. */
+            bdy = qq_info_lookup_buddy_by_uin(info, msg->from_uin->str);
+            if (!bdy) {
+                from = msg->from_uin->str;
+            } else {
+                from = bdy->markname->str;
+                if (bdy-> markname->len <= 0){
+                    from = bdy->nick->str;
+                }
+            }
+            g_snprintf(title, sizeof(title), "New message from friend %s", from);
+            break;
+        case MSG_GROUP_T:
+            /* Parse which group send this message. */
+            code = msg->group_code;
+            gp = qq_info_lookup_group_by_code(info, code->str);
+            if (!gp) {
+                from = msg -> from_uin -> str;
+            } else {
+                from = gp->name->str;
+            }
+            g_snprintf(title, sizeof(title), "New message from group %s", from);
+            break;
+        case MSG_STATUS_CHANGED_T:
+            /* Nothing */
+        case MSG_KICK_T:
+            /* No implement now */
+            return;
+        default:
+            g_warning("Unknonw poll message type! %d (%s, %d)", msg->msg_type
+                      , __FILE__, __LINE__);
+            return;
     }
 	body = qq_get_msgstr(msg);
 	if (!body) {
@@ -156,7 +156,7 @@ static void qq_msg_notify(QQRecvMsg *msg)
 	
 #ifdef USE_GSTREAMER
 	/* Play a audio to notify that a new msg is coming if
-	 user dont set mute. */
+       user dont set mute. */
 	if (!gqq_config_is_mute(cfg)) {
 		qq_sound_notify(msg);
 	}
@@ -172,14 +172,14 @@ static void qq_msg_notify(QQRecvMsg *msg)
 static void qq_poll_dispatch_buddy_msg(QQRecvMsg *msg)
 {
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map"
-                                            , msg -> from_uin -> str);
+                                         , msg -> from_uin -> str);
 	
     if(cw == NULL){
         cw = qq_chatwindow_new(msg -> from_uin -> str); 
         // not show it
         gtk_widget_hide(cw);
         gqq_config_insert_ht(cfg, "chat_window_map"
-                                , msg -> from_uin -> str, cw);
+                             , msg -> from_uin -> str, cw);
     }
     qq_chatwindow_add_recv_message(cw, msg);
     qq_tray_blinking_for(tray, msg -> from_uin -> str);
@@ -189,13 +189,13 @@ static void qq_poll_dispatch_buddy_msg(QQRecvMsg *msg)
 static void qq_poll_dispatch_group_msg(QQRecvMsg *msg)
 {
     GtkWidget *cw = gqq_config_lookup_ht(cfg, "chat_window_map"
-                                            , msg -> group_code -> str);
+                                         , msg -> group_code -> str);
     if(cw == NULL){
         cw = qq_group_chatwindow_new(msg -> group_code -> str); 
         // not show it
         gtk_widget_hide(cw);
         gqq_config_insert_ht(cfg, "chat_window_map"
-                                , msg -> group_code -> str, cw);
+                             , msg -> group_code -> str, cw);
     }
     qq_group_chatwindow_add_recv_message(cw, msg);
     qq_tray_blinking_for(tray, msg -> group_code -> str);
@@ -250,8 +250,8 @@ static void qq_poll_dispatch_kick_msg(QQRecvMsg *msg)
 	 * 	in the back.
 	 */
 	GtkWidget *dialog = gtk_message_dialog_new(GTK_WINDOW(main_win),
-			GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
-			GTK_BUTTONS_CLOSE, "You got kicked in the back.");
+                                               GTK_DIALOG_DESTROY_WITH_PARENT, GTK_MESSAGE_ERROR,
+                                               GTK_BUTTONS_CLOSE, "You got kicked in the back.");
 	gtk_dialog_run(GTK_DIALOG(dialog));
 	gtk_main_quit();
 }
@@ -271,24 +271,24 @@ gint qq_poll_message_callback(QQRecvMsg *msg, gpointer data)
 	
     switch(msg -> msg_type)
     {
-    case MSG_BUDDY_T:
-        gqq_mainloop_attach(loop, qq_poll_dispatch_buddy_msg, 1, msg);
-        break;
-    case MSG_GROUP_T:
-        gqq_mainloop_attach(loop, qq_poll_dispatch_group_msg, 1, msg);
-        break;
-    case MSG_STATUS_CHANGED_T:
-        gqq_mainloop_attach(loop, qq_poll_dispatch_status_changed_msg, 1, msg);
-        break;
-    case MSG_KICK_T:
-	if (!got)
-        	gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
-	got = TRUE;
-        break;
-    default:
-        g_warning("Unknonw poll message type! %d (%s, %d)", msg -> msg_type
-                                    , __FILE__, __LINE__);
-        break;
+        case MSG_BUDDY_T:
+            gqq_mainloop_attach(loop, qq_poll_dispatch_buddy_msg, 1, msg);
+            break;
+        case MSG_GROUP_T:
+            gqq_mainloop_attach(loop, qq_poll_dispatch_group_msg, 1, msg);
+            break;
+        case MSG_STATUS_CHANGED_T:
+            gqq_mainloop_attach(loop, qq_poll_dispatch_status_changed_msg, 1, msg);
+            break;
+        case MSG_KICK_T:
+            if (!got)
+                gqq_mainloop_attach(loop, qq_poll_dispatch_kick_msg, 1, msg);
+            got = TRUE;
+            break;
+        default:
+            g_warning("Unknonw poll message type! %d (%s, %d)", msg -> msg_type
+                      , __FILE__, __LINE__);
+            break;
     }
     return 0;
 }
