@@ -65,9 +65,9 @@ static gint check_verify_code(QQInfo *info)
 	g_free(params);
 
 	request_set_default_headers(req);
-	request_add_header(req, "Host", LOGINHOST);
+	request_add_header(req, "Host", "check.ptlogin2.qq.com");
 
-	Connection *con = connect_to_host(LOGINHOST, 80);
+	Connection *con = connect_to_host("check.ptlogin2.qq.com", 80);
 
 	send_request(con, req);
 	res = rcv_response(con, &rps);
@@ -389,12 +389,13 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	gchar *params = NULL;
 	GString *cookie = NULL;
 
-	params = g_strdup_printf(LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
-							 "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
-							 "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-							 "&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
-							 , info -> me -> uin -> str, p, info -> verify_code -> str
-							 , LOGIN_S_URL);
+	params = g_strdup_printf(LOGINPATH
+                "?u=%s&p=%s&verifycode=%s&webqq_type=40&"
+                "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
+                "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
+                "&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
+                , info -> me -> uin -> str, p, info -> verify_code -> str,
+                LOGIN_S_URL);
 	if (!params)
 		return -1;
 
@@ -743,13 +744,14 @@ error:
 static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		        , const gchar *status, GError **err)
 {
-	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
+    g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
     gint retcode = NO_ERR;
     retcode = get_version(info);
-	if(retcode != NO_ERR){
+
+    if(retcode != NO_ERR){
         create_error_msg(err, retcode, "Get version error.");
-		return retcode;
-	}
+        return retcode;
+    }
 
     if(info -> verify_code == NULL){
         g_warning("Need verify code!!(%s, %d)", __FILE__, __LINE__);
@@ -757,7 +759,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
         return WRONGVC_ERR;
     }
 
-	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
+    g_debug("Login...(%s, %d)", __FILE__, __LINE__);
 
         /* TODO : complete and test this function */
 	GString *md5 = get_pwvc_md5(
