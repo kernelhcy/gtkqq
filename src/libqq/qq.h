@@ -49,7 +49,7 @@ gint qq_logout(QQInfo *info, GError **err);
 // If success, return 0. or error code and set *err.
 //
 gint qq_sendmsg(QQSendMsg *msg, GError **err);
-GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err);
+GString* get_pwvc_md5(GString *pwd, GString *vc, GString *uin);
 
 //
 // Get all the buddies and categories
