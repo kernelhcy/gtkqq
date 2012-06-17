@@ -116,7 +116,8 @@ static gint check_verify_code(QQInfo *info)
     if (*result[1] == '0') { /* we needn't get a image */
         info->need_vcimage = FALSE;
         info->verify_code = g_string_new(result[3]);
-
+        info->hex_uin = g_string_new(result[5]);
+        g_debug("Hex Uin: %s (%s, %d)", info->hex_uin->str, __FILE__, __LINE__);
         g_debug("Verify code : %s (%s, %d)", 
                 info-> verify_code-> str, __FILE__, __LINE__);
         /* We need get the ptvfsession from the header "Set-Cookie" */
@@ -749,7 +750,7 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
         /* TODO : complete and test this function */
 	GString *md5 = get_pwvc_md5(
                 g_string_new(passwd), info -> verify_code, 
-                g_string_new("\\x00\\x00\\x00\\x00\\x13\\xfe\\xb6\\x1f"));
+                info->hex_uin);
 
 	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
 	gint ret = get_ptcz_skey(info, md5 -> str);
