@@ -1,10 +1,12 @@
-#include <qq.h>
-#include <http.h>
-#include <url.h>
-#include <qqhosts.h>
+#include "qq.h"
+#include "http.h"
+#include "url.h"
+#include "qqhosts.h"
+#include "json.h"
+
 #include <string.h>
-#include <json.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <glib/gprintf.h>
 
 /*
@@ -311,39 +313,69 @@ error:
  * Then, join the result with the capitalizaion of the verify code.
  * Compute the chekc sum of the new string.
  */
-GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
+
+/* TODO: complete this function */
+GString* get_pwvc_md5(GString *passwd, GString *vc, GString *uin)
 {
-	guint8 buf[100] = {0};
-	gsize bsize = 100;
+    int i;
+    int uin_byte_length;
+    char buf[128] = {0};
+    char _uin[9] = {0};
 
-	GChecksum *cs = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(cs, (const guchar*)pwd, strlen(pwd));
-	g_checksum_get_digest(cs, buf, &bsize);
-	g_checksum_free(cs);
+    if (!passwd || !vc || !uin) {
+        return NULL;
+    }
+    
 
-	cs = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(cs, buf, bsize);
-	g_checksum_get_digest(cs, buf, &bsize);
-	g_checksum_free(cs);
+    /* Calculate the length of uin (it must be 8?) */
+    uin_byte_length = uin->len / 4;
 
-	cs = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(cs, buf, bsize);
-	const gchar * md5_3 = g_checksum_get_string(cs);
-	md5_3 = g_ascii_strup(md5_3, strlen(md5_3));
-	gchar buf2[100] = {0};
-	g_snprintf(buf2, sizeof(buf2), "%s%s", md5_3, vc);
-	g_checksum_free(cs);
+    /**
+     * Ok, parse uin from string format.
+     * "\x00\x00\x00\x00\x54\xb3\x3c\x53" -> {0,0,0,0,54,b3,3c,53}
+     */
+    for (i = 0; i < uin_byte_length ; i++) {
+        char u[5] = {0};
+        char tmp;
+        strncpy(u, uin->str + i * 4 + 2, 2);
 
-	gchar *tmp1;
-	tmp1 = g_ascii_strup(buf2, strlen(buf2));
-	tmp1 = g_compute_checksum_for_string(G_CHECKSUM_MD5
-						, tmp1, -1);
-	tmp1 = g_ascii_strup(tmp1, strlen(tmp1));
-	GString *re = g_string_new(tmp1);
-	g_free(tmp1);
+        errno = 0;
+        tmp = strtol(u, NULL, 16);
+        if (errno) {
+            return NULL;
+        }
+        _uin[i] = tmp;
+    }
 
-	return re;
+    GChecksum *cs;
+    gsize bsize = 100;
+    cs = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(cs, (const guchar *)passwd->str, passwd->len);
+    g_checksum_get_digest(cs, (guint8 *)buf, &bsize);
+    g_checksum_free(cs);
+
+    memcpy(buf+16, _uin, uin_byte_length);
+
+    cs = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(cs, (const guchar *)buf, 16 + uin_byte_length);
+    const char *c = g_checksum_get_string(cs);
+
+    snprintf(buf, 100, "%s%s", c, vc->str);
+
+    char *a = g_ascii_strup(buf, strlen(buf));
+    printf("%s\n", a);
+    g_checksum_free(cs);
+
+
+    cs = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(cs, (const guchar *)a, strlen(a));
+
+    const char *d = g_checksum_get_string(cs);
+    char *e = g_ascii_strup(d, strlen(d));
+    return g_string_new(e);
 }
+
+
 
 /*
  * Get ptca and skey
@@ -726,7 +758,11 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
     }
 
 	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
-	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str, err);
+
+        /* TODO : complete and test this function */
+	GString *md5 = get_pwvc_md5(
+                g_string_new(passwd), info -> verify_code, 
+                g_string_new("\\x00\\x00\\x00\\x00\\x13\\xfe\\xb6\\x1f"));
 
 	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
 	gint ret = get_ptcz_skey(info, md5 -> str);
