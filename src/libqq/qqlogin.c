@@ -748,18 +748,17 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
     g_debug("Login...(%s, %d)", __FILE__, __LINE__);
 
         /* TODO : complete and test this function */
-	GString *md5 = get_pwvc_md5(
-                g_string_new(passwd), info -> verify_code, 
-                info->hex_uin);
+    GString *md5 = get_pwvc_md5(
+            g_string_new(passwd), info -> verify_code, info->hex_uin);
 
-	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
-	gint ret = get_ptcz_skey(info, md5 -> str);
-	if(ret != 0){
-		g_string_free(md5, TRUE);
-		const gchar * msg;
-		switch(ret)
-		{
-		case 1:
+    g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
+    gint ret = get_ptcz_skey(info, md5 -> str);
+    if(ret != 0){
+        g_string_free(md5, TRUE);
+        const gchar * msg;
+            switch(ret)
+            {
+                case 1:
 			msg = "System busy! Please try again.";
             retcode = NETWORK_ERR;
 			break;
