@@ -52,8 +52,10 @@ static gint check_verify_code(QQInfo *info)
 	Response *rps = NULL;
 	int res = 0;
 
-	params = g_strdup_printf(VCCHECKPATH"?uin=%s&appid="APPID"&r=%.16f"
-							 , info -> me -> uin -> str, g_random_double());
+	params = g_strdup_printf(
+                VCCHECKPATH
+                "?uin=%s&appid="APPID"&r=%.16f"
+                , info -> me -> uin -> str, g_random_double());
 	if (!params)
 		return -1;
 
@@ -100,60 +102,43 @@ static gint check_verify_code(QQInfo *info)
 	 * "Set-Cookie".
 	 */
 
-	gchar *c, *s;
-       	s = rps -> msg -> str;
-	if(g_strstr_len(s, -1, "ptui_checkVC") == NULL){
-		g_warning("Get vc_type error!(%s, %d)", __FILE__, __LINE__);
-		ret = NETWORK_ERR;
-		goto error;
-	}
+    gchar *s;
+    s = rps -> msg -> str;
+    if(g_strstr_len(s, -1, "ptui_checkVC") == NULL){
+        g_warning("Get vc_type error!(%s, %d)", __FILE__, __LINE__);
+        ret = NETWORK_ERR;
+        goto error;
+    }
 
-	g_debug("check vc return: %s(%s, %d)", s, __FILE__, __LINE__);
-	c = g_strstr_len(s, -1, "'");
-	++c;
-	if(*c == '0'){
-		/*
-		 * We got the verify code.
-		 */
-		info -> need_vcimage = FALSE;
-		s = c;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		*c = '\0';
-		info -> verify_code = g_string_new(s);
-		g_debug("Verify code : %s (%s, %d)", info -> verify_code -> str
-				, __FILE__, __LINE__);
-		/*
-		 * We need get the ptvfsession from the header "Set-Cookie"
-		 */
-		info -> ptvfsession = get_cookie(rps, "ptvfsession");
-	}else if(*c == '1'){
-		/*
-		 * We need get the verify image.
-		 */
-		info -> need_vcimage = TRUE;
-		s = c;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		*c = '\0';
-		info -> vc_type = g_string_new(s);
-		g_debug("We need verify code image! vc_type: %s (%s, %d)"
-				, info -> vc_type -> str, __FILE__, __LINE__);
-	}else{
-		g_warning("Unknown return value!(%s, %d)", __FILE__, __LINE__);
-		ret = NETWORK_ERR;
-		goto error;
-	}
+    g_debug("check vc return: %s(%s, %d)", s, __FILE__, __LINE__);
+
+    char **result = g_strsplit(s, "'", 5);
+    if (*result[1] == '0') { /* we needn't get a image */
+        info->need_vcimage = FALSE;
+        info->verify_code = g_string_new(result[3]);
+
+        g_debug("Verify code : %s (%s, %d)", 
+                info-> verify_code-> str, __FILE__, __LINE__);
+        /* We need get the ptvfsession from the header "Set-Cookie" */
+        info -> ptvfsession = get_cookie(rps, "ptvfsession");
+
+    } else if (*result[1] == '1') {
+
+        info->need_vcimage = TRUE;
+        info->vc_type = g_string_new(result[3]);
+        g_debug("We need verify code image! vc_type: %s (%s, %d)", 
+                info -> vc_type -> str, __FILE__, __LINE__);
+
+    } else {
+        g_warning("Unknown return value!(%s, %d)", __FILE__, __LINE__);
+        ret = NETWORK_ERR;
+        goto error;
+    }
+
 error:
-	request_del(req);
-	response_del(rps);
-	return ret;
+    request_del(req);
+    response_del(rps);
+    return ret;
 }
 
 /*
