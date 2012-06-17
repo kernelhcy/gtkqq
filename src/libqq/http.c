@@ -150,11 +150,9 @@ void request_add_header(Request* r, const gchar* name
 
 void request_set_default_headers(Request *r)
 {
-    request_add_header(r, "User-Agent", "Mozilla/5.0 (X11; U; Linux i686; "
-                        "en-US) AppleWebKit/534.13 "
-                        "(KHTML, like Gecko) "
-                        "Chrome/9.0.597.45 "
-                        "Safari/534.13");
+    request_add_header(r, "User-Agent", 
+            "Mozilla/5.0 (X11; Linux x86_64; "
+            "rv:10.0) Gecko/20100101 Firefox/10.0");    
     request_add_header(r, "Accept", "text/html, application/xml;q=0.9, "
                     "application/xhtml+xml, image/png, "
                     "image/jpeg, image/gif, "

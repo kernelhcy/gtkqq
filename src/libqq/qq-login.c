@@ -53,9 +53,7 @@ static gint check_verify_code(QQInfo *info)
 	int res = 0;
 
 	params = g_strdup_printf(
-                VCCHECKPATH
-                "?uin=%s&appid="APPID"&r=%.16f"
-                , info -> me -> uin -> str, g_random_double());
+                VCCHECKPATH"?uin=%s&appid="APPID, info -> me -> uin -> str);
 	if (!params)
 		return -1;
 
@@ -69,6 +67,9 @@ static gint check_verify_code(QQInfo *info)
 	request_set_default_headers(req);
 	request_add_header(req, "Host", "check.ptlogin2.qq.com");
 
+        char chkuin[64];
+        snprintf(chkuin, sizeof(chkuin), "chkuin=%s", info->me->uin->str);
+        request_add_header(req, "Cookie", chkuin);
 	Connection *con = connect_to_host("check.ptlogin2.qq.com", 80);
 
 	send_request(con, req);
@@ -379,10 +380,11 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	GString *cookie = NULL;
 
 	params = g_strdup_printf(LOGINPATH
-                "?u=%s&p=%s&verifycode=%s&webqq_type=40&"
-                "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
+                "?u=%s&p=%s&verifycode=%s&webqq_type=10&"
+                "remember_uin=1&aid="APPID"&login2qq=1&u1=%s&h=1&"
                 "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-                "&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
+                "&dumy=&fp=loginerroralert&action=2-11-7438&mibao_css=m_webqq"
+                "&t=1&g=1"
                 , info -> me -> uin -> str, p, info -> verify_code -> str,
                 LOGIN_S_URL);
 	if (!params)
