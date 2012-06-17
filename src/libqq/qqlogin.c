@@ -112,7 +112,7 @@ static gint check_verify_code(QQInfo *info)
 
     g_debug("check vc return: %s(%s, %d)", s, __FILE__, __LINE__);
 
-    char **result = g_strsplit(s, "'", 5);
+    char **result = g_strsplit(s, "'", -1);
     if (*result[1] == '0') { /* we needn't get a image */
         info->need_vcimage = FALSE;
         info->verify_code = g_string_new(result[3]);
@@ -139,6 +139,7 @@ static gint check_verify_code(QQInfo *info)
 error:
     request_del(req);
     response_del(rps);
+    g_strfreev(result);
     return ret;
 }
 
@@ -303,6 +304,8 @@ error:
 /* TODO: complete this function */
 GString* get_pwvc_md5(GString *passwd, GString *vc, GString *uin)
 {
+
+    g_debug("Get MD5 passwd(%s), vc(%s), uin(%s)", passwd->str, vc->str, uin->str);
     int i;
     int uin_byte_length;
     char buf[128] = {0};
@@ -394,11 +397,6 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	g_free(params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
-	request_add_header(req, "Referer", "http://ui.ptlogin2.qq.com/cgi-bin/"
-					   "login?target=self&style=4&appid=1003903&enable_ql"
-					   "ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
-					   "om%2Floginproxy.html%3Flogin_level%3D3"
-					   "&f_url=loginerroralert");
 
 	/* Add cookie to http header. */
 	cookie = g_string_new("");
@@ -445,6 +443,8 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	}
 
 	gint status;
+        g_debug("Server return (%s) (%s, %d)", 
+                rps->msg->str, __FILE__, __LINE__);
 	gchar *sbe = g_strstr_len(rps -> msg -> str, -1, "'");
 	++sbe;
 	gchar *sen = g_strstr_len(sbe, -1, "'");
