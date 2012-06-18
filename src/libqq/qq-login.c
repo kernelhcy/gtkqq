@@ -113,7 +113,11 @@ static gint check_verify_code(QQInfo *info)
 
     g_debug("check vc return: %s(%s, %d)", s, __FILE__, __LINE__);
 
-    char **result = g_strsplit(s, "'", -1);
+    gchar **result = g_strsplit(s, "'", -1);
+    if (result == NULL) {
+        g_warning("Parse error (%s, %d)", __FILE__, __LINE__);
+        goto error;
+    }
     if (*result[1] == '0') { /* we needn't get a image */
         info->need_vcimage = FALSE;
         info->verify_code = g_string_new(result[3]);
@@ -134,13 +138,14 @@ static gint check_verify_code(QQInfo *info)
     } else {
         g_warning("Unknown return value!(%s, %d)", __FILE__, __LINE__);
         ret = NETWORK_ERR;
+        g_strfreev(result);
         goto error;
     }
+    g_strfreev(result);
 
 error:
     request_del(req);
     response_del(rps);
-    g_strfreev(result);
     return ret;
 }
 
@@ -302,7 +307,6 @@ error:
  * Compute the chekc sum of the new string.
  */
 
-/* TODO: complete this function */
 GString* get_pwvc_md5(GString *passwd, GString *vc, GString *uin)
 {
 
@@ -353,16 +357,17 @@ GString* get_pwvc_md5(GString *passwd, GString *vc, GString *uin)
     snprintf(buf, 100, "%s%s", c, vc->str);
 
     char *a = g_ascii_strup(buf, strlen(buf));
-    printf("%s\n", a);
     g_checksum_free(cs);
-
 
     cs = g_checksum_new(G_CHECKSUM_MD5);
     g_checksum_update(cs, (const guchar *)a, strlen(a));
 
     const char *d = g_checksum_get_string(cs);
     char *e = g_ascii_strup(d, strlen(d));
-    return g_string_new(e);
+    g_checksum_free(cs);
+    GString *ret = g_string_new(e);
+    g_free(e);
+    return ret;
 }
 
 
@@ -749,7 +754,6 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 
     g_debug("Login...(%s, %d)", __FILE__, __LINE__);
 
-        /* TODO : complete and test this function */
     GString *md5 = get_pwvc_md5(
             g_string_new(passwd), info -> verify_code, info->hex_uin);
 
