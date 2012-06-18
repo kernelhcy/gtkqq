@@ -30,8 +30,6 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
 {
     json_t *tmp = NULL;
     GString *utf8 = g_string_new("");
-    GString *tmpstring = g_string_new("");
-    gint i;
     tmp = json_find_first_label_all(json, "content");
     if(tmp == NULL){
         g_warning("No conent found!(%s, %d)", __FILE__, __LINE__);
@@ -45,36 +43,10 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
         if(ctent -> type == JSON_STRING){
             //String
             g_string_truncate(utf8, 0);
-            g_string_truncate(tmpstring, 0);
             ucs4toutf8(utf8, ctent -> text);
-            for(i = 0; i < utf8 -> len; ++i){
-                if(utf8 -> str[i] == '\\' && i + 1 < utf8 -> len){
-                    switch(utf8 -> str[i + 1])
-                    {
-                    case '\\':
-                        g_string_append_c(tmpstring, '\\');
-                        break;
-                    case 'n':
-                        g_string_append_c(tmpstring, '\n');
-                        break;
-                    case 'r':
-                        g_string_append_c(tmpstring, '\r');
-                        break;
-                    case 't':
-                        g_string_append_c(tmpstring, '\t');
-                        break;
-                    case '"':
-                        g_string_append_c(tmpstring, '"');
-                        break;
-                    default:
-                        break;
-                    }
-                    ++i;
-                }else{
-                    g_string_append_c(tmpstring, utf8 -> str[i]);
-                }
-            }
-            ct = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, tmpstring -> str); 
+            gchar *tmpstring = g_strcompress(utf8->str);
+            ct = qq_msgcontent_new(QQ_MSG_CONTENT_STRING_T, tmpstring);
+            g_free(tmpstring);
             qq_recvmsg_add_content(msg, ct);
             g_debug("Msg Content: string %s(%s, %d)", utf8 -> str
                             , __FILE__, __LINE__);
@@ -145,7 +117,6 @@ static void parase_content(QQRecvMsg *msg, json_t *json)
         }
     }
     g_string_free(utf8, TRUE);
-    g_string_free(tmpstring, TRUE);
 }
 
 
