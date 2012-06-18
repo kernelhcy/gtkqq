@@ -101,6 +101,8 @@ struct _QQInfo{
     GString *clientid;        
     GString *cookie;
 
+    GString *hex_uin;
+
     /*
      * Maybe we need a lock...
      */

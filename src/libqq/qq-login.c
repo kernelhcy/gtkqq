@@ -1,10 +1,12 @@
-#include <qq.h>
-#include <http.h>
-#include <url.h>
-#include <qqhosts.h>
+#include "qq.h"
+#include "http.h"
+#include "url.h"
+#include "qqhosts.h"
+#include "json.h"
+
 #include <string.h>
-#include <json.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <glib/gprintf.h>
 
 /*
@@ -50,8 +52,8 @@ static gint check_verify_code(QQInfo *info)
 	Response *rps = NULL;
 	int res = 0;
 
-	params = g_strdup_printf(VCCHECKPATH"?uin=%s&appid="APPID"&r=%.16f"
-							 , info -> me -> uin -> str, g_random_double());
+	params = g_strdup_printf(
+                VCCHECKPATH"?uin=%s&appid="APPID, info -> me -> uin -> str);
 	if (!params)
 		return -1;
 
@@ -63,9 +65,12 @@ static gint check_verify_code(QQInfo *info)
 	g_free(params);
 
 	request_set_default_headers(req);
-	request_add_header(req, "Host", LOGINHOST);
+	request_add_header(req, "Host", "check.ptlogin2.qq.com");
 
-	Connection *con = connect_to_host(LOGINHOST, 80);
+        char chkuin[64];
+        snprintf(chkuin, sizeof(chkuin), "chkuin=%s", info->me->uin->str);
+        request_add_header(req, "Cookie", chkuin);
+	Connection *con = connect_to_host("check.ptlogin2.qq.com", 80);
 
 	send_request(con, req);
 	res = rcv_response(con, &rps);
@@ -98,60 +103,45 @@ static gint check_verify_code(QQInfo *info)
 	 * "Set-Cookie".
 	 */
 
-	gchar *c, *s;
-       	s = rps -> msg -> str;
-	if(g_strstr_len(s, -1, "ptui_checkVC") == NULL){
-		g_warning("Get vc_type error!(%s, %d)", __FILE__, __LINE__);
-		ret = NETWORK_ERR;
-		goto error;
-	}
+    gchar *s;
+    s = rps -> msg -> str;
+    if(g_strstr_len(s, -1, "ptui_checkVC") == NULL){
+        g_warning("Get vc_type error!(%s, %d)", __FILE__, __LINE__);
+        ret = NETWORK_ERR;
+        goto error;
+    }
 
-	g_debug("check vc return: %s(%s, %d)", s, __FILE__, __LINE__);
-	c = g_strstr_len(s, -1, "'");
-	++c;
-	if(*c == '0'){
-		/*
-		 * We got the verify code.
-		 */
-		info -> need_vcimage = FALSE;
-		s = c;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		*c = '\0';
-		info -> verify_code = g_string_new(s);
-		g_debug("Verify code : %s (%s, %d)", info -> verify_code -> str
-				, __FILE__, __LINE__);
-		/*
-		 * We need get the ptvfsession from the header "Set-Cookie"
-		 */
-		info -> ptvfsession = get_cookie(rps, "ptvfsession");
-	}else if(*c == '1'){
-		/*
-		 * We need get the verify image.
-		 */
-		info -> need_vcimage = TRUE;
-		s = c;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		s = c + 1;
-		c = g_strstr_len(s, -1, "'");
-		*c = '\0';
-		info -> vc_type = g_string_new(s);
-		g_debug("We need verify code image! vc_type: %s (%s, %d)"
-				, info -> vc_type -> str, __FILE__, __LINE__);
-	}else{
-		g_warning("Unknown return value!(%s, %d)", __FILE__, __LINE__);
-		ret = NETWORK_ERR;
-		goto error;
-	}
+    g_debug("check vc return: %s(%s, %d)", s, __FILE__, __LINE__);
+
+    char **result = g_strsplit(s, "'", -1);
+    if (*result[1] == '0') { /* we needn't get a image */
+        info->need_vcimage = FALSE;
+        info->verify_code = g_string_new(result[3]);
+        info->hex_uin = g_string_new(result[5]);
+        g_debug("Hex Uin: %s (%s, %d)", info->hex_uin->str, __FILE__, __LINE__);
+        g_debug("Verify code : %s (%s, %d)", 
+                info-> verify_code-> str, __FILE__, __LINE__);
+        /* We need get the ptvfsession from the header "Set-Cookie" */
+        info -> ptvfsession = get_cookie(rps, "ptvfsession");
+
+    } else if (*result[1] == '1') {
+
+        info->need_vcimage = TRUE;
+        info->vc_type = g_string_new(result[3]);
+        g_debug("We need verify code image! vc_type: %s (%s, %d)", 
+                info -> vc_type -> str, __FILE__, __LINE__);
+
+    } else {
+        g_warning("Unknown return value!(%s, %d)", __FILE__, __LINE__);
+        ret = NETWORK_ERR;
+        goto error;
+    }
+
 error:
-	request_del(req);
-	response_del(rps);
-	return ret;
+    request_del(req);
+    response_del(rps);
+    g_strfreev(result);
+    return ret;
 }
 
 /*
@@ -311,39 +301,71 @@ error:
  * Then, join the result with the capitalizaion of the verify code.
  * Compute the chekc sum of the new string.
  */
-GString* get_pwvc_md5(const gchar *pwd, const gchar *vc, GError **err)
+
+/* TODO: complete this function */
+GString* get_pwvc_md5(GString *passwd, GString *vc, GString *uin)
 {
-	guint8 buf[100] = {0};
-	gsize bsize = 100;
 
-	GChecksum *cs = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(cs, (const guchar*)pwd, strlen(pwd));
-	g_checksum_get_digest(cs, buf, &bsize);
-	g_checksum_free(cs);
+    g_debug("Get MD5 passwd(%s), vc(%s), uin(%s)", passwd->str, vc->str, uin->str);
+    int i;
+    int uin_byte_length;
+    char buf[128] = {0};
+    char _uin[9] = {0};
 
-	cs = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(cs, buf, bsize);
-	g_checksum_get_digest(cs, buf, &bsize);
-	g_checksum_free(cs);
+    if (!passwd || !vc || !uin) {
+        return NULL;
+    }
+    
 
-	cs = g_checksum_new(G_CHECKSUM_MD5);
-	g_checksum_update(cs, buf, bsize);
-	const gchar * md5_3 = g_checksum_get_string(cs);
-	md5_3 = g_ascii_strup(md5_3, strlen(md5_3));
-	gchar buf2[100] = {0};
-	g_snprintf(buf2, sizeof(buf2), "%s%s", md5_3, vc);
-	g_checksum_free(cs);
+    /* Calculate the length of uin (it must be 8?) */
+    uin_byte_length = uin->len / 4;
 
-	gchar *tmp1;
-	tmp1 = g_ascii_strup(buf2, strlen(buf2));
-	tmp1 = g_compute_checksum_for_string(G_CHECKSUM_MD5
-						, tmp1, -1);
-	tmp1 = g_ascii_strup(tmp1, strlen(tmp1));
-	GString *re = g_string_new(tmp1);
-	g_free(tmp1);
+    /**
+     * Ok, parse uin from string format.
+     * "\x00\x00\x00\x00\x54\xb3\x3c\x53" -> {0,0,0,0,54,b3,3c,53}
+     */
+    for (i = 0; i < uin_byte_length ; i++) {
+        char u[5] = {0};
+        char tmp;
+        strncpy(u, uin->str + i * 4 + 2, 2);
 
-	return re;
+        errno = 0;
+        tmp = strtol(u, NULL, 16);
+        if (errno) {
+            return NULL;
+        }
+        _uin[i] = tmp;
+    }
+
+    GChecksum *cs;
+    gsize bsize = 100;
+    cs = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(cs, (const guchar *)passwd->str, passwd->len);
+    g_checksum_get_digest(cs, (guint8 *)buf, &bsize);
+    g_checksum_free(cs);
+
+    memcpy(buf+16, _uin, uin_byte_length);
+
+    cs = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(cs, (const guchar *)buf, 16 + uin_byte_length);
+    const char *c = g_checksum_get_string(cs);
+
+    snprintf(buf, 100, "%s%s", c, vc->str);
+
+    char *a = g_ascii_strup(buf, strlen(buf));
+    printf("%s\n", a);
+    g_checksum_free(cs);
+
+
+    cs = g_checksum_new(G_CHECKSUM_MD5);
+    g_checksum_update(cs, (const guchar *)a, strlen(a));
+
+    const char *d = g_checksum_get_string(cs);
+    char *e = g_ascii_strup(d, strlen(d));
+    return g_string_new(e);
 }
+
+
 
 /*
  * Get ptca and skey
@@ -357,12 +379,14 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	gchar *params = NULL;
 	GString *cookie = NULL;
 
-	params = g_strdup_printf(LOGINPATH"?u=%s&p=%s&verifycode=%s&webqq_type=40&"
-							 "remember_uin=0&aid="APPID"&login2qq=1&u1=%s&h=1&"
-							 "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
-							 "&dumy=&fp=loginerroralert&action=4-30-764935&mibao_css=m_webqq"
-							 , info -> me -> uin -> str, p, info -> verify_code -> str
-							 , LOGIN_S_URL);
+	params = g_strdup_printf(LOGINPATH
+                "?u=%s&p=%s&verifycode=%s&webqq_type=10&"
+                "remember_uin=1&aid="APPID"&login2qq=1&u1=%s&h=1&"
+                "ptredirect=0&ptlang=2052&from_ui=1&pttype=1"
+                "&dumy=&fp=loginerroralert&action=2-11-7438&mibao_css=m_webqq"
+                "&t=1&g=1"
+                , info -> me -> uin -> str, p, info -> verify_code -> str,
+                LOGIN_S_URL);
 	if (!params)
 		return -1;
 
@@ -375,11 +399,6 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	g_free(params);
 	request_set_default_headers(req);
 	request_add_header(req, "Host", LOGINHOST);
-	request_add_header(req, "Referer", "http://ui.ptlogin2.qq.com/cgi-bin/"
-					   "login?target=self&style=4&appid=1003903&enable_ql"
-					   "ogin=0&no_verifyimg=1&s_url=http%3A%2F%2Fweb2.qq.c"
-					   "om%2Floginproxy.html%3Flogin_level%3D3"
-					   "&f_url=loginerroralert");
 
 	/* Add cookie to http header. */
 	cookie = g_string_new("");
@@ -426,6 +445,8 @@ static gint get_ptcz_skey(QQInfo *info, const gchar *p)
 	}
 
 	gint status;
+        g_debug("Server return (%s) (%s, %d)", 
+                rps->msg->str, __FILE__, __LINE__);
 	gchar *sbe = g_strstr_len(rps -> msg -> str, -1, "'");
 	++sbe;
 	gchar *sen = g_strstr_len(sbe, -1, "'");
@@ -711,13 +732,14 @@ error:
 static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
 		        , const gchar *status, GError **err)
 {
-	g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
+    g_debug("Get version...(%s, %d)", __FILE__, __LINE__);
     gint retcode = NO_ERR;
     retcode = get_version(info);
-	if(retcode != NO_ERR){
+
+    if(retcode != NO_ERR){
         create_error_msg(err, retcode, "Get version error.");
-		return retcode;
-	}
+        return retcode;
+    }
 
     if(info -> verify_code == NULL){
         g_warning("Need verify code!!(%s, %d)", __FILE__, __LINE__);
@@ -725,17 +747,20 @@ static gint do_login(QQInfo *info, const gchar *uin, const gchar *passwd
         return WRONGVC_ERR;
     }
 
-	g_debug("Login...(%s, %d)", __FILE__, __LINE__);
-	GString *md5 = get_pwvc_md5(passwd, info -> verify_code -> str, err);
+    g_debug("Login...(%s, %d)", __FILE__, __LINE__);
 
-	g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
-	gint ret = get_ptcz_skey(info, md5 -> str);
-	if(ret != 0){
-		g_string_free(md5, TRUE);
-		const gchar * msg;
-		switch(ret)
-		{
-		case 1:
+        /* TODO : complete and test this function */
+    GString *md5 = get_pwvc_md5(
+            g_string_new(passwd), info -> verify_code, info->hex_uin);
+
+    g_debug("Get ptcz and skey...(%s, %d)", __FILE__, __LINE__);
+    gint ret = get_ptcz_skey(info, md5 -> str);
+    if(ret != 0){
+        g_string_free(md5, TRUE);
+        const gchar * msg;
+            switch(ret)
+            {
+                case 1:
 			msg = "System busy! Please try again.";
             retcode = NETWORK_ERR;
 			break;
